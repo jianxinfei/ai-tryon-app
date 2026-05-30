@@ -1,0 +1,13 @@
+# 环境变量（包含密钥，绝对不能上传）
+.env.local
+.env*.local
+
+# 依赖包（体积巨大，GitHub 不需要）
+node_modules/
+
+# 构建缓存
+.next/
+
+# 其他
+*.log
+.DS_Store

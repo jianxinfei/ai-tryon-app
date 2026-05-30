@@ -1,0 +1,12 @@
+{
+  "name": "stripe-product-setup",
+  "version": "1.0.0",
+  "private": true,
+  "description": "一次性脚本：在 Stripe 中创建 AI试衣App 的产品和价格",
+  "scripts": {
+    "create-products": "node create-stripe-products.js"
+  },
+  "dependencies": {
+    "stripe": "^15.0.0"
+  }
+}
