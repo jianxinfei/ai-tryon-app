@@ -785,9 +785,12 @@ export async function POST(req: NextRequest) {
     const { personImage, clothingImage } = body;
 
     console.log('[TryOn API] 请求模式: 虚拟试衣，所需积分: 1');
+    console.log('[TryOn API] 当前用户ID:', userId);
 
     // ── 3. 检查积分（≥1） ──
+    console.log('[TryOn API] 开始检查用户积分...');
     const creditCheck = await checkUserHasEnoughCredits(userId, 1);
+    console.log('[TryOn API] 积分检查结果:', creditCheck);
     if (!creditCheck.can_try) {
       return NextResponse.json(
         { success: false, error: '积分不足', message: '虚拟试衣需要 1 积分，请购买积分包后继续。', needPurchase: true, redirectTo: '/pricing', currentCredits: creditCheck.credits, requiredCredits: 1 },

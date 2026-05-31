@@ -42,6 +42,8 @@ export interface ConsumeResult {
  * 获取用户的积分信息
  */
 export async function getUserCredits(userId: string): Promise<UserCredits | null> {
+  console.log('[Credits] 开始查询用户积分, userId:', userId);
+  
   const { data, error } = await getSupabaseAdmin()
     .from('user_credits')
     .select('*')
@@ -49,9 +51,21 @@ export async function getUserCredits(userId: string): Promise<UserCredits | null
     .single();
 
   if (error) {
-    console.log('[Credits] 查询用户积分失败:', error.message);
+    console.error('[Credits] 查询用户积分失败:', {
+      userId,
+      errorCode: error.code,
+      errorMessage: error.message,
+      errorDetails: error.details,
+    });
     return null;
   }
+  
+  console.log('[Credits] 查询用户积分成功:', {
+    userId,
+    credits: data?.credits,
+    recordId: data?.id,
+  });
+  
   return data;
 }
 
@@ -165,9 +179,12 @@ export async function addCredits(params: {
  * 检查用户积分是否足够
  */
 export async function checkUserHasEnoughCredits(userId: string, required: number): Promise<CreditCheckResult> {
+  console.log('[Credits] 检查用户积分是否足够:', { userId, required });
+  
   const userCredits = await getUserCredits(userId);
 
   if (!userCredits) {
+    console.log('[Credits] 用户无积分记录:', { userId });
     return {
       can_try: false,
       use_type: '',
@@ -176,6 +193,13 @@ export async function checkUserHasEnoughCredits(userId: string, required: number
     };
   }
 
+  console.log('[Credits] 用户积分信息:', { 
+    userId, 
+    currentCredits: userCredits.credits, 
+    required,
+    hasEnough: userCredits.credits >= required 
+  });
+
   if (userCredits.credits >= required) {
     return {
       can_try: true,
@@ -183,6 +207,12 @@ export async function checkUserHasEnoughCredits(userId: string, required: number
       credits: userCredits.credits,
     };
   }
+
+  console.log('[Credits] 用户积分不足:', { 
+    userId, 
+    currentCredits: userCredits.credits, 
+    required 
+  });
 
   return {
     can_try: false,
