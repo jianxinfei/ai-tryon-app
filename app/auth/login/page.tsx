@@ -19,50 +19,52 @@ function AuthLoginContent() {
   const searchParams = useSearchParams();
   
   // 获取 Supabase URL 用于生成正确的 storage key
+  // 使用默认值避免构建时环境变量未注入的问题
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   
-  const [supabaseClient] = useState(() =>
-    createBrowserClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        auth: {
-          // 使用 Supabase 默认的 storage key 格式
-          storageKey: `sb-${new URL(supabaseUrl).hostname}-auth-token`,
-          storage: {
-            getItem: (key) => {
-              if (typeof window === 'undefined') return null;
-              try {
-                return localStorage.getItem(key);
-              } catch {
-                return null;
-              }
-            },
-            setItem: (key, value) => {
-              if (typeof window === 'undefined') return;
-              try {
-                localStorage.setItem(key, value);
-              } catch (e) {
-                console.error('[Login] localStorage.setItem 失败:', e);
-              }
-            },
-            removeItem: (key) => {
-              if (typeof window === 'undefined') return;
-              try {
-                localStorage.removeItem(key);
-              } catch (e) {
-                console.error('[Login] localStorage.removeItem 失败:', e);
-              }
-            },
+  const [supabaseClient] = useState(() => {
+    // 如果环境变量为空，返回一个空操作的客户端（避免构建时报错）
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.warn('[Login] Supabase 环境变量未配置，认证功能将不可用');
+      return createBrowserClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder-key');
+    }
+    return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        // 使用 Supabase 默认的 storage key 格式
+        storageKey: `sb-${new URL(supabaseUrl).hostname}-auth-token`,
+        storage: {
+          getItem: (key) => {
+            if (typeof window === 'undefined') return null;
+            try {
+              return localStorage.getItem(key);
+            } catch {
+              return null;
+            }
           },
-          autoRefreshToken: true,
-          persistSession: true,
-          detectSessionInUrl: true,
+          setItem: (key, value) => {
+            if (typeof window === 'undefined') return;
+            try {
+              localStorage.setItem(key, value);
+            } catch (e) {
+              console.error('[Login] localStorage.setItem 失败:', e);
+            }
+          },
+          removeItem: (key) => {
+            if (typeof window === 'undefined') return;
+            try {
+              localStorage.removeItem(key);
+            } catch (e) {
+              console.error('[Login] localStorage.removeItem 失败:', e);
+            }
+          },
         },
-      }
-    )
-  );
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+      },
+    });
+  });
 
   // 调试：检查 Supabase 配置
   useEffect(() => {
