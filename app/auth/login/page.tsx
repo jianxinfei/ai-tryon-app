@@ -11,6 +11,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { createBrowserClient } from '@supabase/ssr';
 
 function AuthLoginContent() {
@@ -291,6 +292,13 @@ function AuthLoginContent() {
             >
               {isSignUp ? '已有账号？点击登录' : '还没有账号？点击注册'}
             </button>
+          </div>
+
+          {/* 用户协议链接 */}
+          <div className="mt-3 text-center">
+            <Link href="/terms" className="text-xs text-slate-400 hover:text-indigo-600 transition-colors">
+              《用户协议与知识产权声明》
+            </Link>
           </div>
 
           {/* 分割线 */}

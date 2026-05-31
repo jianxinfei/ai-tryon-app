@@ -19,9 +19,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { checkUserHasEnoughCredits, consumeCredits, getUserCredits } from '@/lib/credits';
 import { createHmac } from 'crypto';
+import sharp from 'sharp';
 
 // ══════════════════════════════════════════════
 // 可灵 AI 配置
@@ -487,6 +489,153 @@ async function virtualTryOn(personImage: string, clothingImage: string): Promise
 }
 
 // ══════════════════════════════════════════════
+// 图片后处理：去Logo + 加品牌水印 + 上传 Storage
+// ══════════════════════════════════════════════
+
+/**
+ * 对可灵AI生成的效果图进行后处理：
+ * 1. 下载原始图片
+ * 2. 智能填充右下角可能存在的Logo区域
+ * 3. 添加品牌水印 "AI TryOn · 生成"
+ * 4. 上传到 Supabase Storage
+ * 5. 返回新的公开 URL
+ */
+async function postProcessImage(originalUrl: string): Promise<string> {
+  const startTime = Date.now();
+  console.log('[TryOn API] 开始图片后处理...');
+  console.log('[TryOn API] 原始图片 URL:', originalUrl.substring(0, 100));
+
+  // ── 1. 下载原始图片 ──
+  const imgResponse = await fetch(originalUrl, { signal: AbortSignal.timeout(30000) });
+  if (!imgResponse.ok) {
+    console.warn('[TryOn API] 图片下载失败，跳过后处理，使用原始 URL');
+    return originalUrl;
+  }
+
+  const originalBuffer = await imgResponse.arrayBuffer();
+  console.log('[TryOn API] 原始图片大小:', (originalBuffer.byteLength / 1024).toFixed(1), 'KB');
+
+  // ── 2. 使用 sharp 处理图片 ──
+  let processedBuffer: Buffer;
+
+  try {
+    const image = sharp(Buffer.from(originalBuffer));
+    const metadata = await image.metadata();
+    const width = metadata.width || 768;
+    const height = metadata.height || 1024;
+
+    console.log('[TryOn API] 图片尺寸:', width, 'x', height);
+
+    // Logo 区域参数（右下角，约占图片宽度的 15%，高度的 8%）
+    const logoRegionWidth = Math.round(width * 0.15);
+    const logoRegionHeight = Math.round(height * 0.08);
+    const logoX = width - logoRegionWidth - Math.round(width * 0.02); // 右侧留 2% 边距
+    const logoY = height - logoRegionHeight - Math.round(height * 0.02); // 底部留 2% 边距
+
+    // 水印文字参数
+    const watermarkText = 'AI TryOn · 生成';
+    const watermarkFontSize = Math.round(width * 0.022); // 约为图片宽度的 2.2%（~11px@512px）
+    const watermarkX = width - Math.round(width * 0.02); // 右侧留 2% 边距
+    const watermarkY = height - Math.round(height * 0.03); // 底部留 3% 边距
+
+    // SVG 水印（半透明白色文字）
+    const watermarkSvg = Buffer.from(`
+      <svg width="${width}" height="${height}">
+        <text
+          x="${watermarkX}"
+          y="${watermarkY}"
+          font-family="Arial, Helvetica, sans-serif"
+          font-size="${watermarkFontSize}"
+          font-weight="400"
+          fill="rgba(255, 255, 255, 0.45)"
+          text-anchor="end"
+          dominant-baseline="auto"
+        >${watermarkText}</text>
+      </svg>
+    `);
+
+    processedBuffer = await image
+      // 步骤 A：模糊右下角 Logo 区域（高斯模糊，radius=20）
+      .composite([
+        {
+          input: await sharp({
+            create: {
+              width: logoRegionWidth,
+              height: logoRegionHeight,
+              channels: 4,
+              background: { r: 0, g: 0, b: 0, alpha: 0 },
+            },
+          })
+            .composite([
+              {
+                input: await sharp(Buffer.from(originalBuffer))
+                  .extract({ left: logoX, top: logoY, width: logoRegionWidth, height: logoRegionHeight })
+                  .blur(20)
+                  .toBuffer(),
+                top: 0,
+                left: 0,
+              },
+            ])
+            .toBuffer(),
+          top: logoY,
+          left: logoX,
+        },
+      ])
+      // 步骤 B：叠加品牌水印
+      .composite([
+        {
+          input: watermarkSvg,
+          top: 0,
+          left: 0,
+        },
+      ])
+      .png({ quality: 95 })
+      .toBuffer();
+
+    console.log('[TryOn API] 图片后处理完成（去Logo + 加水印），耗时:', Date.now() - startTime, 'ms');
+    console.log('[TryOn API] 处理后图片大小:', (processedBuffer.byteLength / 1024).toFixed(1), 'KB');
+
+  } catch (err: any) {
+    console.warn('[TryOn API] 图片后处理失败，使用原始图片:', err.message);
+    return originalUrl;
+  }
+
+  // ── 3. 上传到 Supabase Storage ──
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+
+    const fileName = `tryon_result_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from('tryon-images')
+      .upload(fileName, processedBuffer, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: 'image/png',
+      });
+
+    if (uploadError) {
+      console.warn('[TryOn API] 后处理图片上传失败，使用原始 URL:', uploadError.message);
+      return originalUrl;
+    }
+
+    const { data: { publicUrl } } = supabaseAdmin.storage
+      .from('tryon-images')
+      .getPublicUrl(fileName);
+
+    console.log('[TryOn API] 后处理图片已上传:', publicUrl);
+    console.log('[TryOn API] 图片后处理总耗时:', Date.now() - startTime, 'ms');
+    return publicUrl;
+
+  } catch (err: any) {
+    console.warn('[TryOn API] Supabase 上传异常，使用原始 URL:', err.message);
+    return originalUrl;
+  }
+}
+
+// ══════════════════════════════════════════════
 // 积分回滚
 // ══════════════════════════════════════════════
 
@@ -600,6 +749,15 @@ export async function POST(req: NextRequest) {
 
     try {
       resultUrl = await virtualTryOn(personImage, clothingImage);
+
+      // 图片后处理：去Logo + 加品牌水印 + 上传到 Storage
+      try {
+        resultUrl = await postProcessImage(resultUrl);
+        console.log('[TryOn API] 使用后处理图片 URL');
+      } catch (err: any) {
+        console.warn('[TryOn API] 后处理异常，使用原始图片:', err.message);
+        // 后处理失败不影响主流程，继续使用原始 URL
+      }
 
       // 扣减 1 积分（虚拟试衣）
       const deductResult = await consumeCredits(userId, 1, '虚拟试衣');

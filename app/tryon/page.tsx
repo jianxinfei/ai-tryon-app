@@ -756,6 +756,14 @@ export default function TryOnPage() {
             <li className="flex items-start gap-2"><span className="text-indigo-600">•</span>支持 JPG、PNG 格式图片</li>
             <li className="flex items-start gap-2"><span className="text-indigo-600">•</span>开启「使用 AI 模特」可无需上传真人照片</li>
           </ul>
+          <div className="mt-4 pt-4 border-t border-slate-200 space-y-1.5">
+            <p className="text-xs text-slate-400 text-center">
+              上传图片即表示您同意 <a href="/terms" className="text-indigo-500 hover:text-indigo-600 underline">《用户协议与知识产权声明》</a>
+            </p>
+            <p className="text-xs text-slate-400 text-center">
+              虚拟试衣功能由可灵AI（Kling AI）提供技术支持
+            </p>
+          </div>
         </div>
       </main>
     </div>

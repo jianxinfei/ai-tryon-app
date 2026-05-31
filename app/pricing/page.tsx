@@ -378,6 +378,9 @@ export default function PricingPage() {
               ← 返回首页
             </button>
           </div>
+          <p className="text-xs text-slate-400 pt-2">
+            本应用虚拟试衣功能由可灵AI（Kling AI）提供技术支持 · <a href="/terms" className="text-indigo-500 hover:text-indigo-600">用户协议</a>
+          </p>
         </div>
       </main>
     </div>
