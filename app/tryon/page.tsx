@@ -21,11 +21,13 @@ import { createBrowserClient } from '@supabase/ssr';
 
 interface TryOnResult {
   success: boolean;
-  resultUrl: string;
+  resultImageUrl: string;  // 主字段名
+  resultUrl?: string;     // 向后兼容
   useType: string;
   creditsBalance: number;
   message: string;
   creditsConsumed: number;
+  error?: string;
 }
 
 interface UserStatus {
@@ -275,6 +277,7 @@ export default function TryOnPage() {
       });
 
       const data = await response.json();
+      console.log('[TryOn] 后端响应:', JSON.stringify(data));
 
       if (!response.ok) {
         if (response.status === 401) { router.push('/auth/login?redirectTo=/tryon'); return; }
@@ -286,10 +289,22 @@ export default function TryOnPage() {
         throw new Error(data.message || data.error || '试衣失败');
       }
 
-      if (!data.resultUrl) throw new Error('服务器返回数据异常');
+      // 兼容新旧字段名：优先使用 resultImageUrl，回退到 resultUrl
+      const imageUrl = data.resultImageUrl || data.resultUrl;
+      if (!imageUrl) {
+        console.error('[TryOn] 后端响应中缺少图片 URL:', data);
+        throw new Error('服务器返回数据异常：缺少图片 URL');
+      }
 
-      console.log('[TryOn] 试衣成功，结果图片 URL:', data.resultUrl);
-      setResult(data);
+      if (data.success === false) {
+        throw new Error(data.message || data.error || '试衣失败');
+      }
+
+      console.log('[TryOn] 试衣成功，结果图片 URL:', imageUrl);
+      setResult({
+        ...data,
+        resultImageUrl: imageUrl,
+      });
       setUserStatus(prev => ({ ...prev, credits: data.creditsBalance ?? prev.credits }));
     } catch (err: any) {
       setError(err.message || '试衣失败，请重试');
@@ -717,33 +732,53 @@ export default function TryOnPage() {
           <div className="mt-8 bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-lg text-slate-900">试衣结果</h3>
-              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">试衣成功</span>
+              <span className={`text-xs px-2 py-1 rounded-full ${result.success ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+                {result.success ? '试衣成功' : '试衣失败'}
+              </span>
             </div>
-            <div className="relative rounded-xl overflow-hidden bg-slate-100">
-              <img
-                src={result.resultUrl}
-                alt="试衣结果"
-                className="w-full max-h-[600px] object-contain"
-                onLoad={() => console.log('[TryOn] 结果图片加载成功:', result.resultUrl)}
-                onError={(e) => console.error('[TryOn] 结果图片加载失败:', result.resultUrl)}
-              />
-            </div>
-            <div className="mt-4 flex gap-3">
-              <a href={result.resultUrl} download
-                className="flex-1 py-2 px-6 bg-slate-900 text-white text-base font-medium rounded-lg text-center hover:bg-slate-800 transition-colors shadow-md">下载图片</a>
-              <button onClick={() => {
-                setResult(null);
-                setPersonPreview('');
-                setClothingPreview('');
-                setPersonImage('');
-                setClothingImage('');
-                if (useAiModel) {
-                  setGeneratedModelUrl('');
-                  setGeneratedModelPreview('');
-                }
-              }}
-                className="flex-1 py-2 px-6 border border-slate-300 text-slate-700 text-base font-medium rounded-lg hover:bg-slate-50 transition-colors">再试一件</button>
-            </div>
+            {result.success && result.resultImageUrl ? (
+              <>
+                <div className="relative rounded-xl overflow-hidden bg-slate-100">
+                  <img
+                    src={result.resultImageUrl}
+                    alt="试衣结果"
+                    className="w-full max-h-[600px] object-contain"
+                    onLoad={() => console.log('[TryOn] 结果图片加载成功:', result.resultImageUrl)}
+                    onError={(e) => {
+                      console.error('[TryOn] 结果图片加载失败:', result.resultImageUrl);
+                      // 如果 resultImageUrl 加载失败，尝试 resultUrl
+                      const target = e.target as HTMLImageElement;
+                      if (result.resultUrl && result.resultUrl !== result.resultImageUrl) {
+                        console.log('[TryOn] 尝试使用 resultUrl 回退:', result.resultUrl);
+                        target.src = result.resultUrl;
+                      } else {
+                        setError('结果图片加载失败，请重试');
+                      }
+                    }}
+                  />
+                </div>
+                <div className="mt-4 flex gap-3">
+                  <a href={result.resultImageUrl} download
+                    className="flex-1 py-2 px-6 bg-slate-900 text-white text-base font-medium rounded-lg text-center hover:bg-slate-800 transition-colors shadow-md">下载图片</a>
+                  <button onClick={() => {
+                    setResult(null);
+                    setPersonPreview('');
+                    setClothingPreview('');
+                    setPersonImage('');
+                    setClothingImage('');
+                    if (useAiModel) {
+                      setGeneratedModelUrl('');
+                      setGeneratedModelPreview('');
+                    }
+                  }}
+                    className="flex-1 py-2 px-6 border border-slate-300 text-slate-700 text-base font-medium rounded-lg hover:bg-slate-50 transition-colors">再试一件</button>
+                </div>
+              </>
+            ) : (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                {result.error || result.message || '试衣失败，请重试'}
+              </div>
+            )}
           </div>
         )}
 

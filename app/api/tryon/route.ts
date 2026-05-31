@@ -768,12 +768,12 @@ export async function POST(req: NextRequest) {
     
     if (authError) {
       console.error('[TryOn API] 认证错误:', authError.message, authError);
-      return NextResponse.json({ error: '认证失败', message: authError.message, needLogin: true }, { status: 401 });
+      return NextResponse.json({ success: false, error: '认证失败', message: authError.message, needLogin: true }, { status: 401 });
     }
     
     if (!user) {
       console.error('[TryOn API] 错误: 未获取到用户对象');
-      return NextResponse.json({ error: '请先登录后再试衣', needLogin: true }, { status: 401 });
+      return NextResponse.json({ success: false, error: '请先登录后再试衣', needLogin: true }, { status: 401 });
     }
     
     console.log('[TryOn API] 用户认证成功:', user.id, user.email);
@@ -790,24 +790,24 @@ export async function POST(req: NextRequest) {
     const creditCheck = await checkUserHasEnoughCredits(userId, 1);
     if (!creditCheck.can_try) {
       return NextResponse.json(
-        { error: '积分不足', message: '虚拟试衣需要 1 积分，请购买积分包后继续。', needPurchase: true, redirectTo: '/pricing', currentCredits: creditCheck.credits, requiredCredits: 1 },
+        { success: false, error: '积分不足', message: '虚拟试衣需要 1 积分，请购买积分包后继续。', needPurchase: true, redirectTo: '/pricing', currentCredits: creditCheck.credits, requiredCredits: 1 },
         { status: 403 }
       );
     }
 
     // ── 4. 验证参数 ──
     if (!personImage) {
-      return NextResponse.json({ error: '请上传人物图或使用 AI 模特' }, { status: 400 });
+      return NextResponse.json({ success: false, error: '请上传人物图或使用 AI 模特' }, { status: 400 });
     }
     if (!clothingImage) {
-      return NextResponse.json({ error: '请上传服装图' }, { status: 400 });
+      return NextResponse.json({ success: false, error: '请上传服装图' }, { status: 400 });
     }
     const urlPattern = /^https?:\/\/.+/;
     if (!urlPattern.test(personImage)) {
-      return NextResponse.json({ error: '人物图片 URL 格式无效' }, { status: 400 });
+      return NextResponse.json({ success: false, error: '人物图片 URL 格式无效' }, { status: 400 });
     }
     if (!urlPattern.test(clothingImage)) {
-      return NextResponse.json({ error: '服装图片 URL 格式无效' }, { status: 400 });
+      return NextResponse.json({ success: false, error: '服装图片 URL 格式无效' }, { status: 400 });
     }
 
     // ── 5. 调用可灵 AI 虚拟试衣 ──
@@ -817,14 +817,19 @@ export async function POST(req: NextRequest) {
     try {
       resultUrl = await virtualTryOn(personImage, clothingImage);
 
-      // 图片后处理：去Logo + 加品牌水印 + 上传到 Storage
-      try {
-        resultUrl = await postProcessImage(resultUrl);
-        console.log('[TryOn API] 使用后处理图片 URL');
-      } catch (err: any) {
-        console.warn('[TryOn API] 后处理异常，使用原始图片:', err.message);
-        // 后处理失败不影响主流程，继续使用原始 URL
-      }
+      // ══════════════════════════════════════════════
+      // 图片后处理：已暂时禁用
+      // 原因：sharp 在 Vercel 无服务器环境下可能缺少原生二进制依赖导致执行失败
+      // 如需恢复，建议改用 jimp（纯 JS 实现，无需原生依赖）
+      // ══════════════════════════════════════════════
+      // try {
+      //   resultUrl = await postProcessImage(resultUrl);
+      //   console.log('[TryOn API] 使用后处理图片 URL');
+      // } catch (err: any) {
+      //   console.warn('[TryOn API] 后处理异常，使用原始图片:', err.message);
+      // }
+
+      console.log('[TryOn API] 直接使用可灵 AI 原始图片 URL（后处理已禁用）:', resultUrl.substring(0, 100));
 
       // 扣减 1 积分（虚拟试衣）
       const deductResult = await consumeCredits(userId, 1, '虚拟试衣');
@@ -843,20 +848,30 @@ export async function POST(req: NextRequest) {
       }
 
       return NextResponse.json(
-        { error: 'AI 试衣失败', message: err.message || '请重试或更换图片' },
+        { success: false, error: 'AI 试衣失败', message: err.message || '请重试或更换图片' },
         { status: 500 }
       );
     }
 
     // ── 6. 返回结果 ──
+    const finalCreditsBalance = creditsDeducted > 0
+      ? (await getUserCredits(userId))?.credits ?? creditCheck.credits - 1
+      : creditCheck.credits;
+
+    console.log('[TryOn API] 试衣完成，返回结果:', {
+      success: true,
+      resultImageUrl: resultUrl,
+      creditsBalance: finalCreditsBalance,
+      creditsConsumed: creditsDeducted,
+    });
+
     return NextResponse.json({
       success: true,
-      resultUrl,
+      resultImageUrl: resultUrl,
+      resultUrl: resultUrl,  // 向后兼容旧前端
       useType: 'credits',
-      creditsBalance: creditsDeducted > 0
-        ? (await getUserCredits(userId))?.credits ?? creditCheck.credits - 1
-        : creditCheck.credits,
-      message: `试衣成功！`,
+      creditsBalance: finalCreditsBalance,
+      message: '试衣成功！',
       creditsConsumed: creditsDeducted,
     });
 
@@ -869,7 +884,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: '操作失败，请稍后重试', message: err.message },
+      { success: false, error: '操作失败，请稍后重试', message: err.message },
       { status: 500 }
     );
   }
