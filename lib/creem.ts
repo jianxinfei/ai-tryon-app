@@ -9,14 +9,34 @@
 import { createCreem } from 'creem_io';
 
 // ══════════════════════════════════════════════
-// Creem 客户端初始化
+// Creem 客户端初始化（延迟初始化）
 // ══════════════════════════════════════════════
 
-export const creem = createCreem({
-  apiKey: process.env.CREEM_API_KEY!,
-  // serverIdx: 0 = 生产环境, 1 = 测试环境
-  // 测试 API Key 以 creem_test_ 开头时自动使用测试环境
-  testMode: process.env.CREEM_API_KEY?.startsWith('creem_test_') ?? false,
+let _creemClient: ReturnType<typeof createCreem> | null = null;
+
+/**
+ * 获取 Creem 客户端（延迟初始化）
+ * 避免在构建阶段因环境变量未注入而失败
+ */
+export function getCreemClient(): ReturnType<typeof createCreem> {
+  if (!_creemClient) {
+    const apiKey = process.env.CREEM_API_KEY;
+    if (!apiKey) {
+      throw new Error('CREEM_API_KEY 环境变量未配置');
+    }
+    _creemClient = createCreem({
+      apiKey,
+      testMode: apiKey.startsWith('creem_test_'),
+    });
+  }
+  return _creemClient;
+}
+
+// 兼容旧代码的导出（延迟获取）
+export const creem = new Proxy({} as ReturnType<typeof createCreem>, {
+  get(_target, prop) {
+    return Reflect.get(getCreemClient(), prop);
+  },
 });
 
 // ══════════════════════════════════════════════

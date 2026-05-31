@@ -6,7 +6,7 @@
  * - id, user_id, credits, created_at, updated_at
  */
 
-import { supabaseAdmin } from './supabase-admin';
+import { getSupabaseAdmin } from './supabase-admin';
 
 // ══════════════════════════════════════════════
 // 类型定义
@@ -42,7 +42,7 @@ export interface ConsumeResult {
  * 获取用户的积分信息
  */
 export async function getUserCredits(userId: string): Promise<UserCredits | null> {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from('user_credits')
     .select('*')
     .eq('user_id', userId)
@@ -113,7 +113,7 @@ export async function addCredits(params: {
 
   // 更新余额
   if (current) {
-    const { error } = await supabaseAdmin
+    const { error } = await getSupabaseAdmin()
       .from('user_credits')
       .update({ credits: newBalance })
       .eq('user_id', userId);
@@ -124,7 +124,7 @@ export async function addCredits(params: {
     }
   } else {
     // 首次创建记录
-    const { error } = await supabaseAdmin
+    const { error } = await getSupabaseAdmin()
       .from('user_credits')
       .insert({
         user_id: userId,
@@ -139,7 +139,7 @@ export async function addCredits(params: {
 
   // 记录交易流水（如果表存在）
   try {
-    await supabaseAdmin.from('credit_transactions').insert({
+    await getSupabaseAdmin().from('credit_transactions').insert({
       user_id: userId,
       transaction_type: transactionType,
       amount: amount,
@@ -228,7 +228,7 @@ export async function consumeCredits(
 
   const newBalance = current.credits - amount;
 
-  const { error } = await supabaseAdmin
+  const { error } = await getSupabaseAdmin()
     .from('user_credits')
     .update({ credits: newBalance })
     .eq('user_id', userId);
@@ -245,7 +245,7 @@ export async function consumeCredits(
 
   // 记录流水（如果表存在）
   try {
-    await supabaseAdmin.from('credit_transactions').insert({
+    await getSupabaseAdmin().from('credit_transactions').insert({
       user_id: userId,
       transaction_type: 'use',
       amount: -amount,
