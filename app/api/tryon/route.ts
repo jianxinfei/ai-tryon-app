@@ -602,8 +602,20 @@ async function postProcessImage(originalUrl: string): Promise<string> {
 
   // ── 3. 上传到 Supabase Storage ──
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl) {
+      console.error('[TryOn API] 错误: NEXT_PUBLIC_SUPABASE_URL 环境变量未设置（图片上传）');
+      return originalUrl;
+    }
+    
+    if (!supabaseKey) {
+      console.error('[TryOn API] 错误: SUPABASE_SERVICE_ROLE_KEY 环境变量未设置（图片上传）');
+      return originalUrl;
+    }
+    
+    console.log('[TryOn API] 创建 Supabase Admin 客户端用于上传...');
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 
     const fileName = `tryon_result_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
@@ -643,22 +655,36 @@ async function postProcessImage(originalUrl: string): Promise<string> {
  * 回滚已扣减的积分
  */
 async function rollbackCredits(userId: string, amount: number, reason: string): Promise<void> {
+  console.log(`[TryOn API] 尝试回滚积分: userId=${userId}, amount=${amount}, reason=${reason}`);
+  if (!userId || amount <= 0) {
+    console.log('[TryOn API] 跳过回滚: 用户ID为空或积分为0');
+    return;
+  }
   try {
     const { createClient } = await import('@supabase/supabase-js');
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !supabaseKey) return;
+    if (!supabaseUrl || !supabaseKey) {
+      console.warn('[TryOn API] 跳过回滚: Supabase 环境变量未设置');
+      return;
+    }
 
+    console.log('[TryOn API] 创建 Supabase 客户端进行积分回滚...');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // 查询当前余额
-    const { data: current } = await supabase
+    const { data: current, error: queryError } = await supabase
       .from('user_credits')
       .select('credits')
       .eq('user_id', userId)
       .single();
 
+    if (queryError) {
+      console.error('[TryOn API] 查询用户积分失败:', queryError);
+    }
+
     const newBalance = (current?.credits ?? 0) + amount;
+    console.log(`[TryOn API] 当前余额: ${current?.credits ?? 0}, 回滚后余额: ${newBalance}`);
 
     const { error } = await supabase
       .from('user_credits')
@@ -670,8 +696,8 @@ async function rollbackCredits(userId: string, amount: number, reason: string): 
     } else {
       console.log(`[TryOn API] 积分已回滚 ${amount} 分 (userId: ${userId}), 新余额: ${newBalance}, 原因: ${reason}`);
     }
-  } catch (e) {
-    console.error('[TryOn API] 积分回滚异常:', e);
+  } catch (e: any) {
+    console.error('[TryOn API] 积分回滚异常:', e.message, e);
   }
 }
 
@@ -688,28 +714,69 @@ export async function POST(req: NextRequest) {
 
   try {
     // ── 1. 验证用户登录 ──
+    console.log('[TryOn API] 开始验证用户登录...');
+    
+    // 检查环境变量
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl) {
+      console.error('[TryOn API] 错误: NEXT_PUBLIC_SUPABASE_URL 环境变量未设置');
+      return NextResponse.json({ error: '服务器配置错误', message: 'Supabase URL 未配置' }, { status: 500 });
+    }
+    
+    if (!supabaseAnonKey) {
+      console.error('[TryOn API] 错误: NEXT_PUBLIC_SUPABASE_ANON_KEY 环境变量未设置');
+      return NextResponse.json({ error: '服务器配置错误', message: 'Supabase Anon Key 未配置' }, { status: 500 });
+    }
+    
+    console.log('[TryOn API] 环境变量检查通过:', { 
+      supabaseUrl: supabaseUrl.substring(0, 20) + '...', 
+      hasAnonKey: !!supabaseAnonKey 
+    });
+    
     const cookieStore = await cookies();
+    const allCookies = cookieStore.getAll();
+    console.log('[TryOn API] 获取到的 cookies 数量:', allCookies.length);
+    console.log('[TryOn API] Cookie 名称列表:', allCookies.map(c => c.name));
+    
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseAnonKey,
       {
         cookies: {
-          getAll() { return cookieStore.getAll(); },
+          getAll() { 
+            console.log('[TryOn API] getAll() 被调用，返回 cookies:', allCookies.length);
+            return allCookies; 
+          },
           setAll(cookiesToSet) {
             try {
+              console.log('[TryOn API] setAll() 被调用，设置 cookies:', cookiesToSet.length);
               cookiesToSet.forEach(({ name, value, options }) =>
                 cookieStore.set(name, value, options)
               );
-            } catch { /* 忽略 */ }
+            } catch (e) { 
+              console.error('[TryOn API] setAll() 错误:', e);
+            }
           },
         },
       }
     );
 
+    console.log('[TryOn API] 调用 supabase.auth.getUser()...');
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    
+    if (authError) {
+      console.error('[TryOn API] 认证错误:', authError.message, authError);
+      return NextResponse.json({ error: '认证失败', message: authError.message, needLogin: true }, { status: 401 });
+    }
+    
+    if (!user) {
+      console.error('[TryOn API] 错误: 未获取到用户对象');
       return NextResponse.json({ error: '请先登录后再试衣', needLogin: true }, { status: 401 });
     }
+    
+    console.log('[TryOn API] 用户认证成功:', user.id, user.email);
     const userId = user.id;
     userId_holder.value = userId;
 
