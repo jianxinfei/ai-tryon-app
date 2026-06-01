@@ -177,20 +177,62 @@ export async function addCredits(params: {
 
 /**
  * 检查用户积分是否足够
+ * 
+ * 如果用户没有积分记录，自动创建并赠送 3 积分（新用户福利）
  */
 export async function checkUserHasEnoughCredits(userId: string, required: number): Promise<CreditCheckResult> {
   console.log('[Credits] 检查用户积分是否足够:', { userId, required });
   
-  const userCredits = await getUserCredits(userId);
+  let userCredits = await getUserCredits(userId);
 
+  // ── 用户无积分记录：自动创建并赠送 3 积分 ──
   if (!userCredits) {
-    console.log('[Credits] 用户无积分记录:', { userId });
-    return {
-      can_try: false,
-      use_type: '',
-      credits: 0,
-      reason: 'no_credits_record',
-    };
+    console.log('[Credits] 用户无积分记录，自动创建并赠送 3 积分:', { userId });
+    
+    const { error: insertError } = await getSupabaseAdmin()
+      .from('user_credits')
+      .insert({ user_id: userId, credits: 3 });
+
+    if (insertError) {
+      console.error('[Credits] 自动创建积分记录失败:', {
+        userId,
+        errorCode: insertError.code,
+        errorMessage: insertError.message,
+      });
+      return {
+        can_try: false,
+        use_type: '',
+        credits: 0,
+        reason: 'create_credits_failed',
+      };
+    }
+
+    console.log('[Credits] 积分记录创建成功，赠送 3 积分:', { userId, credits: 3 });
+
+    // 记录赠送流水
+    try {
+      await getSupabaseAdmin().from('credit_transactions').insert({
+        user_id: userId,
+        transaction_type: 'bonus',
+        amount: 3,
+        balance_after: 3,
+        description: '新用户注册赠送',
+      });
+    } catch (e) {
+      console.log('[Credits] 记录赠送流水失败（表可能不存在）:', e);
+    }
+
+    // 重新查询确认
+    userCredits = await getUserCredits(userId);
+    if (!userCredits) {
+      console.error('[Credits] 创建后重新查询仍为空:', { userId });
+      return {
+        can_try: false,
+        use_type: '',
+        credits: 0,
+        reason: 'query_after_create_failed',
+      };
+    }
   }
 
   console.log('[Credits] 用户积分信息:', { 
