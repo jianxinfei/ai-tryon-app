@@ -270,42 +270,73 @@ export default function TryOnPage() {
 
       console.log('[TryOn] 请求参数:', requestBody);
 
-      const response = await fetch('/api/tryon', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
+      // 封装请求函数，支持 401 自动刷新重试
+      const doTryOnRequest = async (isRetry = false): Promise<void> => {
+        const response = await fetch('/api/tryon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        });
 
-      const data = await response.json();
-      console.log('[TryOn] 后端响应:', JSON.stringify(data));
+        const data = await response.json();
+        console.log('[TryOn] 后端响应:', JSON.stringify(data));
 
-      if (!response.ok) {
-        if (response.status === 401) { router.push('/auth/login?redirectTo=/tryon'); return; }
-        if (response.status === 403 && data.needPurchase) {
-          setError(data.message);
-          setTimeout(() => router.push(data.redirectTo || '/pricing'), 3000);
-          return;
+        if (!response.ok) {
+          // ── 401：尝试刷新 session 后重试一次 ──
+          if (response.status === 401 && !isRetry) {
+            console.log('[TryOn] 收到 401，尝试刷新 session...');
+            setError('登录已过期，正在刷新...');
+
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              console.error('[TryOn] session 刷新失败:', refreshError.message);
+              setError('登录已过期，请重新登录');
+              setTimeout(() => router.push('/auth/login?redirectTo=/tryon'), 1500);
+              return;
+            }
+
+            console.log('[TryOn] session 刷新成功，自动重试请求...');
+            setError('');
+            return doTryOnRequest(true); // 重试一次
+          }
+
+          // ── 401 且已是重试：跳转登录 ──
+          if (response.status === 401) {
+            setError('登录已过期，请重新登录');
+            setTimeout(() => router.push('/auth/login?redirectTo=/tryon'), 1500);
+            return;
+          }
+
+          // ── 403 积分不足：跳转购买页 ──
+          if (response.status === 403 && data.needPurchase) {
+            setError(data.message);
+            setTimeout(() => router.push(data.redirectTo || '/pricing'), 3000);
+            return;
+          }
+
+          throw new Error(data.message || data.error || '试衣失败');
         }
-        throw new Error(data.message || data.error || '试衣失败');
-      }
 
-      // 兼容新旧字段名：优先使用 resultImageUrl，回退到 resultUrl
-      const imageUrl = data.resultImageUrl || data.resultUrl;
-      if (!imageUrl) {
-        console.error('[TryOn] 后端响应中缺少图片 URL:', data);
-        throw new Error('服务器返回数据异常：缺少图片 URL');
-      }
+        // ── 成功响应 ──
+        const imageUrl = data.resultImageUrl || data.resultUrl;
+        if (!imageUrl) {
+          console.error('[TryOn] 后端响应中缺少图片 URL:', data);
+          throw new Error('服务器返回数据异常：缺少图片 URL');
+        }
 
-      if (data.success === false) {
-        throw new Error(data.message || data.error || '试衣失败');
-      }
+        if (data.success === false) {
+          throw new Error(data.message || data.error || '试衣失败');
+        }
 
-      console.log('[TryOn] 试衣成功，结果图片 URL:', imageUrl);
-      setResult({
-        ...data,
-        resultImageUrl: imageUrl,
-      });
-      setUserStatus(prev => ({ ...prev, credits: data.creditsBalance ?? prev.credits }));
+        console.log('[TryOn] 试衣成功，结果图片 URL:', imageUrl);
+        setResult({
+          ...data,
+          resultImageUrl: imageUrl,
+        });
+        setUserStatus(prev => ({ ...prev, credits: data.creditsBalance ?? prev.credits }));
+      };
+
+      await doTryOnRequest();
     } catch (err: any) {
       setError(err.message || '试衣失败，请重试');
     } finally {
