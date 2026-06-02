@@ -33,13 +33,10 @@ interface UserStatus {
 
 // 试穿类型配置
 const TRY_ON_TYPES = [
-  { id: 'upper_body', label: '上衣', category: 'clothing', uploadLabel: '服装照片' },
-  { id: 'lower_body', label: '下衣', category: 'clothing', uploadLabel: '服装照片' },
-  { id: 'dress', label: '连衣裙/套装', category: 'clothing', uploadLabel: '服装照片' },
-  { id: 'hat', label: '帽子', category: 'accessory', uploadLabel: '帽子图片' },
-  { id: 'glasses', label: '眼镜', category: 'accessory', uploadLabel: '眼镜图片' },
-  { id: 'necklace', label: '项链', category: 'accessory', uploadLabel: '项链图片' },
-  { id: 'earring', label: '耳饰', category: 'accessory', uploadLabel: '耳饰图片' },
+  { id: 'upper_body', label: '上衣', category: 'clothing' },
+  { id: 'lower_body', label: '下衣', category: 'clothing' },
+  { id: 'dress', label: '连衣裙/套装', category: 'clothing' },
+  { id: 'accessory', label: '配饰', category: 'accessory' },
 ] as const;
 
 type TryOnTypeId = typeof TRY_ON_TYPES[number]['id'];
@@ -811,7 +808,9 @@ export default function TryOnPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33l3.558-2.207a2.25 2.25 0 00.993-1.898V8.25A2.25 2.25 0 0018 6h-4.568a2.25 2.25 0 01-1.658-.734l-1.08-1.233a2.25 2.25 0 00-1.658-.734zM7.5 9.75a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
                       </svg>
                       <span className="font-medium">
-                        上传{TRY_ON_TYPES.find(t => t.id === tryOnType)?.uploadLabel || '服装照片'}
+                        {TRY_ON_TYPES.find(t => t.id === tryOnType)?.category === 'accessory'
+                          ? '请上传配饰图片'
+                          : '请上传服装照片'}
                       </span>
                       <span className="text-xs mt-1">点击或拖拽上传</span>
                     </>
