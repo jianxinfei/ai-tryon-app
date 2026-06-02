@@ -236,36 +236,6 @@ export default function HomePage() {
             上传你的照片和心仪的服装，AI 帮你一键试穿
           </p>
 
-          {/* ── 积分状态卡片 ── */}
-          {!loading && credits && (
-            <div className="mt-6 sm:mt-8 bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 w-full max-w-[280px] sm:max-w-xs">
-              <div className="flex items-center justify-between mb-2 sm:mb-3">
-                <span className="text-xs sm:text-sm font-medium text-slate-500">可用积分</span>
-                <span className="text-[10px] sm:text-xs text-slate-400">
-                  每次试衣消耗 1 积分
-                </span>
-              </div>
-
-              {/* 进度条 */}
-              <div className="w-full h-1.5 sm:h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.min(100, (credits.credits_balance / 10) * 100)}%`,
-                  }}
-                />
-              </div>
-
-              <div className="mt-2 sm:mt-3 text-center">
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-                  {credits.credits_balance}
-                </span>
-                <span className="text-xs sm:text-sm text-slate-400 ml-1">积分</span>
-              </div>
-            </div>
-          )}
-
-
         </main>
       </div>
 
