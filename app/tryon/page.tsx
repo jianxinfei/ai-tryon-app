@@ -445,16 +445,8 @@ export default function TryOnPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
-            <span className="font-bold text-sm sm:text-base">AI Try-On</span>
+            <span className="font-bold text-sm sm:text-base">AI 虚拟试衣</span>
           </button>
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 text-xs text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full">
-              <span>积分: {userStatus.credits}</span>
-            </div>
-            <button onClick={() => router.push('/pricing')} className="py-2 px-6 text-base font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors">
-              购买积分
-            </button>
-          </div>
         </div>
       </nav>
 
@@ -931,15 +923,6 @@ export default function TryOnPage() {
           </div>
         )}
 
-        {/* ── 配饰按钮 ── */}
-        <button
-          onClick={() => alert('即将上线，敬请期待！')}
-          disabled={isLoading}
-          className="w-full mt-6 py-3 bg-amber-50 text-amber-600 font-medium rounded-xl border border-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {ACCESSORY_TYPE.label}（敬请期待）
-        </button>
-
         {/* ── 服务声明 ── */}
         <div className="mt-12 pt-6 border-t border-slate-200 space-y-1.5">
           <p className="text-xs text-slate-400 text-center">
@@ -948,6 +931,17 @@ export default function TryOnPage() {
           <p className="text-xs text-slate-400 text-center">
             虚拟试衣功能由可灵AI（Kling AI）提供技术支持
           </p>
+        </div>
+
+        {/* ── 配饰按钮（敬请期待） ── */}
+        <div className="mt-6 py-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
+          <button
+            onClick={() => alert('即将上线，敬请期待！')}
+            disabled={isLoading}
+            className="text-amber-600 font-medium hover:text-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {ACCESSORY_TYPE.label}（敬请期待）
+          </button>
         </div>
       </main>
     </div>
