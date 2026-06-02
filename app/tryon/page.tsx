@@ -439,7 +439,6 @@ export default function TryOnPage() {
       {/* ── 导航栏 ── */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
         <div className="max-w-5xl mx-auto px-4 py-3">
-          <span className="font-bold text-sm sm:text-base text-slate-900">AI 虚拟试衣</span>
         </div>
       </nav>
 

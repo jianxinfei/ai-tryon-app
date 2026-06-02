@@ -134,7 +134,7 @@ export default function ProfilePage() {
 
       <div className="px-4 -mt-4">
         {/* 统计卡片 - 精致仪表盘样式 */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-3 mb-4">
           {/* 积分余额 */}
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-sm p-6 text-center border border-blue-200">
             <div className="text-5xl font-bold text-blue-700 mb-3">
@@ -150,6 +150,14 @@ export default function ProfilePage() {
             <div className="text-xs text-slate-500">试衣次数</div>
           </div>
         </div>
+
+        {/* 购买积分和会员 */}
+        <button
+          onClick={() => router.push('/pricing')}
+          className="w-full py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200 hover:from-indigo-700 hover:to-indigo-600 transition-all mb-6"
+        >
+          购买积分和会员
+        </button>
 
         {/* 功能按钮 */}
         {user ? (

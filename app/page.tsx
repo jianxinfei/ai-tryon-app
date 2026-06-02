@@ -265,31 +265,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* ── 试衣按钮 ── */}
-          <button
-            onClick={() => router.push('/tryon')}
-            className="mt-6 sm:mt-8 w-full max-w-[280px] sm:max-w-xs py-3.5 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base text-white
-              bg-gradient-to-r from-indigo-600 to-indigo-500
-              hover:from-indigo-700 hover:to-indigo-600
-              shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-200
-              transition-all
-              active:scale-[0.98]"
-          >
-            <span className="flex items-center justify-center gap-2">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-              </svg>
-              开始试衣
-            </span>
-          </button>
 
-          {/* ── 查看方案 ── */}
-          <button
-            onClick={goToPricing}
-            className="mt-2 sm:mt-3 text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
-          >
-            查看积分包和会员方案 →
-          </button>
         </main>
       </div>
 
