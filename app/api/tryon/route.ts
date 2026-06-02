@@ -24,7 +24,6 @@ import { cookies } from 'next/headers';
 import { checkUserHasEnoughCredits, consumeCredits, getUserCredits } from '@/lib/credits';
 import { createHmac } from 'crypto';
 import sharp from 'sharp';
-import Jimp from 'jimp';
 
 // ══════════════════════════════════════════════
 // 可灵 AI 配置
@@ -780,16 +779,9 @@ export async function POST(req: NextRequest) {
       resultUrl = await virtualTryOn(personImage, clothingImage);
 
       // ══════════════════════════════════════════════
-      // 图片后处理：添加 AI 生成水印（使用 jimp）
+      // 图片后处理已禁用，改为前端 CSS 水印叠加
       // ══════════════════════════════════════════════
-      try {
-        resultUrl = await postProcessImage(resultUrl);
-        console.log('[TryOn API] 使用后处理图片 URL');
-      } catch (err: any) {
-        console.warn('[TryOn API] 后处理异常，使用原始图片:', err.message);
-      }
-
-      console.log('[TryOn API] 最终图片 URL:', resultUrl.substring(0, 100));
+      console.log('[TryOn API] 最终图片 URL（前端将叠加 CSS 水印）:', resultUrl.substring(0, 100));
 
       // 扣减 1 积分（虚拟试衣）
       const deductResult = await consumeCredits(userId, 1, '虚拟试衣');

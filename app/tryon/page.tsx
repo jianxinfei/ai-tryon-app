@@ -787,6 +787,12 @@ export default function TryOnPage() {
                       }
                     }}
                   />
+                  {/* CSS 水印叠加层 */}
+                  <div className="absolute bottom-0 right-0 px-3 py-1.5 pointer-events-none select-none">
+                    <span className="text-[11px] text-white/70 font-medium drop-shadow-md whitespace-nowrap">
+                      AI TryOn · 生成
+                    </span>
+                  </div>
                 </div>
                 <div className="mt-4 flex gap-3">
                   <a href={result.resultImageUrl} download
