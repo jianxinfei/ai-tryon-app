@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
-import BottomNav from '@/components/BottomNav';
 
 interface User {
   id: string;
@@ -30,7 +29,6 @@ export default function ProfilePage() {
   // 获取用户和积分数据
   const fetchUserData = useCallback(async () => {
     try {
-      // 获取当前 session
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
@@ -39,7 +37,6 @@ export default function ProfilePage() {
           email: session.user.email,
         });
 
-        // 获取积分信息
         const creditRes = await fetch('/api/credits');
         const creditData = await creditRes.json();
 
@@ -65,7 +62,6 @@ export default function ProfilePage() {
   useEffect(() => {
     fetchUserData();
 
-    // 监听认证状态变化
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser({
@@ -114,95 +110,70 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
-      {/* 顶部标题 */}
-      <div className="bg-indigo-600 text-white px-6 py-8 rounded-b-3xl">
-        <h1 className="text-2xl font-bold mb-1">个人中心</h1>
-        <p className="text-indigo-200 text-sm">
-          {user ? '欢迎回来' : '登录后查看更多信息'}
-        </p>
-      </div>
-
-      <div className="px-4 -mt-6">
-        {/* 用户信息卡片 */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
-          <div className="flex items-center gap-4">
-            {/* 头像 */}
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
-              <span className="text-2xl">{user ? '👤' : '👤'}</span>
-            </div>
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold text-slate-900">
-                {loading ? '加载中...' : getNickname()}
-              </h2>
-              <p className="text-sm text-slate-400">
-                {user?.email || '点击下方按钮登录'}
+    <div className="min-h-screen bg-slate-50 pb-16">
+      {/* 蓝色渐变顶栏 */}
+      <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 pt-12 pb-8">
+        <div className="flex items-center gap-4">
+          {/* 头像 */}
+          <div className="w-16 h-16 rounded-full bg-white/25 flex items-center justify-center flex-shrink-0">
+            <span className="text-2xl">{user ? '👤' : '👤'}</span>
+          </div>
+          {/* 昵称和邮箱 */}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl font-bold text-white truncate">
+              {loading ? '加载中...' : getNickname()}
+            </h1>
+            {user?.email && (
+              <p className="text-blue-100 text-sm truncate mt-0.5">
+                {user.email}
               </p>
-            </div>
-          </div>
-        </div>
-
-        {/* 统计卡片 */}
-        {user && (
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-white rounded-2xl shadow-sm p-5 text-center">
-              <div className="text-3xl font-bold text-indigo-600 mb-1">
-                {loading ? '-' : (credits?.credits_balance ?? 0)}
-              </div>
-              <div className="text-sm text-slate-500">积分余额</div>
-            </div>
-            <div className="bg-white rounded-2xl shadow-sm p-5 text-center">
-              <div className="text-3xl font-bold text-amber-600 mb-1">
-                {loading ? '-' : (credits?.total_uses ?? 0)}
-              </div>
-              <div className="text-sm text-slate-500">试衣次数</div>
-            </div>
-          </div>
-        )}
-
-        {/* 功能列表 */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
-          {/* 账号管理 */}
-          <div className="px-4 py-4">
-            {user ? (
-              <>
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-xl">⚙️</span>
-                  <div className="font-medium text-slate-900">账号管理</div>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                  className="w-full py-3 bg-red-50 text-red-600 font-medium rounded-xl hover:bg-red-100 transition-colors disabled:opacity-50"
-                >
-                  {isLoggingOut ? '退出中...' : '退出登录'}
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-xl">👤</span>
-                  <div className="font-medium text-slate-900">登录账户</div>
-                </div>
-                <button
-                  onClick={handleLogin}
-                  className="w-full py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition-colors"
-                >
-                  登录 / 注册
-                </button>
-              </>
             )}
           </div>
         </div>
+      </div>
 
-        {/* 版本信息 */}
-        <div className="text-center text-xs text-slate-400 mt-6">
+      <div className="px-4 -mt-4">
+        {/* 统计卡片 */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {/* 积分余额 */}
+          <div className="bg-white rounded-2xl shadow-sm p-5 text-center">
+            <div className="text-3xl font-bold text-blue-600 mb-1">
+              {loading ? '-' : (credits?.credits_balance ?? 0)}
+            </div>
+            <div className="text-sm text-slate-500">积分余额</div>
+          </div>
+          {/* 试衣次数 */}
+          <div className="bg-white rounded-2xl shadow-sm p-5 text-center">
+            <div className="text-3xl font-bold text-amber-600 mb-1">
+              {loading ? '-' : (credits?.total_uses ?? 0)}
+            </div>
+            <div className="text-sm text-slate-500">试衣次数</div>
+          </div>
+        </div>
+
+        {/* 功能按钮 */}
+        {user ? (
+          <button
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="w-full py-4 bg-white border-2 border-red-500 text-red-600 font-semibold rounded-xl hover:bg-red-50 transition-colors disabled:opacity-50 mb-4"
+          >
+            {isLoggingOut ? '退出中...' : '退出登录'}
+          </button>
+        ) : (
+          <button
+            onClick={handleLogin}
+            className="w-full py-4 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors mb-4"
+          >
+            登录 / 注册
+          </button>
+        )}
+
+        {/* 版本号 */}
+        <div className="text-center text-xs text-slate-400 mt-4">
           AI Try-On v1.0.0
         </div>
       </div>
-
-      {/* 底部导航 */}
-      <BottomNav />
     </div>
   );
 }
