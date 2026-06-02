@@ -137,17 +137,17 @@ export default function ProfilePage() {
         <div className="grid grid-cols-2 gap-3 mb-6">
           {/* 积分余额 */}
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-sm p-6 text-center border border-blue-200">
-            <div className="text-4xl font-bold text-blue-700 mb-2">
+            <div className="text-5xl font-bold text-blue-700 mb-3">
               {loading ? '-' : (credits?.credits_balance ?? 0)}
             </div>
-            <div className="text-sm text-blue-600 font-medium">积分余额</div>
+            <div className="text-xs text-slate-500">积分余额</div>
           </div>
           {/* 试衣次数 */}
           <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl shadow-sm p-6 text-center border border-amber-200">
-            <div className="text-4xl font-bold text-amber-700 mb-2">
+            <div className="text-5xl font-bold text-amber-700 mb-3">
               {loading ? '-' : (credits?.total_uses ?? 0)}
             </div>
-            <div className="text-sm text-amber-600 font-medium">试衣次数</div>
+            <div className="text-xs text-slate-500">试衣次数</div>
           </div>
         </div>
 
