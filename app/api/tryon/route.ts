@@ -24,6 +24,7 @@ import { cookies } from 'next/headers';
 import { checkUserHasEnoughCredits, consumeCredits, getUserCredits } from '@/lib/credits';
 import { createHmac } from 'crypto';
 import sharp from 'sharp';
+import Jimp from 'jimp';
 
 // ══════════════════════════════════════════════
 // 可灵 AI 配置
@@ -489,20 +490,21 @@ async function virtualTryOn(personImage: string, clothingImage: string): Promise
 }
 
 // ══════════════════════════════════════════════
-// 图片后处理：去Logo + 加品牌水印 + 上传 Storage
+// 图片后处理：添加 AI 生成水印 + 上传 Storage
 // ══════════════════════════════════════════════
 
 /**
  * 对可灵AI生成的效果图进行后处理：
  * 1. 下载原始图片
- * 2. 智能填充右下角可能存在的Logo区域
- * 3. 添加品牌水印 "AI TryOn · 生成"
- * 4. 上传到 Supabase Storage
- * 5. 返回新的公开 URL
+ * 2. 使用 jimp 在右下角添加半透明水印 "AI TryOn · 生成"
+ * 3. 上传到 Supabase Storage
+ * 4. 返回新的公开 URL
+ * 
+ * 使用 jimp（纯 JS）而非 sharp，避免 Vercel 无服务器环境的原生依赖问题
  */
 async function postProcessImage(originalUrl: string): Promise<string> {
   const startTime = Date.now();
-  console.log('[TryOn API] 开始图片后处理...');
+  console.log('[TryOn API] 开始图片后处理（jimp 水印）...');
   console.log('[TryOn API] 原始图片 URL:', originalUrl.substring(0, 100));
 
   // ── 1. 下载原始图片 ──
@@ -512,91 +514,53 @@ async function postProcessImage(originalUrl: string): Promise<string> {
     return originalUrl;
   }
 
-  const originalBuffer = await imgResponse.arrayBuffer();
+  const originalBuffer = Buffer.from(await imgResponse.arrayBuffer());
   console.log('[TryOn API] 原始图片大小:', (originalBuffer.byteLength / 1024).toFixed(1), 'KB');
 
-  // ── 2. 使用 sharp 处理图片 ──
+  // ── 2. 使用 jimp 添加水印 ──
   let processedBuffer: Buffer;
 
   try {
-    const image = sharp(Buffer.from(originalBuffer));
-    const metadata = await image.metadata();
-    const width = metadata.width || 768;
-    const height = metadata.height || 1024;
+    const image = await Jimp.read(originalBuffer);
+    const width = image.getWidth();
+    const height = image.getHeight();
 
     console.log('[TryOn API] 图片尺寸:', width, 'x', height);
 
-    // Logo 区域参数（右下角，约占图片宽度的 15%，高度的 8%）
-    const logoRegionWidth = Math.round(width * 0.15);
-    const logoRegionHeight = Math.round(height * 0.08);
-    const logoX = width - logoRegionWidth - Math.round(width * 0.02); // 右侧留 2% 边距
-    const logoY = height - logoRegionHeight - Math.round(height * 0.02); // 底部留 2% 边距
-
     // 水印文字参数
     const watermarkText = 'AI TryOn · 生成';
-    const watermarkFontSize = Math.round(width * 0.022); // 约为图片宽度的 2.2%（~11px@512px）
-    const watermarkX = width - Math.round(width * 0.02); // 右侧留 2% 边距
-    const watermarkY = height - Math.round(height * 0.03); // 底部留 3% 边距
+    // 字体大小：约图片宽度的 2.2%（~11px@512px）
+    const fontSize = Math.max(10, Math.round(width * 0.022));
+    // 右下角位置
+    const textX = width - Math.round(width * 0.02); // 右侧留 2% 边距
+    const textY = height - Math.round(height * 0.03); // 底部留 3% 边距
 
-    // SVG 水印（半透明白色文字）
-    const watermarkSvg = Buffer.from(`
-      <svg width="${width}" height="${height}">
-        <text
-          x="${watermarkX}"
-          y="${watermarkY}"
-          font-family="Arial, Helvetica, sans-serif"
-          font-size="${watermarkFontSize}"
-          font-weight="400"
-          fill="rgba(255, 255, 255, 0.45)"
-          text-anchor="end"
-          dominant-baseline="auto"
-        >${watermarkText}</text>
-      </svg>
-    `);
+    // 加载内置字体（jimp 自带）
+    const font = await Jimp.loadFont(Jimp.FONT_SANS_16_BLACK);
+    // 缩放字体：Jimp 字体是固定大小的，需要通过 print 的 x/y 偏移来模拟
+    // FONT_SANS_16_BLACK 基础大小约 16px，我们用 0.7 的透明度
+    const watermarkColor = 0xB3FFFFFF; // 白色，70% 不透明度（0xB3 = ~70%）
 
-    processedBuffer = await image
-      // 步骤 A：模糊右下角 Logo 区域（高斯模糊，radius=20）
-      .composite([
-        {
-          input: await sharp({
-            create: {
-              width: logoRegionWidth,
-              height: logoRegionHeight,
-              channels: 4,
-              background: { r: 0, g: 0, b: 0, alpha: 0 },
-            },
-          })
-            .composite([
-              {
-                input: await sharp(Buffer.from(originalBuffer))
-                  .extract({ left: logoX, top: logoY, width: logoRegionWidth, height: logoRegionHeight })
-                  .blur(20)
-                  .toBuffer(),
-                top: 0,
-                left: 0,
-              },
-            ])
-            .toBuffer(),
-          top: logoY,
-          left: logoX,
-        },
-      ])
-      // 步骤 B：叠加品牌水印
-      .composite([
-        {
-          input: watermarkSvg,
-          top: 0,
-          left: 0,
-        },
-      ])
-      .png({ quality: 95 })
-      .toBuffer();
+    image.print(
+      font,
+      textX - watermarkText.length * 8, // 估算文字宽度偏移
+      textY - 16, // 基于字体高度的偏移
+      {
+        text: watermarkText,
+        alignmentX: Jimp.HORIZONTAL_ALIGN_RIGHT,
+      },
+      width - Math.round(width * 0.02), // 最大宽度（右对齐参考线）
+      height - Math.round(height * 0.03), // y 坐标
+    );
 
-    console.log('[TryOn API] 图片后处理完成（去Logo + 加水印），耗时:', Date.now() - startTime, 'ms');
+    // 获取处理后的 Buffer
+    processedBuffer = await image.getBufferAsync(Jimp.MIME_PNG);
+
+    console.log('[TryOn API] jimp 水印添加完成，耗时:', Date.now() - startTime, 'ms');
     console.log('[TryOn API] 处理后图片大小:', (processedBuffer.byteLength / 1024).toFixed(1), 'KB');
 
   } catch (err: any) {
-    console.warn('[TryOn API] 图片后处理失败，使用原始图片:', err.message);
+    console.error('[TryOn API] jimp 水印添加失败，使用原始图片:', err.message, err.stack);
     return originalUrl;
   }
 
@@ -605,13 +569,8 @@ async function postProcessImage(originalUrl: string): Promise<string> {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
-    if (!supabaseUrl) {
-      console.error('[TryOn API] 错误: NEXT_PUBLIC_SUPABASE_URL 环境变量未设置（图片上传）');
-      return originalUrl;
-    }
-    
-    if (!supabaseKey) {
-      console.error('[TryOn API] 错误: SUPABASE_SERVICE_ROLE_KEY 环境变量未设置（图片上传）');
+    if (!supabaseUrl || !supabaseKey) {
+      console.warn('[TryOn API] Supabase 环境变量未设置（图片上传），使用原始 URL');
       return originalUrl;
     }
     
@@ -821,18 +780,16 @@ export async function POST(req: NextRequest) {
       resultUrl = await virtualTryOn(personImage, clothingImage);
 
       // ══════════════════════════════════════════════
-      // 图片后处理：已暂时禁用
-      // 原因：sharp 在 Vercel 无服务器环境下可能缺少原生二进制依赖导致执行失败
-      // 如需恢复，建议改用 jimp（纯 JS 实现，无需原生依赖）
+      // 图片后处理：添加 AI 生成水印（使用 jimp）
       // ══════════════════════════════════════════════
-      // try {
-      //   resultUrl = await postProcessImage(resultUrl);
-      //   console.log('[TryOn API] 使用后处理图片 URL');
-      // } catch (err: any) {
-      //   console.warn('[TryOn API] 后处理异常，使用原始图片:', err.message);
-      // }
+      try {
+        resultUrl = await postProcessImage(resultUrl);
+        console.log('[TryOn API] 使用后处理图片 URL');
+      } catch (err: any) {
+        console.warn('[TryOn API] 后处理异常，使用原始图片:', err.message);
+      }
 
-      console.log('[TryOn API] 直接使用可灵 AI 原始图片 URL（后处理已禁用）:', resultUrl.substring(0, 100));
+      console.log('[TryOn API] 最终图片 URL:', resultUrl.substring(0, 100));
 
       // 扣减 1 积分（虚拟试衣）
       const deductResult = await consumeCredits(userId, 1, '虚拟试衣');

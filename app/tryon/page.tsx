@@ -804,6 +804,20 @@ export default function TryOnPage() {
                   }}
                     className="flex-1 py-2 px-6 border border-slate-300 text-slate-700 text-base font-medium rounded-lg hover:bg-slate-50 transition-colors">再试一件</button>
                 </div>
+                <div className="mt-3">
+                  <button onClick={() => {
+                    // 只清空服装和结果，保留人物图
+                    setResult(null);
+                    setClothingPreview('');
+                    setClothingImage('');
+                    setError('');
+                    // 自动聚焦到服装上传区
+                    setTimeout(() => clothingInputRef.current?.click(), 100);
+                  }}
+                    className="w-full py-2.5 px-6 border border-indigo-200 text-indigo-600 text-base font-medium rounded-lg hover:bg-indigo-50 transition-colors">
+                    更换服装
+                  </button>
+                </div>
               </>
             ) : (
               <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
@@ -817,10 +831,9 @@ export default function TryOnPage() {
         <div className="mt-12 p-6 bg-slate-50 rounded-2xl">
           <h3 className="font-bold text-slate-900 mb-3">使用说明</h3>
           <ul className="space-y-2 text-sm text-slate-600">
-            <li className="flex items-start gap-2"><span className="text-indigo-600">•</span>普通试衣消耗 1 积分，AI 模特模式消耗 2 积分（生成 1 + 试衣 1）</li>
+            <li className="flex items-start gap-2"><span className="text-indigo-600">•</span>每次试衣消耗 1 积分</li>
             <li className="flex items-start gap-2"><span className="text-indigo-600">•</span>积分可单独购买，永久有效</li>
             <li className="flex items-start gap-2"><span className="text-indigo-600">•</span>支持 JPG、PNG 格式图片</li>
-            <li className="flex items-start gap-2"><span className="text-indigo-600">•</span>开启「使用 AI 模特」可无需上传真人照片</li>
           </ul>
           <div className="mt-4 pt-4 border-t border-slate-200 space-y-1.5">
             <p className="text-xs text-slate-400 text-center">
