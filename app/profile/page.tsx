@@ -133,21 +133,21 @@ export default function ProfilePage() {
       </div>
 
       <div className="px-4 -mt-4">
-        {/* 统计卡片 */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        {/* 统计卡片 - 精致仪表盘样式 */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
           {/* 积分余额 */}
-          <div className="bg-white rounded-2xl shadow-sm p-5 text-center">
-            <div className="text-3xl font-bold text-blue-600 mb-1">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-sm p-6 text-center border border-blue-200">
+            <div className="text-4xl font-bold text-blue-700 mb-2">
               {loading ? '-' : (credits?.credits_balance ?? 0)}
             </div>
-            <div className="text-sm text-slate-500">积分余额</div>
+            <div className="text-sm text-blue-600 font-medium">积分余额</div>
           </div>
           {/* 试衣次数 */}
-          <div className="bg-white rounded-2xl shadow-sm p-5 text-center">
-            <div className="text-3xl font-bold text-amber-600 mb-1">
+          <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl shadow-sm p-6 text-center border border-amber-200">
+            <div className="text-4xl font-bold text-amber-700 mb-2">
               {loading ? '-' : (credits?.total_uses ?? 0)}
             </div>
-            <div className="text-sm text-slate-500">试衣次数</div>
+            <div className="text-sm text-amber-600 font-medium">试衣次数</div>
           </div>
         </div>
 
@@ -156,14 +156,14 @@ export default function ProfilePage() {
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className="w-full py-4 bg-white border-2 border-red-500 text-red-600 font-semibold rounded-xl hover:bg-red-50 transition-colors disabled:opacity-50 mb-4"
+            className="w-full py-4 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl shadow-lg shadow-red-200 hover:from-red-600 hover:to-red-700 transition-all disabled:opacity-50 mb-4"
           >
             {isLoggingOut ? '退出中...' : '退出登录'}
           </button>
         ) : (
           <button
             onClick={handleLogin}
-            className="w-full py-4 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors mb-4"
+            className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-200 hover:from-blue-700 hover:to-blue-800 transition-all mb-4"
           >
             登录 / 注册
           </button>
