@@ -459,7 +459,7 @@ export default function TryOnPage() {
             上传人物照和服装照，AI 为您生成试穿效果
           </p>
           <p className="mt-1.5 text-xs text-slate-400">
-            每次消耗 1 积分 | 支持 JPG / PNG | 积分永久有效
+            每次消耗 1 积分 | 支持 JPG / PNG | 积分长期有效，放心囤！
           </p>
         </div>
 
