@@ -97,19 +97,12 @@ export default function TestLoadingPage() {
             className="w-full py-4 bg-indigo-600 text-white font-bold text-lg rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-indigo-200"
           >
             {isLoading ? (
-              <span className="flex flex-col items-center justify-center gap-1">
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  AI 正在为您精心试穿...
-                </span>
-                {pollProgress.estimatedTime > 0 && (
-                  <span className="text-sm font-normal opacity-80">
-                    预计还需 {pollProgress.estimatedTime} 秒
-                  </span>
-                )}
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                正在处理...
               </span>
             ) : isComplete ? (
               <span className="flex items-center justify-center gap-2">
@@ -123,6 +116,63 @@ export default function TestLoadingPage() {
             )}
           </button>
         </div>
+
+        {/* 等待动画区域 - 与真实页面一致 */}
+        {isLoading && (
+          <div className="mt-8 flex flex-col items-center gap-4 bg-white rounded-xl p-6 border border-slate-200">
+            <h3 className="font-semibold text-slate-700 mb-2">动画预览</h3>
+            <div className="relative">
+              {/* GIF 动画 */}
+              <img
+                src="/wait-animation.gif"
+                alt="AI 正在试衣中"
+                className="w-[200px] h-[200px] object-contain rounded-lg shadow-lg"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const videoEl = target.nextElementSibling as HTMLVideoElement;
+                  if (videoEl) {
+                    videoEl.style.display = 'block';
+                  }
+                }}
+              />
+              {/* MP4 备用 */}
+              <video
+                src="/wait-animation.mp4"
+                className="w-[200px] h-[200px] object-contain rounded-lg shadow-lg hidden"
+                autoPlay
+                loop
+                muted
+                playsInline
+                onError={(e) => {
+                  const target = e.target as HTMLVideoElement;
+                  target.style.display = 'none';
+                  const fallbackEl = target.nextElementSibling as HTMLDivElement;
+                  if (fallbackEl) {
+                    fallbackEl.style.display = 'flex';
+                  }
+                }}
+              />
+              {/* 纯 CSS 旋转动画备用 */}
+              <div className="w-[200px] h-[200px] flex items-center justify-center bg-slate-100 rounded-lg shadow-lg hidden">
+                <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+              </div>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-slate-800">
+                AI 正在为您精心试穿...
+              </p>
+              <p className="text-sm text-slate-500 mt-1">
+                已等待 {pollProgress.count * 2} 秒
+                {pollProgress.estimatedTime > 0 && (
+                  <span className="ml-2">
+                    · 预计还需 {pollProgress.estimatedTime} 秒
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* 重置按钮 */}
         {(isLoading || isComplete) && (

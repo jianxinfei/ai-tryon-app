@@ -32,14 +32,8 @@ interface UserStatus {
 }
 
 // 试穿类型配置
-const TRY_ON_TYPES = [
-  { id: 'upper_body', label: '上衣', category: 'clothing' },
-  { id: 'lower_body', label: '下衣', category: 'clothing' },
-  { id: 'dress', label: '连衣裙/套装', category: 'clothing' },
-  { id: 'accessory', label: '配饰', category: 'accessory' },
-] as const;
-
-type TryOnTypeId = typeof TRY_ON_TYPES[number]['id'];
+// 配饰按钮配置
+const ACCESSORY_TYPE = { id: 'accessory', label: '配饰', category: 'accessory' } as const;
 
 // AI 模特参数配置
 const GENDER_OPTIONS = [
@@ -78,9 +72,6 @@ export default function TryOnPage() {
     isLoggedIn: false,
     credits: 0,
   });
-
-  // 试穿类型
-  const [tryOnType, setTryOnType] = useState<TryOnTypeId>('upper_body');
 
   // AI 模特开关（暂时隐藏，保留代码）
   const SHOW_AI_MODEL = false; // 设为 true 可重新启用 AI 模特功能
@@ -315,12 +306,6 @@ export default function TryOnPage() {
       if (!personImage || !clothingImage) { setError('请上传人物图和服装图'); return; }
     }
 
-    const selectedType = TRY_ON_TYPES.find(t => t.id === tryOnType);
-    if (selectedType?.category === 'accessory') {
-      setError('配饰试穿即将上线，敬请期待！');
-      return;
-    }
-
     setIsLoading(true);
     setError('');
     setResult(null);
@@ -329,7 +314,7 @@ export default function TryOnPage() {
     try {
       const requestBody: Record<string, any> = {
         clothingImage,
-        tryOnType,
+        tryOnType: 'clothing', // 固定为服装试穿
         personImage: useAiModel ? generatedModelUrl : personImage,
       };
 
@@ -490,34 +475,6 @@ export default function TryOnPage() {
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>
         )}
-
-        {/* ── 试穿类型选择器 ── */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-slate-700 mb-3">试穿类型</label>
-          <div className="flex flex-wrap gap-2">
-            {TRY_ON_TYPES.map((type) => {
-              const isSelected = tryOnType === type.id;
-              const isAccessory = type.category === 'accessory';
-              return (
-                <button key={type.id} onClick={() => setTryOnType(type.id)}
-                  className={`py-2 px-6 text-base font-medium rounded-lg transition-all
-                    ${isSelected ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600'}`}
-                >
-                  {type.label}
-                  {isAccessory && !isSelected && <span className="ml-1.5 text-xs text-amber-500">✨</span>}
-                </button>
-              );
-            })}
-          </div>
-          {TRY_ON_TYPES.find(t => t.id === tryOnType)?.category === 'accessory' && (
-            <p className="mt-2 text-xs text-amber-600 flex items-center gap-1">
-              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.144 2.42-1.144 3.185 0l6.364 9.528c.753 1.131-.056 2.623-1.592 2.623H3.485c-1.536 0-2.345-1.492-1.592-2.623l6.364-9.528zM11 14a1 1 0 11-2 0 1 1 0 012 0zm-1-3a1 1 0 00-1 1v2a1 1 0 002 0v-2a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              配饰试穿功能即将上线，敬请期待！
-            </p>
-          )}
-        </div>
 
         {/* ── AI 模特开关（暂时隐藏） ── */}
         {SHOW_AI_MODEL && (
@@ -783,7 +740,6 @@ export default function TryOnPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                         </svg>
                         <span className="font-medium">上传人物照片</span>
-                        <span className="text-xs mt-1">点击或拖拽上传</span>
                       </>
                     )}
                   </button>
@@ -811,12 +767,7 @@ export default function TryOnPage() {
                       <svg className="w-12 h-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33l3.558-2.207a2.25 2.25 0 00.993-1.898V8.25A2.25 2.25 0 0018 6h-4.568a2.25 2.25 0 01-1.658-.734l-1.08-1.233a2.25 2.25 0 00-1.658-.734zM7.5 9.75a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
                       </svg>
-                      <span className="font-medium">
-                        {TRY_ON_TYPES.find(t => t.id === tryOnType)?.category === 'accessory'
-                          ? '请上传配饰图片'
-                          : '请上传服装照片'}
-                      </span>
-                      <span className="text-xs mt-1">点击或拖拽上传</span>
+                      <span className="font-medium">上传服装照片</span>
                     </>
                   )}
                 </button>
@@ -831,24 +782,78 @@ export default function TryOnPage() {
           <button onClick={handleTryOn} disabled={isLoading || !canSubmit}
             className="w-full py-4 bg-indigo-600 text-white font-bold text-lg rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-indigo-200">
             {isLoading ? (
-              <span className="flex flex-col items-center justify-center gap-1">
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  AI 正在为您精心试穿...
-                </span>
-                {pollProgress.estimatedTime > 0 && (
-                  <span className="text-sm font-normal opacity-80">
-                    预计还需 {pollProgress.estimatedTime} 秒
-                  </span>
-                )}
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                正在处理...
               </span>
             ) : (
               '开始试衣（消耗 1 积分）'
             )}
           </button>
+        )}
+
+        {/* 等待动画区域 */}
+        {isLoading && !useAiModel && (
+          <div className="mt-8 flex flex-col items-center gap-4">
+            {/* 等待动画 */}
+            <div className="relative">
+              {/* GIF 动画 */}
+              <img
+                src="/wait-animation.gif"
+                alt="AI 正在试衣中"
+                className="w-[200px] h-[200px] object-contain rounded-lg shadow-lg"
+                onError={(e) => {
+                  // 如果 GIF 不存在，显示备用的 MP4
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const videoEl = target.nextElementSibling as HTMLVideoElement;
+                  if (videoEl) {
+                    videoEl.style.display = 'block';
+                  }
+                }}
+              />
+              {/* MP4 备用 */}
+              <video
+                src="/wait-animation.mp4"
+                className="w-[200px] h-[200px] object-contain rounded-lg shadow-lg hidden"
+                autoPlay
+                loop
+                muted
+                playsInline
+                onError={(e) => {
+                  // 如果 MP4 也不存在，显示纯 CSS 旋转动画
+                  const target = e.target as HTMLVideoElement;
+                  target.style.display = 'none';
+                  const fallbackEl = target.nextElementSibling as HTMLDivElement;
+                  if (fallbackEl) {
+                    fallbackEl.style.display = 'flex';
+                  }
+                }}
+              />
+              {/* 纯 CSS 旋转动画备用 */}
+              <div className="w-[200px] h-[200px] flex items-center justify-center bg-slate-100 rounded-lg shadow-lg hidden">
+                <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+              </div>
+            </div>
+
+            {/* 进度文案 */}
+            <div className="text-center">
+              <p className="text-lg font-semibold text-slate-800">
+                AI 正在为您精心试穿...
+              </p>
+              <p className="text-sm text-slate-500 mt-1">
+                已等待 {pollProgress.count * 2} 秒
+                {pollProgress.estimatedTime > 0 && (
+                  <span className="ml-2">
+                    · 预计还需 {pollProgress.estimatedTime} 秒
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
         )}
 
         {/* ── 结果展示 ── */}
@@ -925,6 +930,15 @@ export default function TryOnPage() {
             )}
           </div>
         )}
+
+        {/* ── 配饰按钮 ── */}
+        <button
+          onClick={() => alert('即将上线，敬请期待！')}
+          disabled={isLoading}
+          className="w-full mt-6 py-3 bg-amber-50 text-amber-600 font-medium rounded-xl border border-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {ACCESSORY_TYPE.label}（敬请期待）
+        </button>
 
         {/* ── 服务声明 ── */}
         <div className="mt-12 pt-6 border-t border-slate-200 space-y-1.5">

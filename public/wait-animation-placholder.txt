@@ -1,0 +1,9 @@
+请将您的等待动画文件重命名为 wait-animation.gif（或 wait-animation.mp4）并放置在此目录中
+
+支持的格式：
+- .gif (使用 <img> 标签)
+- .mp4 或 .webm (使用 <video> 标签)
+
+推荐尺寸：约 200px 宽度，正方形或 4:3 比例
+
+动画放置后，将自动集成到 /tryon 页面的加载状态中
