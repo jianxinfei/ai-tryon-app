@@ -57,7 +57,7 @@ export default function ProfilePage() {
 
   // 处理登录
   const handleLogin = () => {
-    router.push('/login');
+    router.push('/auth/login');
   };
 
   // 处理登出

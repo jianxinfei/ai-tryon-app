@@ -239,48 +239,11 @@ export default function HomePage() {
                 </span>
               </button>
             )}
-
-            {/* 登录/登出按钮 */}
-            {currentUser ? (
-              // 已登录：显示用户邮箱 + 登出按钮
-              <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm text-slate-600 hidden sm:inline max-w-[120px] truncate" title={currentUser.email}>
-                  {currentUser.email}
-                </span>
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center gap-1.5 bg-slate-100 text-slate-700 rounded-full px-3 sm:px-4 py-1.5 sm:py-2 hover:bg-slate-200 transition-colors flex-shrink-0"
-                >
-                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M3 12h12m0 0l-3-3m3 3l-3 3" />
-                  </svg>
-                  <span className="text-xs sm:text-sm font-semibold">登出</span>
-                </button>
-              </div>
-            ) : (
-              // 未登录：显示登录按钮
-              <button
-                onClick={() => router.push('/auth/login?redirectTo=/')}
-                className="flex items-center gap-1.5 bg-indigo-600 text-white rounded-full px-3 sm:px-4 py-1.5 sm:py-2 hover:bg-indigo-700 transition-colors flex-shrink-0"
-              >
-                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                </svg>
-                <span className="text-xs sm:text-sm font-semibold">登录</span>
-              </button>
-            )}
           </div>
         </nav>
 
         {/* ── 主内容 ── */}
         <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 -mt-8 sm:-mt-12">
-          {/* Hero 插画 - 响应式大小 */}
-          <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl sm:rounded-3xl flex items-center justify-center mb-6 sm:mb-8 shadow-lg shadow-indigo-100">
-            <svg className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 text-indigo-600 max-w-full h-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-            </svg>
-          </div>
-
           {/* 标题 - 响应式大小 */}
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 text-center tracking-tight px-4">
             AI 虚拟试衣
