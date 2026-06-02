@@ -109,6 +109,7 @@ export default function TryOnPage() {
   const [isUploading, setIsUploading] = useState({ person: false, clothing: false });
   const [result, setResult] = useState<TryOnResult | null>(null);
   const [error, setError] = useState<string>('');
+  const [pollProgress, setPollProgress] = useState({ count: 0, estimatedTime: 30 }); // 轮询进度
 
   // Refs
   const personInputRef = useRef<HTMLInputElement>(null);
@@ -291,8 +292,10 @@ export default function TryOnPage() {
           throw new Error(data.error || '试衣失败');
         }
 
-        // 任务处理中 - 继续轮询
+        // 任务处理中 - 更新进度并继续轮询
         retryCount++;
+        const estimatedTime = Math.max(0, (MAX_POLL_RETRIES - retryCount) * 2);
+        setPollProgress({ count: retryCount, estimatedTime });
         await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
 
       } catch (err: any) {
@@ -321,6 +324,7 @@ export default function TryOnPage() {
     setIsLoading(true);
     setError('');
     setResult(null);
+    setPollProgress({ count: 0, estimatedTime: 30 }); // 重置轮询进度
 
     try {
       const requestBody: Record<string, any> = {
@@ -827,12 +831,19 @@ export default function TryOnPage() {
           <button onClick={handleTryOn} disabled={isLoading || !canSubmit}
             className="w-full py-4 bg-indigo-600 text-white font-bold text-lg rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-indigo-200">
             {isLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                AI 正在为您试穿...
+              <span className="flex flex-col items-center justify-center gap-1">
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  AI 正在为您精心试穿...
+                </span>
+                {pollProgress.estimatedTime > 0 && (
+                  <span className="text-sm font-normal opacity-80">
+                    预计还需 {pollProgress.estimatedTime} 秒
+                  </span>
+                )}
               </span>
             ) : (
               '开始试衣（消耗 1 积分）'
@@ -870,8 +881,8 @@ export default function TryOnPage() {
                     }}
                   />
                   {/* CSS 水印叠加层 */}
-                  <div className="absolute bottom-0 right-0 px-3 py-1.5 pointer-events-none select-none">
-                    <span className="text-[11px] text-white/70 font-medium drop-shadow-md whitespace-nowrap">
+                  <div className="absolute bottom-2 right-2 px-2 py-1 pointer-events-none select-none">
+                    <span className="text-[11px] text-white/60 font-medium drop-shadow-md whitespace-nowrap">
                       AI TryOn · 生成
                     </span>
                   </div>
