@@ -3,10 +3,6 @@
  *
  * 功能：
  * 1. 普通模式：上传人物图 + 服装图 → 试衣（消耗 1 积分）
- * 2. AI 模特模式（两步）：
- *    - 步骤 1：配置参数 → 生成 AI 模特（消耗 1 积分）
- *    - 步骤 2：上传服装图 → 使用模特试衣（消耗 1 积分）
- *    总共 2 积分，分两次扣
  */
 
 'use client';
@@ -242,6 +238,74 @@ export default function TryOnPage() {
   // 步骤 2：使用模特试衣 / 普通试衣
   // ══════════════════════════════════════════════
 
+  // 轮询间隔（毫秒）
+  const POLL_INTERVAL = 2000;
+  // 最大轮询次数（15 次 × 2 秒 = 30 秒）
+  const MAX_POLL_RETRIES = 15;
+
+  // 调用积分扣减 API
+  const deductCredits = async (): Promise<{ success: boolean; creditsBalance?: number }> => {
+    try {
+      const response = await fetch('/api/tryon/deduct', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+      console.log('[TryOn] 积分扣减响应:', data);
+
+      if (data.success && data.creditsBalance !== undefined) {
+        setUserStatus(prev => ({ ...prev, credits: data.creditsBalance }));
+        return { success: true, creditsBalance: data.creditsBalance };
+      }
+
+      return { success: false };
+    } catch (err: any) {
+      console.error('[TryOn] 积分扣减失败:', err.message);
+      return { success: false };
+    }
+  };
+
+  // 轮询任务状态（使用 POST 请求）
+  const pollTaskStatus = async (taskId: string): Promise<string> => {
+    let retryCount = 0;
+
+    while (retryCount < MAX_POLL_RETRIES) {
+      try {
+        const response = await fetch('/api/tryon/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ taskId }),
+        });
+        const data = await response.json();
+
+        console.log('[TryOn] 轮询任务状态:', data);
+
+        if (!data.success) {
+          throw new Error(data.message || data.error || '查询任务状态失败');
+        }
+
+        // 任务成功完成
+        if (data.resultUrl) {
+          return data.resultUrl;
+        }
+
+        // 任务失败
+        if (data.status === 'failed') {
+          throw new Error(data.error || '试衣失败');
+        }
+
+        // 任务处理中 - 继续轮询
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+
+      } catch (err: any) {
+        throw err;
+      }
+    }
+
+    throw new Error('生成超时，请稍后重试');
+  };
+
   const handleTryOn = async () => {
     // 验证
     if (useAiModel) {
@@ -271,7 +335,7 @@ export default function TryOnPage() {
       console.log('[TryOn] 请求参数:', requestBody);
 
       // 封装请求函数，支持 401 自动刷新重试
-      const doTryOnRequest = async (isRetry = false): Promise<void> => {
+      const createTask = async (isRetry = false): Promise<string> => {
         const response = await fetch('/api/tryon', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -279,7 +343,7 @@ export default function TryOnPage() {
         });
 
         const data = await response.json();
-        console.log('[TryOn] 后端响应:', JSON.stringify(data));
+        console.log('[TryOn] 创建任务响应:', JSON.stringify(data));
 
         if (!response.ok) {
           // ── 401：尝试刷新 session 后重试一次 ──
@@ -292,53 +356,73 @@ export default function TryOnPage() {
               console.error('[TryOn] session 刷新失败:', refreshError.message);
               setError('登录已过期，请重新登录');
               setTimeout(() => router.push('/auth/login?redirectTo=/tryon'), 1500);
-              return;
+              throw new Error('登录已过期');
             }
 
             console.log('[TryOn] session 刷新成功，自动重试请求...');
             setError('');
-            return doTryOnRequest(true); // 重试一次
+            return createTask(true); // 重试一次
           }
 
           // ── 401 且已是重试：跳转登录 ──
           if (response.status === 401) {
             setError('登录已过期，请重新登录');
             setTimeout(() => router.push('/auth/login?redirectTo=/tryon'), 1500);
-            return;
+            throw new Error('登录已过期');
           }
 
           // ── 403 积分不足：跳转购买页 ──
           if (response.status === 403 && data.needPurchase) {
             setError(data.message);
             setTimeout(() => router.push(data.redirectTo || '/pricing'), 3000);
-            return;
+            throw new Error('积分不足');
           }
 
-          throw new Error(data.message || data.error || '试衣失败');
+          throw new Error(data.message || data.error || '创建试衣任务失败');
         }
 
-        // ── 成功响应 ──
-        const imageUrl = data.resultImageUrl || data.resultUrl;
-        if (!imageUrl) {
-          console.error('[TryOn] 后端响应中缺少图片 URL:', data);
-          throw new Error('服务器返回数据异常：缺少图片 URL');
+        // ── 成功响应：获取 taskId ──
+        if (!data.taskId) {
+          console.error('[TryOn] 后端响应中缺少 taskId:', data);
+          throw new Error('服务器返回数据异常：缺少任务 ID');
         }
 
-        if (data.success === false) {
-          throw new Error(data.message || data.error || '试衣失败');
-        }
-
-        console.log('[TryOn] 试衣成功，结果图片 URL:', imageUrl);
-        setResult({
-          ...data,
-          resultImageUrl: imageUrl,
-        });
-        setUserStatus(prev => ({ ...prev, credits: data.creditsBalance ?? prev.credits }));
+        console.log('[TryOn] 任务创建成功，taskId:', data.taskId);
+        return data.taskId;
       };
 
-      await doTryOnRequest();
+      // 步骤 1：创建试衣任务
+      const taskId = await createTask();
+
+      // 步骤 2：显示加载状态
+      console.log('[TryOn] AI 正在为您试穿...');
+
+      // 步骤 3：轮询任务状态
+      console.log('[TryOn] 开始轮询任务状态...');
+      const resultImageUrl = await pollTaskStatus(taskId);
+
+      // 步骤 4：轮询成功，调用积分扣减
+      console.log('[TryOn] 试衣成功，开始扣减积分...');
+      const deductResult = await deductCredits();
+
+      console.log('[TryOn] 试衣成功，结果图片 URL:', resultImageUrl);
+      setResult({
+        success: true,
+        resultImageUrl,
+        resultUrl: resultImageUrl,
+        useType: 'credits',
+        creditsBalance: deductResult.creditsBalance ?? userStatus.credits - 1,
+        message: '试衣成功！',
+        creditsConsumed: 1,
+      });
+
     } catch (err: any) {
-      setError(err.message || '试衣失败，请重试');
+      console.error('[TryOn] 试衣流程失败:', err.message);
+
+      // 跳过已处理的错误（登录过期、积分不足）
+      if (err.message !== '登录已过期' && err.message !== '积分不足') {
+        setError(err.message || '试衣失败，请重试');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -394,11 +478,7 @@ export default function TryOnPage() {
         <div className="text-center mb-8 sm:mb-10">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">AI 虚拟试衣</h1>
           <p className="mt-2 text-sm text-slate-500">
-            {useAiModel
-              ? generatedModelUrl
-                ? '模特已就绪，上传服装即可试穿'
-                : '配置模特参数，AI 将为您生成虚拟模特（消耗 1 积分）'
-              : '上传人物照片和服装照片，AI 将为您生成试穿效果（消耗 1 积分）'}
+            上传人物照片和服装照片，AI 将为您生成试穿效果（消耗 1 积分）
           </p>
         </div>
 
@@ -447,7 +527,7 @@ export default function TryOnPage() {
                 </div>
                 <div>
                   <span className="text-sm font-medium text-slate-900">使用 AI 模特</span>
-                  <p className="text-xs text-slate-400">无需上传真人照片，AI 自动生成虚拟模特（生成 1 积分 + 试衣 1 积分）</p>
+                  <p className="text-xs text-slate-400">无需上传真人照片，AI 自动生成虚拟模特</p>
                 </div>
               </div>
               <button
@@ -590,7 +670,7 @@ export default function TryOnPage() {
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                   </svg>
-                  生成 AI 模特（消耗 1 积分）
+                  生成 AI 模特
                 </span>
               )}
             </button>
@@ -668,7 +748,7 @@ export default function TryOnPage() {
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                   </svg>
-                  使用该模特试衣（消耗 1 积分）
+                  使用该模特试衣
                 </span>
               )}
             </button>
@@ -750,7 +830,7 @@ export default function TryOnPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                AI 正在试衣中...
+                AI 正在为您试穿...
               </span>
             ) : (
               '开始试衣（消耗 1 积分）'

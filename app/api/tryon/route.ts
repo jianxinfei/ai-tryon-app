@@ -19,11 +19,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
-import { checkUserHasEnoughCredits, consumeCredits, getUserCredits } from '@/lib/credits';
+import { checkUserHasEnoughCredits } from '@/lib/credits';
 import { createHmac } from 'crypto';
-import sharp from 'sharp';
 
 // ══════════════════════════════════════════════
 // 可灵 AI 配置
@@ -415,260 +413,12 @@ async function createKlingTryOnTask(
   return taskId;
 }
 
-/**
- * 查询可灵 AI 任务状态
- */
-async function pollKlingTask(taskId: string): Promise<string> {
-  // 正确路径：/v1/images/kolors-virtual-try-on/{id}
-  const path = `/v1/images/kolors-virtual-try-on/${taskId}`;
-  const url = `${KLING_API_BASE}${path}`;
-
-  const startTime = Date.now();
-
-  while (Date.now() - startTime < POLL_TIMEOUT * 1000) {
-    console.log(`[TryOn API] 轮询任务状态... (taskId: ${taskId})`);
-
-    const headers = getKlingAuthHeaders();
-
-    const response = await fetchWithSmartRetry(url, {
-      method: 'GET',
-      headers,
-    }, '查询任务状态');
-
-    const pollData = await response.json();
-    console.log('[TryOn API] 查询任务完整响应:', JSON.stringify(pollData, null, 2));
-
-    // 修正：状态字段可能在 pollData.data 中
-    const taskData = pollData.data || pollData;
-    const status = taskData.task_status || taskData.status || 'unknown';
-    console.log('[TryOn API] 任务状态:', status);
-
-    // 任务成功
-    if (status === 'succeed' || status === 'completed' || status === 'SUCCESS') {
-      console.log('[TryOn API] 任务成功');
-      console.log('[TryOn API] task_result:', JSON.stringify(taskData.task_result, null, 2));
-
-      // 修正：结果 URL 在 task_result.images[0].url 中
-      const resultUrl = taskData.task_result?.images?.[0]?.url
-        || taskData.image_url
-        || taskData.result_url
-        || taskData.output?.[0]
-        || taskData.images?.[0]?.url;
-
-      if (!resultUrl) {
-        console.error('[TryOn API] 任务成功但无结果图片:', JSON.stringify(pollData));
-        throw new Error('试衣完成但未获取到结果图片');
-      }
-
-      console.log(`[TryOn API] 试衣成功，结果 URL: ${resultUrl}`);
-      console.log(`[TryOn API] 总耗时 ${Date.now() - startTime}ms`);
-      return resultUrl;
-    }
-
-    // 任务失败
-    if (status === 'failed' || status === 'FAILED') {
-      const errorMsg = taskData.error?.message || taskData.message || taskData.fail_reason || '模型处理失败';
-      console.error('[TryOn API] 任务失败:', errorMsg);
-      throw new Error(`AI 试衣失败: ${errorMsg}`);
-    }
-
-    await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
-  }
-
-  console.warn(`[TryOn API] 轮询超时 (${POLL_TIMEOUT}s)`);
-  throw new Error('服务繁忙，请稍后重试');
-}
-
-/**
- * 调用可灵 AI 虚拟试衣（完整流程）
- */
-async function virtualTryOn(personImage: string, clothingImage: string): Promise<string> {
-  const taskId = await createKlingTryOnTask(personImage, clothingImage);
-  console.log('[TryOn API] 任务已创建，ID:', taskId);
-  return pollKlingTask(taskId);
-}
-
-// ══════════════════════════════════════════════
-// 图片后处理：添加 AI 生成水印 + 上传 Storage
-// ══════════════════════════════════════════════
-
-/**
- * 对可灵AI生成的效果图进行后处理：
- * 1. 下载原始图片
- * 2. 使用 jimp 在右下角添加半透明水印 "AI TryOn · 生成"
- * 3. 上传到 Supabase Storage
- * 4. 返回新的公开 URL
- * 
- * 使用 jimp（纯 JS）而非 sharp，避免 Vercel 无服务器环境的原生依赖问题
- */
-async function postProcessImage(originalUrl: string): Promise<string> {
-  const startTime = Date.now();
-  console.log('[TryOn API] 开始图片后处理（jimp 水印）...');
-  console.log('[TryOn API] 原始图片 URL:', originalUrl.substring(0, 100));
-
-  // ── 1. 下载原始图片 ──
-  const imgResponse = await fetch(originalUrl, { signal: AbortSignal.timeout(30000) });
-  if (!imgResponse.ok) {
-    console.warn('[TryOn API] 图片下载失败，跳过后处理，使用原始 URL');
-    return originalUrl;
-  }
-
-  const originalBuffer = Buffer.from(await imgResponse.arrayBuffer());
-  console.log('[TryOn API] 原始图片大小:', (originalBuffer.byteLength / 1024).toFixed(1), 'KB');
-
-  // ── 2. 使用 jimp 添加水印 ──
-  let processedBuffer: Buffer;
-
-  try {
-    const image = await Jimp.read(originalBuffer);
-    const width = image.getWidth();
-    const height = image.getHeight();
-
-    console.log('[TryOn API] 图片尺寸:', width, 'x', height);
-
-    // 水印文字参数
-    const watermarkText = 'AI TryOn · 生成';
-    // 字体大小：约图片宽度的 2.2%（~11px@512px）
-    const fontSize = Math.max(10, Math.round(width * 0.022));
-    // 右下角位置
-    const textX = width - Math.round(width * 0.02); // 右侧留 2% 边距
-    const textY = height - Math.round(height * 0.03); // 底部留 3% 边距
-
-    // 加载内置字体（jimp 自带）
-    const font = await Jimp.loadFont(Jimp.FONT_SANS_16_BLACK);
-    // 缩放字体：Jimp 字体是固定大小的，需要通过 print 的 x/y 偏移来模拟
-    // FONT_SANS_16_BLACK 基础大小约 16px，我们用 0.7 的透明度
-    const watermarkColor = 0xB3FFFFFF; // 白色，70% 不透明度（0xB3 = ~70%）
-
-    image.print(
-      font,
-      textX - watermarkText.length * 8, // 估算文字宽度偏移
-      textY - 16, // 基于字体高度的偏移
-      {
-        text: watermarkText,
-        alignmentX: Jimp.HORIZONTAL_ALIGN_RIGHT,
-      },
-      width - Math.round(width * 0.02), // 最大宽度（右对齐参考线）
-      height - Math.round(height * 0.03), // y 坐标
-    );
-
-    // 获取处理后的 Buffer
-    processedBuffer = await image.getBufferAsync(Jimp.MIME_PNG);
-
-    console.log('[TryOn API] jimp 水印添加完成，耗时:', Date.now() - startTime, 'ms');
-    console.log('[TryOn API] 处理后图片大小:', (processedBuffer.byteLength / 1024).toFixed(1), 'KB');
-
-  } catch (err: any) {
-    console.error('[TryOn API] jimp 水印添加失败，使用原始图片:', err.message, err.stack);
-    return originalUrl;
-  }
-
-  // ── 3. 上传到 Supabase Storage ──
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
-    if (!supabaseUrl || !supabaseKey) {
-      console.warn('[TryOn API] Supabase 环境变量未设置（图片上传），使用原始 URL');
-      return originalUrl;
-    }
-    
-    console.log('[TryOn API] 创建 Supabase Admin 客户端用于上传...');
-    const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
-
-    const fileName = `tryon_result_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
-
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from('tryon-images')
-      .upload(fileName, processedBuffer, {
-        cacheControl: '3600',
-        upsert: false,
-        contentType: 'image/png',
-      });
-
-    if (uploadError) {
-      console.warn('[TryOn API] 后处理图片上传失败，使用原始 URL:', uploadError.message);
-      return originalUrl;
-    }
-
-    const { data: { publicUrl } } = supabaseAdmin.storage
-      .from('tryon-images')
-      .getPublicUrl(fileName);
-
-    console.log('[TryOn API] 后处理图片已上传:', publicUrl);
-    console.log('[TryOn API] 图片后处理总耗时:', Date.now() - startTime, 'ms');
-    return publicUrl;
-
-  } catch (err: any) {
-    console.warn('[TryOn API] Supabase 上传异常，使用原始 URL:', err.message);
-    return originalUrl;
-  }
-}
-
-// ══════════════════════════════════════════════
-// 积分回滚
-// ══════════════════════════════════════════════
-
-/**
- * 回滚已扣减的积分
- */
-async function rollbackCredits(userId: string, amount: number, reason: string): Promise<void> {
-  console.log(`[TryOn API] 尝试回滚积分: userId=${userId}, amount=${amount}, reason=${reason}`);
-  if (!userId || amount <= 0) {
-    console.log('[TryOn API] 跳过回滚: 用户ID为空或积分为0');
-    return;
-  }
-  try {
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !supabaseKey) {
-      console.warn('[TryOn API] 跳过回滚: Supabase 环境变量未设置');
-      return;
-    }
-
-    console.log('[TryOn API] 创建 Supabase 客户端进行积分回滚...');
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // 查询当前余额
-    const { data: current, error: queryError } = await supabase
-      .from('user_credits')
-      .select('credits')
-      .eq('user_id', userId)
-      .single();
-
-    if (queryError) {
-      console.error('[TryOn API] 查询用户积分失败:', queryError);
-    }
-
-    const newBalance = (current?.credits ?? 0) + amount;
-    console.log(`[TryOn API] 当前余额: ${current?.credits ?? 0}, 回滚后余额: ${newBalance}`);
-
-    const { error } = await supabase
-      .from('user_credits')
-      .update({ credits: newBalance })
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error(`[TryOn API] 积分回滚失败 (userId: ${userId}, amount: ${amount}):`, error);
-    } else {
-      console.log(`[TryOn API] 积分已回滚 ${amount} 分 (userId: ${userId}), 新余额: ${newBalance}, 原因: ${reason}`);
-    }
-  } catch (e: any) {
-    console.error('[TryOn API] 积分回滚异常:', e.message, e);
-  }
-}
-
 // ══════════════════════════════════════════════
 // 主处理函数
 // ══════════════════════════════════════════════
 
 export async function POST(req: NextRequest) {
   console.log('[TryOn API] === 收到试衣请求 ===');
-
-  // 追踪已扣减的积分，用于失败时回滚
-  let creditsDeducted = 0;
-  const userId_holder = { value: '' as string };
 
   try {
     // ── 1. 验证用户登录 ──
@@ -695,27 +445,19 @@ export async function POST(req: NextRequest) {
     
     const cookieStore = await cookies();
     const allCookies = cookieStore.getAll();
-    console.log('[TryOn API] 获取到的 cookies 数量:', allCookies.length);
-    console.log('[TryOn API] Cookie 名称列表:', allCookies.map(c => c.name));
     
     const supabase = createServerClient(
       supabaseUrl,
       supabaseAnonKey,
       {
         cookies: {
-          getAll() { 
-            console.log('[TryOn API] getAll() 被调用，返回 cookies:', allCookies.length);
-            return allCookies; 
-          },
+          getAll() { return allCookies; },
           setAll(cookiesToSet) {
             try {
-              console.log('[TryOn API] setAll() 被调用，设置 cookies:', cookiesToSet.length);
               cookiesToSet.forEach(({ name, value, options }) =>
                 cookieStore.set(name, value, options)
               );
-            } catch (e) { 
-              console.error('[TryOn API] setAll() 错误:', e);
-            }
+            } catch (e) { console.error('[TryOn API] setAll() 错误:', e); }
           },
         },
       }
@@ -736,7 +478,6 @@ export async function POST(req: NextRequest) {
     
     console.log('[TryOn API] 用户认证成功:', user.id, user.email);
     const userId = user.id;
-    userId_holder.value = userId;
 
     // ── 2. 解析请求体 ──
     const body = await req.json().catch(() => ({}));
@@ -771,70 +512,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: '服装图片 URL 格式无效' }, { status: 400 });
     }
 
-    // ── 5. 调用可灵 AI 虚拟试衣 ──
-    console.log('[TryOn API] 调用可灵 AI 虚拟试衣...');
-    let resultUrl: string;
+    // ── 5. 调用可灵 AI 创建试衣任务（异步模式） ──
+    console.log('[TryOn API] 创建可灵 AI 试衣任务...');
+    let taskId: string;
 
     try {
-      resultUrl = await virtualTryOn(personImage, clothingImage);
-
-      // ══════════════════════════════════════════════
-      // 图片后处理已禁用，改为前端 CSS 水印叠加
-      // ══════════════════════════════════════════════
-      console.log('[TryOn API] 最终图片 URL（前端将叠加 CSS 水印）:', resultUrl.substring(0, 100));
-
-      // 扣减 1 积分（虚拟试衣）
-      const deductResult = await consumeCredits(userId, 1, '虚拟试衣');
-      if (deductResult.success) {
-        creditsDeducted += 1;
-        console.log(`[TryOn API] 已扣减 1 积分（虚拟试衣），剩余: ${deductResult.credits_balance}`);
-      }
+      // 只创建任务，不等待结果，积分扣减由前端在成功后调用
+      taskId = await createKlingTryOnTask(personImage, clothingImage);
+      console.log('[TryOn API] 任务创建成功，task_id:', taskId);
     } catch (err: any) {
-      console.error('[TryOn API] 虚拟试衣失败:', err.message);
-
-      // ⚠️ API 调用失败，回滚已扣减的积分
-      if (creditsDeducted > 0) {
-        console.log(`[TryOn API] 开始回滚 ${creditsDeducted} 积分...`);
-        await rollbackCredits(userId, creditsDeducted, '虚拟试衣失败自动回滚');
-        creditsDeducted = 0;
-      }
-
+      console.error('[TryOn API] 创建试衣任务失败:', err.message);
       return NextResponse.json(
-        { success: false, error: 'AI 试衣失败', message: err.message || '请重试或更换图片' },
+        { success: false, error: '创建试衣任务失败', message: err.message || '请重试或更换图片' },
         { status: 500 }
       );
     }
 
-    // ── 6. 返回结果 ──
-    const finalCreditsBalance = creditsDeducted > 0
-      ? (await getUserCredits(userId))?.credits ?? creditCheck.credits - 1
-      : creditCheck.credits;
-
-    console.log('[TryOn API] 试衣完成，返回结果:', {
-      success: true,
-      resultImageUrl: resultUrl,
-      creditsBalance: finalCreditsBalance,
-      creditsConsumed: creditsDeducted,
-    });
+    // ── 6. 返回结果（立即返回 task_id，不等待图片生成） ──
+    console.log('[TryOn API] 任务创建完成，返回 taskId:', taskId);
 
     return NextResponse.json({
       success: true,
-      resultImageUrl: resultUrl,
-      resultUrl: resultUrl,  // 向后兼容旧前端
-      useType: 'credits',
-      creditsBalance: finalCreditsBalance,
-      message: '试衣成功！',
-      creditsConsumed: creditsDeducted,
+      taskId,
+      message: '任务已创建',
     });
 
   } catch (err: any) {
     console.error('[TryOn API] 未捕获的异常:', err);
-
-    // 回滚已扣减的积分
-    if (creditsDeducted > 0 && userId_holder.value) {
-      await rollbackCredits(userId_holder.value, creditsDeducted, '未捕获异常自动回滚');
-    }
-
     return NextResponse.json(
       { success: false, error: '操作失败，请稍后重试', message: err.message },
       { status: 500 }
