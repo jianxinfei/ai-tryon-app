@@ -478,7 +478,10 @@ export default function TryOnPage() {
         <div className="text-center mb-8 sm:mb-10">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">AI 虚拟试衣</h1>
           <p className="mt-2 text-sm text-slate-500">
-            上传人物照片和服装照片，AI 将为您生成试穿效果（消耗 1 积分）
+            上传人物照和服装照，AI 为您生成试穿效果
+          </p>
+          <p className="mt-1.5 text-xs text-slate-400">
+            每次消耗 1 积分 | 支持 JPG / PNG | 积分永久有效
           </p>
         </div>
 
@@ -913,22 +916,14 @@ export default function TryOnPage() {
           </div>
         )}
 
-        {/* ── 使用说明 ── */}
-        <div className="mt-12 p-6 bg-slate-50 rounded-2xl">
-          <h3 className="font-bold text-slate-900 mb-3">使用说明</h3>
-          <ul className="space-y-2 text-sm text-slate-600">
-            <li className="flex items-start gap-2"><span className="text-indigo-600">•</span>每次试衣消耗 1 积分</li>
-            <li className="flex items-start gap-2"><span className="text-indigo-600">•</span>积分可单独购买，永久有效</li>
-            <li className="flex items-start gap-2"><span className="text-indigo-600">•</span>支持 JPG、PNG 格式图片</li>
-          </ul>
-          <div className="mt-4 pt-4 border-t border-slate-200 space-y-1.5">
-            <p className="text-xs text-slate-400 text-center">
-              上传图片即表示您同意 <a href="/terms" className="text-indigo-500 hover:text-indigo-600 underline">《用户协议与知识产权声明》</a>
-            </p>
-            <p className="text-xs text-slate-400 text-center">
-              虚拟试衣功能由可灵AI（Kling AI）提供技术支持
-            </p>
-          </div>
+        {/* ── 服务声明 ── */}
+        <div className="mt-12 pt-6 border-t border-slate-200 space-y-1.5">
+          <p className="text-xs text-slate-400 text-center">
+            上传图片即表示您同意 <a href="/terms" className="text-indigo-500 hover:text-indigo-600 underline">《用户协议与知识产权声明》</a>
+          </p>
+          <p className="text-xs text-slate-400 text-center">
+            虚拟试衣功能由可灵AI（Kling AI）提供技术支持
+          </p>
         </div>
       </main>
     </div>
