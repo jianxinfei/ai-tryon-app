@@ -14,6 +14,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
+import imageCompression from 'browser-image-compression';
 
 // 类型定义
 interface TryOnResult {
@@ -137,11 +138,6 @@ export default function TryOnPage() {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('图片大小不能超过 5MB');
-      return;
-    }
-
     setError('');
     
     if (type === 'person') {
@@ -151,7 +147,16 @@ export default function TryOnPage() {
     }
 
     try {
-      const imageUrl = await uploadImage(file);
+      // 客户端压缩图片
+      const options = {
+        maxSizeMB: 2, // 最大 2MB
+        maxWidthOrHeight: 1200, // 最大宽高 1200px
+        useWebWorker: true,
+      };
+      
+      const compressedFile = await imageCompression(file, options);
+      
+      const imageUrl = await uploadImage(compressedFile);
       
       if (type === 'person') {
         setPersonPreview(imageUrl);
@@ -401,7 +406,10 @@ export default function TryOnPage() {
                   className="w-full h-64 flex flex-col items-center justify-center text-slate-400 hover:text-indigo-600 transition-colors"
                 >
                   {isUploading.person ? (
-                    <div className="animate-spin w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full" />
+                    <>
+                      <div className="animate-spin w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full mb-2" />
+                      <span className="text-sm text-indigo-600">图片处理中...</span>
+                    </>
                   ) : (
                     <>
                       <svg className="w-12 h-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -412,7 +420,7 @@ export default function TryOnPage() {
                   )}
                 </button>
               )}
-              <p className="mt-3 text-xs text-center text-slate-400">支持 JPG、PNG，最大 5MB</p>
+              <p className="mt-3 text-xs text-center text-slate-400">支持 JPG、PNG，自动压缩优化</p>
             </div>
 
             {/* 服装照片上传 */}
@@ -441,7 +449,10 @@ export default function TryOnPage() {
                   className="w-full h-64 flex flex-col items-center justify-center text-slate-400 hover:text-indigo-600 transition-colors"
                 >
                   {isUploading.clothing ? (
-                    <div className="animate-spin w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full" />
+                    <>
+                      <div className="animate-spin w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full mb-2" />
+                      <span className="text-sm text-indigo-600">图片处理中...</span>
+                    </>
                   ) : (
                     <>
                       <svg className="w-12 h-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -452,7 +463,7 @@ export default function TryOnPage() {
                   )}
                 </button>
               )}
-              <p className="mt-3 text-xs text-center text-slate-400">支持 JPG、PNG，最大 5MB</p>
+              <p className="mt-3 text-xs text-center text-slate-400">支持 JPG、PNG，自动压缩优化</p>
             </div>
           </div>
         )}
