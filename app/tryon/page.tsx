@@ -102,6 +102,23 @@ export default function TryOnPage() {
   const [error, setError] = useState<string>('');
   const [pollProgress, setPollProgress] = useState({ count: 0, estimatedTime: 30 }); // 轮询进度
 
+  // AbortController 用于取消正在进行的请求
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // 清理函数 - 取消所有未完成的请求和定时器
+  const cleanupPendingRequests = useCallback(() => {
+    console.log('[TryOn] 清理未完成的请求...');
+    
+    // 取消当前的 abort controller
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    
+    // 创建新的 abort controller 以备后续使用
+    abortControllerRef.current = new AbortController();
+  }, []);
+
   // Refs
   const personInputRef = useRef<HTMLInputElement>(null);
   const clothingInputRef = useRef<HTMLInputElement>(null);
@@ -264,6 +281,7 @@ export default function TryOnPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ taskId }),
+          signal: abortControllerRef.current?.signal,
         });
         const data = await response.json();
 
@@ -278,6 +296,10 @@ export default function TryOnPage() {
           }
           if (response.status === 500) {
             throw new Error('服务器异常，请稍后重试');
+          }
+          // 任务不存在或已过期
+          if (response.status === 404 || response.status === 410) {
+            throw new Error('任务不存在或已过期，请重新试衣');
           }
           throw new Error(errorMsg);
         }
@@ -344,6 +366,7 @@ export default function TryOnPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody),
+          signal: abortControllerRef.current?.signal,
         });
 
         const data = await response.json();
@@ -880,11 +903,16 @@ export default function TryOnPage() {
                   <a href={result.resultImageUrl} download
                     className="flex-1 py-2 px-6 bg-slate-900 text-white text-base font-medium rounded-lg text-center hover:bg-slate-800 transition-colors shadow-md">下载图片</a>
                   <button onClick={() => {
+                    // 清理所有未完成的请求
+                    cleanupPendingRequests();
+                    // 重置所有状态
                     setResult(null);
                     setPersonPreview('');
                     setClothingPreview('');
                     setPersonImage('');
                     setClothingImage('');
+                    setError('');
+                    setPollProgress({ count: 0, estimatedTime: 30 });
                     if (useAiModel) {
                       setGeneratedModelUrl('');
                       setGeneratedModelPreview('');
@@ -894,11 +922,14 @@ export default function TryOnPage() {
                 </div>
                 <div className="mt-3">
                   <button onClick={() => {
+                    // 清理所有未完成的请求
+                    cleanupPendingRequests();
                     // 只清空服装和结果，保留人物图
                     setResult(null);
                     setClothingPreview('');
                     setClothingImage('');
                     setError('');
+                    setPollProgress({ count: 0, estimatedTime: 30 });
                     // 自动聚焦到服装上传区
                     setTimeout(() => clothingInputRef.current?.click(), 100);
                   }}

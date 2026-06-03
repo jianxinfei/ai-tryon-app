@@ -117,6 +117,22 @@ export async function POST(req: NextRequest) {
     // 检查 HTTP 状态码
     if (!response.ok) {
       console.error('[TryOn Status] 可灵 API 返回错误状态:', response.status, response.statusText);
+      
+      // 处理无效或过期的 taskId
+      if (response.status === 404) {
+        return NextResponse.json({
+          success: false,
+          error: '任务不存在或已过期',
+        }, { status: 404 });
+      }
+      
+      if (response.status === 410) {
+        return NextResponse.json({
+          success: false,
+          error: '任务已过期，请重新创建',
+        }, { status: 410 });
+      }
+      
       return NextResponse.json({
         success: false,
         error: `可灵服务异常 (${response.status})，请稍后重试`,
