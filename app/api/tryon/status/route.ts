@@ -28,14 +28,7 @@ function base64UrlEncode(input: string): string {
     .replace(/\//g, '_');
 }
 
-function generateKlingJwtToken(): string {
-  const ak = process.env.KLING_AI_ACCESS_KEY_ID;
-  const sk = process.env.KLING_AI_SECRET_KEY;
-
-  if (!ak || !sk) {
-    throw new Error('[TryOn Status] 可灵 AI AK/SK 未配置');
-  }
-
+function generateKlingJwtToken(ak: string, sk: string): string {
   const now = Math.floor(Date.now() / 1000);
 
   const headerB64 = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
@@ -57,7 +50,19 @@ function generateKlingJwtToken(): string {
 }
 
 function getKlingAuthHeaders(): Record<string, string> {
-  const token = generateKlingJwtToken();
+  const ak = process.env.KLING_AI_ACCESS_KEY_ID;
+  const sk = process.env.KLING_AI_SECRET_KEY;
+
+  if (!ak || !sk) {
+    console.error('[TryOn Status] 环境变量检查失败:', {
+      hasAk: !!ak,
+      hasSk: !!sk,
+      envKeys: Object.keys(process.env).filter(k => k.startsWith('KLING_'))
+    });
+    throw new Error('可灵 AI 配置不完整，请联系管理员');
+  }
+
+  const token = generateKlingJwtToken(ak, sk);
   return {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -72,16 +77,18 @@ function getKlingAuthHeaders(): Record<string, string> {
 export async function POST(req: NextRequest) {
   console.log('[TryOn Status] 收到状态查询请求');
 
+  let taskId: string | undefined;
+
   try {
     // 解析请求体
     const body = await req.json().catch(() => ({}));
-    const { taskId } = body;
+    taskId = body.taskId;
 
     if (!taskId) {
       console.log('[TryOn Status] 参数错误：缺少 taskId');
       return NextResponse.json({
         success: false,
-        error: '参数错误',
+        error: '缺少任务ID',
       }, { status: 400 });
     }
 
@@ -91,13 +98,42 @@ export async function POST(req: NextRequest) {
     const url = `${KLING_API_BASE}/v1/images/kolors-virtual-try-on/${taskId}`;
     const headers = getKlingAuthHeaders();
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers,
-      signal: AbortSignal.timeout(10000),
-    });
+    // 调用可灵 API，增加超时和错误处理
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: 'GET',
+        headers,
+        signal: AbortSignal.timeout(15000), // 15秒超时
+      });
+    } catch (fetchErr: any) {
+      console.error('[TryOn Status] fetch 调用失败:', fetchErr.message);
+      return NextResponse.json({
+        success: false,
+        error: '网络请求失败，请稍后重试',
+      }, { status: 502 });
+    }
 
-    const data = await response.json();
+    // 检查 HTTP 状态码
+    if (!response.ok) {
+      console.error('[TryOn Status] 可灵 API 返回错误状态:', response.status, response.statusText);
+      return NextResponse.json({
+        success: false,
+        error: `可灵服务异常 (${response.status})，请稍后重试`,
+      }, { status: 502 });
+    }
+
+    let data: any;
+    try {
+      data = await response.json();
+    } catch (parseErr: any) {
+      console.error('[TryOn Status] 解析可灵响应失败:', parseErr.message);
+      return NextResponse.json({
+        success: false,
+        error: '服务器响应解析失败',
+      }, { status: 500 });
+    }
+
     console.log('[TryOn Status] 可灵 API 响应:', JSON.stringify(data));
 
     // 提取任务数据
@@ -150,10 +186,21 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (err: any) {
-    console.error('[TryOn Status] 查询失败:', err.message);
+    console.error('[TryOn Status] 查询异常:', {
+      message: err.message,
+      stack: err.stack,
+      taskId: taskId,
+      name: err.name
+    });
+
+    // 返回友好错误，不暴露内部细节
+    const errorMessage = err.message.includes('可灵')
+      ? err.message
+      : '服务器内部错误，请稍后重试';
+
     return NextResponse.json({
       success: false,
-      error: err.message,
+      error: errorMessage,
     }, { status: 500 });
   }
 }

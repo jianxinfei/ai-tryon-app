@@ -269,8 +269,17 @@ export default function TryOnPage() {
 
         console.log('[TryOn] 轮询任务状态:', data);
 
+        // API 返回错误
         if (!data.success) {
-          throw new Error(data.message || data.error || '查询任务状态失败');
+          const errorMsg = data.error || '查询任务状态失败';
+          // 如果是网络错误或超时，抛出具体错误
+          if (response.status === 502 || response.status === 504) {
+            throw new Error('服务暂时不可用，请稍后重试');
+          }
+          if (response.status === 500) {
+            throw new Error('服务器异常，请稍后重试');
+          }
+          throw new Error(errorMsg);
         }
 
         // 任务成功完成
@@ -290,6 +299,15 @@ export default function TryOnPage() {
         await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
 
       } catch (err: any) {
+        // 网络错误（如断网、请求失败）
+        if (err.name === 'TypeError' && err.message.includes('fetch')) {
+          throw new Error('网络连接失败，请检查网络后重试');
+        }
+        // AbortError（超时）
+        if (err.name === 'AbortError') {
+          throw new Error('请求超时，请稍后重试');
+        }
+        // 其他错误直接抛出
         throw err;
       }
     }
@@ -823,12 +841,12 @@ export default function TryOnPage() {
               </div>
             </div>
 
-            {/* 进度文案 */}
-            <div className="text-center">
-              <p className="text-lg font-semibold text-slate-800">
+            {/* 进度文案 - 缩小文字并放在动画下方 */}
+            <div className="text-center mt-4">
+              <p className="text-sm font-medium text-slate-600">
                 AI 正在为您精心试穿...
               </p>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-xs text-slate-400 mt-1">
                 已等待 {pollProgress.count * 2} 秒
                 {pollProgress.estimatedTime > 0 && (
                   <span className="ml-2">
