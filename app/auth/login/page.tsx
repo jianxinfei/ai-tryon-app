@@ -87,6 +87,8 @@ function AuthLoginContent() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
+  const [showResendButton, setShowResendButton] = useState(false);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
 
   // 监听登录状态变化
   useEffect(() => {
@@ -115,6 +117,54 @@ function AuthLoginContent() {
     };
   }, [supabaseClient, router, redirectTo]);
 
+  // 监听 URL 中的验证参数，检测验证成功
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.includes('#access_token=') || hash.includes('#type=recovery')) {
+      // 检测到验证成功的 URL 参数
+      console.log('[Login] 检测到验证成功的 URL 参数:', hash);
+      setVerificationSuccess(true);
+      
+      // 延迟后刷新状态并跳转
+      setTimeout(() => {
+        router.refresh();
+        setTimeout(() => {
+          router.push(redirectTo);
+        }, 1500);
+      }, 2000);
+    }
+  }, [router, redirectTo]);
+
+  // 重新发送验证邮件
+  const resendVerificationEmail = async () => {
+    if (!email) {
+      setMessage({ type: 'error', text: '请先输入邮箱地址' });
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const { error } = await supabaseClient.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`,
+        },
+      });
+      
+      if (error) throw error;
+      
+      setMessage({
+        type: 'success',
+        text: '验证邮件已重新发送，请检查邮箱',
+      });
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || '发送失败，请重试' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -135,8 +185,9 @@ function AuthLoginContent() {
 
         setMessage({
           type: 'success',
-          text: '注册成功！请检查邮箱完成验证。',
+          text: '验证邮件已发送至您的邮箱，请点击邮件中的链接完成验证',
         });
+        setShowResendButton(true);
       } else {
         // 登录
         console.log('[Login] 开始登录:', email);
@@ -213,12 +264,30 @@ function AuthLoginContent() {
 
         {/* 消息提示 */}
         {message && (
-          <div className={`mb-4 p-3 rounded-lg text-sm text-center ${
+          <div className={`mb-4 p-4 rounded-lg text-sm ${
             message.type === 'error'
               ? 'bg-red-50 border border-red-200 text-red-600'
               : 'bg-green-50 border border-green-200 text-green-600'
           }`}>
-            {message.text}
+            <div className="text-center">{message.text}</div>
+            {showResendButton && message.type === 'success' && (
+              <button
+                onClick={resendVerificationEmail}
+                disabled={loading}
+                className="mt-3 w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg
+                  transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                重新发送验证邮件
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* 验证成功提示 */}
+        {verificationSuccess && (
+          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-center animate-pulse">
+            <div className="text-green-600 font-medium">✓ 验证成功，欢迎回来！</div>
+            <div className="text-xs text-green-500 mt-1">即将为您跳转...</div>
           </div>
         )}
 
@@ -281,6 +350,19 @@ function AuthLoginContent() {
               )}
             </button>
           </form>
+
+          {/* 没有收到验证邮件？ */}
+          {!isSignUp && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={resendVerificationEmail}
+                disabled={loading}
+                className="text-sm text-indigo-600 hover:text-indigo-700 transition-colors"
+              >
+                没有收到验证邮件？点击重新发送
+              </button>
+            </div>
+          )}
 
           {/* 切换登录/注册 */}
           <div className="mt-6 text-center">
