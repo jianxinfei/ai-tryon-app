@@ -131,7 +131,8 @@ export default function TryOnPage() {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/profile');
+        // 未登录，保持状态为未登录，不跳转
+        setUserStatus({ isLoggedIn: false, credits: 0 });
         return;
       }
       const { data: credits } = await supabase
@@ -142,7 +143,7 @@ export default function TryOnPage() {
       setUserStatus({ isLoggedIn: true, credits: credits?.credits ?? 0 });
     };
     checkUser();
-  }, [supabase, router]);
+  }, [supabase]);
 
   // ══════════════════════════════════════════════
   // 图片上传
@@ -500,6 +501,31 @@ export default function TryOnPage() {
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>
         )}
+
+        {/* 未登录提示 */}
+        {!userStatus.isLoggedIn && (
+          <div className="text-center py-12 sm:py-16">
+            <div className="w-20 h-20 mx-auto bg-indigo-100 rounded-full flex items-center justify-center mb-6">
+              <svg className="w-10 h-10 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">请先登录后再试穿</h2>
+            <p className="text-sm text-slate-500 mb-6">登录后即可体验 AI 虚拟试衣功能</p>
+            <button
+              onClick={() => router.push('/profile')}
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-1m3 4h10" />
+              </svg>
+              去登录
+            </button>
+          </div>
+        )}
+
+        {/* 已登录时显示试衣功能 */}
+        {userStatus.isLoggedIn && (
 
         {/* ── AI 模特开关（暂时隐藏） ── */}
         {SHOW_AI_MODEL && (
@@ -966,6 +992,8 @@ export default function TryOnPage() {
             {ACCESSORY_TYPE.label}（敬请期待）
           </button>
         </div>
+        {/* 关闭已登录状态的条件渲染 */}
+        )}
       </main>
     </div>
   );
