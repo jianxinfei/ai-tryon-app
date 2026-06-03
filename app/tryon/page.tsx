@@ -472,9 +472,7 @@ export default function TryOnPage() {
   // ══════════════════════════════════════════════
 
   // 按钮是否可点击
-  const canSubmit = useAiModel
-    ? !!generatedModelUrl && !!clothingImage
-    : !!personImage && !!clothingImage;
+  const canSubmit = (useAiModel ? !!generatedModelUrl : !!personImage) && !!clothingImage;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
