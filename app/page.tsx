@@ -17,6 +17,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
+import Link from 'next/link';
 
 // ══════════════════════════════════════════════
 // 类型
@@ -236,6 +237,16 @@ export default function HomePage() {
             上传你的照片和心仪的服装，AI 帮你一键试穿
           </p>
 
+          {/* 底部链接 */}
+          <div className="mt-auto pt-12 pb-4 text-center space-x-4">
+            <Link href="/terms" className="text-xs text-slate-400 hover:text-indigo-600 transition-colors">
+              用户协议
+            </Link>
+            <span className="text-slate-300">|</span>
+            <Link href="/privacy" className="text-xs text-slate-400 hover:text-indigo-600 transition-colors">
+              隐私声明
+            </Link>
+          </div>
         </main>
       </div>
 

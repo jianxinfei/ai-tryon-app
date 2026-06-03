@@ -372,10 +372,14 @@ export default function ProfilePage() {
               </button>
             </div>
 
-            {/* 用户协议链接 */}
-            <div className="mt-3 text-center">
+            {/* 用户协议和隐私声明链接 */}
+            <div className="mt-3 text-center space-y-1">
               <Link href="/terms" className="text-xs text-slate-400 hover:text-indigo-600 transition-colors">
                 《用户协议与知识产权声明》
+              </Link>
+              <span className="text-slate-300 mx-2">|</span>
+              <Link href="/privacy" className="text-xs text-slate-400 hover:text-indigo-600 transition-colors">
+                《隐私声明》
               </Link>
             </div>
           </div>
