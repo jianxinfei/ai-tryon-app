@@ -312,6 +312,7 @@ function AuthLoginContent() {
               ← 返回上一页
             </button>
           </div>
+        </div>
       </div>
     </div>
   );
