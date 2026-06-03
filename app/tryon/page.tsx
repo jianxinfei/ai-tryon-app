@@ -526,7 +526,7 @@ export default function TryOnPage() {
 
         {/* 已登录时显示试衣功能 */}
         {userStatus.isLoggedIn && (
-
+          <>
         {/* ── AI 模特开关（暂时隐藏） ── */}
         {SHOW_AI_MODEL && (
           <div className="mb-6 p-4 bg-white rounded-xl border border-slate-200">
@@ -992,6 +992,7 @@ export default function TryOnPage() {
             {ACCESSORY_TYPE.label}（敬请期待）
           </button>
         </div>
+          </>
         {/* 关闭已登录状态的条件渲染 */}
         )}
       </main>
