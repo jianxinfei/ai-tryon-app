@@ -332,7 +332,8 @@ export default function TryOnPage() {
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">请先登录后再试穿</h2>
             <p className="text-sm text-slate-500 mb-6">登录后即可体验 AI 虚拟试衣功能</p>
-            <button
+            {/* 去登录按钮已移除 */}
+            {/* <button
               onClick={() => router.push('/profile')}
               className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
             >
@@ -340,7 +341,7 @@ export default function TryOnPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-1m3 4h10" />
               </svg>
               去登录
-            </button>
+            </button> */}
           </div>
         </main>
       </div>
