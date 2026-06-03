@@ -505,6 +505,9 @@ export default function TryOnPage() {
                     alt="试衣结果"
                     className="w-full max-h-[600px] object-contain"
                   />
+                  <span className="absolute bottom-2 right-2 text-white bg-black/40 px-2 py-0.5 rounded-md text-[11px] z-10">
+                    AI TryOn · 生成
+                  </span>
                 </div>
                 <div className="mt-4 flex justify-center">
                   <button
