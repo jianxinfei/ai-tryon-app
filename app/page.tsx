@@ -162,9 +162,9 @@ export default function HomePage() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        // 未登录，提示用户并跳转到登录页
+        // 未登录，提示用户并跳转到个人中心
         alert('请先登录后再购买');
-        router.push('/auth/login?redirectTo=/');
+        router.push('/profile');
         return;
       }
 
@@ -179,7 +179,7 @@ export default function HomePage() {
 
       // 未登录（服务端返回 401）
       if (res.status === 401 || data.needLogin) {
-        router.push('/auth/login?redirectTo=/');
+        router.push('/profile');
         return;
       }
 

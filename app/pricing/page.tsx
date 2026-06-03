@@ -125,9 +125,9 @@ export default function PricingPage() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        // 未登录，提示用户并跳转到登录页
+        // 未登录，提示用户并跳转到个人中心
         alert('请先登录后再购买方案');
-        router.push('/auth/login?redirectTo=/pricing');
+        router.push('/profile');
         return;
       }
 
@@ -142,7 +142,7 @@ export default function PricingPage() {
 
       // 未登录（服务端返回 401）
       if (res.status === 401 || data.needLogin) {
-        router.push('/auth/login?redirectTo=/pricing');
+        router.push('/profile');
         return;
       }
 
@@ -183,34 +183,6 @@ export default function PricingPage() {
             </div>
             <span className="font-bold text-sm sm:text-base">AI Try-On</span>
           </button>
-
-          {/* 登录/登出 */}
-          {currentUser ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-600 hidden sm:inline max-w-[100px] truncate" title={currentUser.email}>
-                {currentUser.email}
-              </span>
-              <button
-                onClick={handleSignOut}
-                className="flex items-center gap-1.5 bg-slate-100 text-slate-700 rounded-full px-3 py-1.5 hover:bg-slate-200 transition-colors text-xs font-semibold"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M3 12h12m0 0l-3-3m3 3l-3 3" />
-                </svg>
-                登出
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => router.push('/auth/login?redirectTo=/pricing')}
-              className="flex items-center gap-1.5 bg-indigo-600 text-white rounded-full px-3 py-1.5 hover:bg-indigo-700 transition-colors text-xs font-semibold"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-              </svg>
-              登录
-            </button>
-          )}
         </div>
       </nav>
 
@@ -361,12 +333,6 @@ export default function PricingPage() {
 
         {/* ── 底部操作 ── */}
         <div className="text-center space-y-3">
-          <button
-            onClick={() => router.push('/auth/login?redirectTo=/pricing')}
-            className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
-          >
-            登录 / 注册以购买方案
-          </button>
           <div>
             <button
               onClick={() => router.push('/')}

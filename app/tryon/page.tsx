@@ -131,7 +131,7 @@ export default function TryOnPage() {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/auth/login?redirectTo=/tryon');
+        router.push('/profile');
         return;
       }
       const { data: credits } = await supabase
@@ -218,7 +218,7 @@ export default function TryOnPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 401) { router.push('/auth/login?redirectTo=/tryon'); return; }
+        if (response.status === 401) { router.push('/profile'); return; }
         if (response.status === 403 && data.needPurchase) {
           setError(data.message);
           setTimeout(() => router.push(data.redirectTo || '/pricing'), 3000);
@@ -381,10 +381,10 @@ export default function TryOnPage() {
             const { error: refreshError } = await supabase.auth.refreshSession();
             if (refreshError) {
               console.error('[TryOn] session 刷新失败:', refreshError.message);
-              setError('登录已过期，请重新登录');
-              setTimeout(() => router.push('/auth/login?redirectTo=/tryon'), 1500);
-              throw new Error('登录已过期');
-            }
+            setError('登录已过期，请重新登录');
+            setTimeout(() => router.push('/profile'), 1500);
+            throw new Error('登录已过期');
+          }
 
             console.log('[TryOn] session 刷新成功，自动重试请求...');
             setError('');
@@ -394,7 +394,7 @@ export default function TryOnPage() {
           // ── 401 且已是重试：跳转登录 ──
           if (response.status === 401) {
             setError('登录已过期，请重新登录');
-            setTimeout(() => router.push('/auth/login?redirectTo=/tryon'), 1500);
+            setTimeout(() => router.push('/profile'), 1500);
             throw new Error('登录已过期');
           }
 
