@@ -303,32 +303,15 @@ function AuthLoginContent() {
             </Link>
           </div>
 
-          {/* 分割线 */}
-          <div className="my-6 flex items-center gap-3">
-            <div className="flex-1 h-px bg-slate-200" />
-            <span className="text-xs text-slate-400">或</span>
-            <div className="flex-1 h-px bg-slate-200" />
+          {/* 返回按钮 */}
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => router.push(redirectTo)}
+              className="text-sm text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              ← 返回上一页
+            </button>
           </div>
-
-          {/* 游客模式 */}
-          <button
-            onClick={() => router.push(redirectTo)}
-            className="w-full py-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl
-              hover:bg-slate-50 hover:border-slate-300 transition-all"
-          >
-            暂不登录，直接体验
-          </button>
-        </div>
-
-        {/* 返回按钮 */}
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => router.push(redirectTo)}
-            className="text-sm text-slate-400 hover:text-slate-600 transition-colors"
-          >
-            ← 返回上一页
-          </button>
-        </div>
       </div>
     </div>
   );

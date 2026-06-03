@@ -75,7 +75,7 @@ const SUBSCRIPTIONS: Array<{
     price: '$9.90',
     period: '/月',
     creditsPerMonth: 100,
-    features: ['每月100次试穿', '高清无水印', '新品优先体验'],
+    features: ['每月100次试穿', '新品优先体验'],
     highlight: false,
   },
 ];
@@ -329,11 +329,8 @@ export default function PricingPage() {
 
                 <ul className="mt-4 sm:mt-5 space-y-2 sm:space-y-2.5">
                   {sub.features.map((f) => (
-                    <li key={f} className="flex items-start gap-1.5 sm:gap-2 text-xs sm:text-sm text-slate-600">
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="leading-tight">{f}</span>
+                    <li key={f} className="text-xs sm:text-sm text-slate-600 text-center">
+                      {f}
                     </li>
                   ))}
                 </ul>
