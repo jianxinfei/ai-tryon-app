@@ -110,14 +110,14 @@ export default function HomePage() {
         {/* LOGO区域 - W390 H749 */}
         <div className="" style={{ width: '390px', height: '749px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
           {/* Logo */}
-          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '5px', height: '300px' }}>
-            <div className="flex items-center justify-center" style={{ width: '172px', height: '100px', background: '#FD7700', borderRadius: '28px', boxShadow: '0px 4px 4px 0px rgba(0, 0, 0, 0.25)' }}>
-              <span style={{ display: 'inline-block', width: '90px', height: '95px', color: '#FFFFFF', fontFamily: 'Inter', fontSize: '64px', fontWeight: 500, textAlign: 'center', lineHeight: '95px' }}>美</span>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '8px', height: '300px' }}>
+            <div className="flex items-center justify-center" style={{ width: '129px', height: '100px', background: '#FD7700', borderRadius: '28px', boxShadow: '0px 4px 4px 0px rgba(0, 0, 0, 0.25)' }}>
+              <span style={{ color: '#FFFFFF', fontFamily: '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif', fontSize: '64px', fontWeight: 500, lineHeight: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>美</span>
             </div>
 
             {/* 标题 */}
-            <h1 className="" style={{ display: '-webkit-box', position: 'relative', color: '#1A1A1A', fontFamily: 'Inter', fontSize: '30px', fontWeight: 700, fontStyle: 'normal', textDecorationLine: 'none', lineHeight: 'normal' }}>what to wear</h1>
-            <p className="" style={{ display: '-webkit-box', width: '33px', height: '18px', flexShrink: 0, position: 'relative', color: '#9CA3AF', fontFamily: 'Inter', fontSize: '13px', fontWeight: 500, fontStyle: 'normal', textDecorationLine: 'none', lineHeight: 'normal' }}>By AI</p>
+            <h1 style={{ color: '#1A1A1A', fontFamily: 'Inter', fontSize: '30px', fontWeight: 700, lineHeight: '1.2', margin: 0, padding: 0 }}>what to wear</h1>
+            <p style={{ color: '#9CA3AF', fontFamily: 'Inter', fontSize: '13px', fontWeight: 500, lineHeight: '1', margin: 0, padding: 0 }}>By AI</p>
           </div>
 
           {/* 底部链接 */}
