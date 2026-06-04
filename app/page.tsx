@@ -210,44 +210,72 @@ export default function HomePage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-amber-50 flex flex-col overflow-x-hidden">
-        {/* ── 导航栏 ── */}
-        <nav className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex items-center gap-2">
-            {/* Logo 图标 - 响应式大小 */}
-            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+      {/* ── 主页面 ── */}
+      <div className="min-h-screen bg-gradient-to-b from-pink-50 to-pink-100 flex flex-col overflow-x-hidden">
+        {/* ── 主内容区域 ── */}
+        <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6">
+          {/* Logo 图标 */}
+          <div className="mb-6 sm:mb-8">
+            <div className="w-24 h-24 sm:w-32 sm:h-32 bg-white rounded-3xl shadow-lg shadow-pink-200/50 flex items-center justify-center">
+              {/* 美字 SVG */}
+              <svg viewBox="0 0 100 100" className="w-14 h-14 sm:w-20 sm:h-20">
+                <text x="50" y="35" fontSize="24" textAnchor="middle" fill="#E53935" fontWeight="bold">美</text>
+                <text x="50" y="65" fontSize="24" textAnchor="middle" fill="#E53935" fontWeight="bold">美</text>
+                <text x="50" y="95" fontSize="24" textAnchor="middle" fill="#E53935" fontWeight="bold">美</text>
               </svg>
             </div>
-            {/* Logo 文字 - 响应式大小 */}
-            <span className="font-bold text-slate-900 text-base sm:text-lg">AI Try-On</span>
           </div>
-        </nav>
 
-        {/* ── 主内容 ── */}
-        <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 -mt-8 sm:-mt-12">
-          {/* 标题 - 响应式大小 */}
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 text-center tracking-tight px-4">
-            AI 虚拟试衣
+          {/* 标题 */}
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-black tracking-wide">
+            what to wear
           </h1>
           
-          {/* 副标题 - 响应式 */}
-          <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-500 text-center max-w-xs sm:max-w-sm px-4">
-            上传你的照片和心仪的服装，AI 帮你一键试穿
+          {/* 副标题 */}
+          <p className="mt-2 sm:mt-3 text-sm sm:text-base text-gray-400">
+            By AI
           </p>
-
-          {/* 底部链接 */}
-          <div className="mt-auto pt-12 pb-4 text-center space-x-4">
-            <Link href="/terms" className="text-xs text-slate-400 hover:text-indigo-600 transition-colors">
-              用户协议
-            </Link>
-            <span className="text-slate-300">|</span>
-            <Link href="/privacy" className="text-xs text-slate-400 hover:text-indigo-600 transition-colors">
-              隐私声明
-            </Link>
-          </div>
         </main>
+
+        {/* ── 底部操作按钮 ── */}
+        <div className="px-6 pb-8">
+          <div className="flex rounded-full shadow-lg overflow-hidden">
+            {/* Glow Up 按钮 */}
+            <button
+              onClick={() => router.push('/tryon')}
+              disabled={tryOnLoading}
+              className="flex-1 sm:flex-none sm:w-1/2 py-4 px-6 bg-red-500 hover:bg-red-600 text-white font-semibold text-base sm:text-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                <path d="M12 6.38l1.45 3.56L18 11.15l-3.55 3.38 1.45 5.56L12 17.07l-4.9 2.43 1.45-5.56L6 11.15l4.55-1.21L12 6.38z"/>
+              </svg>
+              Glow Up
+            </button>
+            
+            {/* Profile 按钮 */}
+            <button
+              onClick={() => router.push('/profile')}
+              className="flex-1 sm:flex-none sm:w-1/2 py-4 px-6 bg-white hover:bg-gray-50 text-gray-400 font-semibold text-base sm:text-lg flex items-center justify-center gap-2 transition-colors"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Profile
+            </button>
+          </div>
+        </div>
+
+        {/* ── 底部链接 ── */}
+        <div className="pb-4 text-center space-x-4">
+          <Link href="/terms" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+            用户协议
+          </Link>
+          <span className="text-gray-300">|</span>
+          <Link href="/privacy" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+            隐私声明
+          </Link>
+        </div>
       </div>
 
       {/* ══════════════════════════════════════
@@ -288,42 +316,6 @@ export default function HomePage() {
 
               {/* 快速购买选项 */}
               <div className="space-y-2.5 sm:space-y-3">
-                {/* 
-                  积分包暂时禁用 - 需要在 Creem Dashboard 创建产品后启用
-                  TODO: 创建 prod_credits_10 和 prod_credits_100 产品后取消注释
-                
-                <button
-                  onClick={() => handleBuyCredits('prod_credits_10')}
-                  className="w-full flex items-center justify-between p-3 sm:p-4 rounded-lg sm:rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 transition-all"
-                >
-                  <div className="text-left">
-                    <p className="font-semibold text-sm sm:text-base text-slate-900">10次试穿</p>
-                    <p className="text-[10px] sm:text-xs text-slate-400">永久有效</p>
-                  </div>
-                  <span className="text-base sm:text-lg font-bold text-slate-900">$1.99</span>
-                </button>
-
-                <button
-                  onClick={() => handleBuyCredits('prod_credits_100')}
-                  className="w-full flex items-center justify-between p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 border-indigo-500 bg-indigo-50/50 hover:bg-indigo-50 transition-all relative"
-                >
-                  <span className="absolute -top-2 sm:-top-2.5 right-2 sm:right-3 bg-indigo-500 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full">
-                    最划算
-                  </span>
-                  <div className="text-left">
-                    <p className="font-semibold text-sm sm:text-base text-slate-900">100次试穿</p>
-                    <p className="text-[10px] sm:text-xs text-slate-400">$0.10/次 · 永久有效</p>
-                  </div>
-                  <span className="text-base sm:text-lg font-bold text-indigo-600">$9.99</span>
-                </button>
-
-                <div className="flex items-center gap-2 sm:gap-3 py-0.5 sm:py-1">
-                  <div className="flex-1 h-px bg-slate-200" />
-                  <span className="text-[10px] sm:text-xs text-slate-400 font-medium">或订阅会员</span>
-                  <div className="flex-1 h-px bg-slate-200" />
-                </div>
-                */}
-
                 {/* 月度订阅 - 使用真实的 Creem Product ID */}
                 <button
                   onClick={() => handleBuyCredits('prod_xWnfRXy7SUJHzhj4FrmgZ')}
@@ -338,26 +330,6 @@ export default function HomePage() {
                     <span className="text-[10px] sm:text-xs font-normal text-slate-400">/月</span>
                   </div>
                 </button>
-
-                {/* 年度订阅 - TODO: 在 Creem Dashboard 创建后替换 Product ID */}
-                {/*
-                <button
-                  onClick={() => handleBuyCredits('prod_xxx_yearly')}
-                  className="w-full flex items-center justify-between p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 border-amber-400 bg-amber-50/30 hover:bg-amber-50 transition-all relative"
-                >
-                  <span className="absolute -top-2 sm:-top-2.5 right-2 sm:right-3 bg-amber-500 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full">
-                    省 $39.89
-                  </span>
-                  <div className="text-left">
-                    <p className="font-semibold text-sm sm:text-base text-slate-900">年度专业版</p>
-                    <p className="text-[10px] sm:text-xs text-slate-400">1200次/年 · 相当于66折</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-base sm:text-lg font-bold text-amber-600">$79.99</span>
-                    <span className="text-[10px] sm:text-xs font-normal text-slate-400">/年</span>
-                  </div>
-                </button>
-                */}
               </div>
 
               {/* 查看全部 */}
