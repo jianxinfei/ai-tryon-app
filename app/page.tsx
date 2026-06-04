@@ -106,43 +106,22 @@ export default function HomePage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-b from-pink-50 to-pink-100 flex flex-col overflow-x-hidden">
-        {/* 状态栏 */}
-        <div className="flex justify-between items-center px-4 py-3 text-sm font-semibold text-slate-900">
-          <span>10:18</span>
-          <div className="flex items-center gap-2">
-            <svg width="18" height="12" viewBox="0 0 24 18" fill="none">
-              <path d="M3 2L5 6L10 4L15 6L20 2L24 8L19 12L20 18L15 14L10 16L5 14L0 18L2 12L0 8L3 2Z" fill="currentColor"/>
-            </svg>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <rect x="2" y="6" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
-              <path d="M2 10H22" stroke="currentColor" strokeWidth="2"/>
-              <path d="M6 6V4H18V6" stroke="currentColor" strokeWidth="2"/>
-              <path d="M10 14V18H14V14" fill="currentColor"/>
-            </svg>
-            <span>28%</span>
-          </div>
-        </div>
-
-        {/* 主内容 */}
-        <main className="flex-1 flex flex-col items-center justify-center px-4">
+      <div className="" style={{ width: '390px', height: '844px', margin: '0 auto', background: '#FFF7FA', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* LOGO区域 - W390 H749 */}
+        <div className="" style={{ width: '390px', height: '749px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
           {/* Logo */}
-          <div className="mb-8">
-            <div className="w-24 h-24 bg-white rounded-3xl shadow-lg shadow-pink-200/50 flex items-center justify-center">
-              <svg viewBox="0 0 100 100" className="w-16 h-16">
-                <text x="50" y="35" fontSize="26" textAnchor="middle" fill="#E53935" fontWeight="bold">美</text>
-                <text x="50" y="65" fontSize="26" textAnchor="middle" fill="#E53935" fontWeight="bold">美</text>
-                <text x="50" y="95" fontSize="26" textAnchor="middle" fill="#E53935" fontWeight="bold">美</text>
-              </svg>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '5px', height: '300px' }}>
+            <div className="flex items-center justify-center" style={{ width: '172px', height: '100px', background: '#FD7700', borderRadius: '28px', boxShadow: '0px 4px 4px 0px rgba(0, 0, 0, 0.25)' }}>
+              <span style={{ display: 'inline-block', width: '90px', height: '95px', color: '#FFFFFF', fontFamily: 'Inter', fontSize: '64px', fontWeight: 500, textAlign: 'center', lineHeight: '95px' }}>美</span>
             </div>
-          </div>
 
-          {/* 标题 */}
-          <h1 className="text-3xl font-bold text-black tracking-wide">what to wear</h1>
-          <p className="mt-2 text-gray-400">By AI</p>
+            {/* 标题 */}
+            <h1 className="" style={{ display: '-webkit-box', position: 'relative', color: '#1A1A1A', fontFamily: 'Inter', fontSize: '30px', fontWeight: 700, fontStyle: 'normal', textDecorationLine: 'none', lineHeight: 'normal' }}>what to wear</h1>
+            <p className="" style={{ display: '-webkit-box', width: '33px', height: '18px', flexShrink: 0, position: 'relative', color: '#9CA3AF', fontFamily: 'Inter', fontSize: '13px', fontWeight: 500, fontStyle: 'normal', textDecorationLine: 'none', lineHeight: 'normal' }}>By AI</p>
+          </div>
 
           {/* 底部链接 */}
-          <div className="mt-auto pt-4 pb-24 text-center space-x-4">
+          <div className="text-center space-x-4" style={{ paddingBottom: '20px' }}>
             <Link href="/terms" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
               用户协议
             </Link>
@@ -151,29 +130,34 @@ export default function HomePage() {
               隐私声明
             </Link>
           </div>
-        </main>
+        </div>
 
-        {/* 底部导航按钮 */}
-        <div className="fixed bottom-4 left-4 right-4 flex rounded-full shadow-lg overflow-hidden">
-          <button
-            onClick={() => router.push('/tryon')}
-            className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-4 px-6 transition-all active:scale-98"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-              <path d="M12 6.38l1.45 3.56L18 11.15l-3.55 3.38 1.45 5.56L12 17.07l-4.9 2.43 1.45-5.56L6 11.15l4.55-1.21L12 6.38z"/>
-            </svg>
-            Glow Up
-          </button>
-          <button
-            onClick={() => router.push('/profile')}
-            className="flex-1 flex items-center justify-center gap-2 bg-white text-gray-500 hover:text-gray-700 font-semibold py-4 px-6 transition-all active:scale-98"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-            </svg>
-            Profile
-          </button>
+        {/* 导航栏区域 - W390 H95 */}
+        <div className="" style={{ width: '390px', height: '95px', display: 'flex', padding: '4px', alignItems: 'center', justifyContent: 'center', background: '#FFF7FA', borderRadius: '36px' }}>
+          {/* 按钮容器 - W348 H62 */}
+          <div className="" style={{ width: '348px', height: '62px', display: 'flex', padding: '0px', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF', borderRadius: '36px' }}>
+            <button
+              onClick={() => router.push('/tryon')}
+              className="hover:bg-red-700 transition-all active:scale-98"
+              style={{ width: '174px', height: '62px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '4px', background: '#E01C47', borderRadius: '26px' }}
+            >
+              <span style={{ color: '#FFF', fontFamily: 'Inter', fontSize: '18px', fontWeight: 600, fontStyle: 'normal', textDecorationLine: 'none', lineHeight: 'normal' }}>Glow Up</span>
+              <svg style={{ width: '18px', height: '18px', position: 'relative' }} viewBox="0 0 24 24" fill="#FFF">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                <path d="M12 6.38l1.45 3.56L18 11.15l-3.55 3.38 1.45 5.56L12 17.07l-4.9 2.43 1.45-5.56L6 11.15l4.55-1.21L12 6.38z"/>
+              </svg>
+            </button>
+            <button
+              onClick={() => router.push('/profile')}
+              className="hover:bg-gray-100 transition-all active:scale-98"
+              style={{ width: '174px', height: '62px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '4px', background: '#FFF', borderRadius: '26px' }}
+            >
+              <span style={{ display: '-webkit-box', position: 'relative', color: '#9CA3AF', fontFamily: 'Inter', fontSize: '18px', fontWeight: 600, fontStyle: 'normal', textDecorationLine: 'none', lineHeight: 'normal' }}>Profile</span>
+              <svg style={{ width: '18px', height: '18px', position: 'relative' }} fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
