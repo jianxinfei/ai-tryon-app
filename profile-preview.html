@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>个人主页</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f5f7fb;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* 手机卡片容器 - 与首页一致 390x844 */
+        .profile-card {
+            width: 390px;
+            height: 844px;
+            max-width: 100%;
+            background-color: #FFF7FA;
+            border-radius: 0;
+            overflow: hidden;
+            padding: 0;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 顶部栏：账户信息 + 登录 右对齐 */
+        .top-bar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            padding: 60px 24px 0;
+        }
+        .brand, .login-btn {
+            font-size: 15px;
+            font-weight: 600;
+            background: #eef3fc;
+            padding: 6px 16px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+        }
+        .brand {
+            color: #1f2e3a;
+        }
+        .login-btn {
+            color: #1e2a3a;
+        }
+
+        /* 头像区域 */
+        .avatar-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 32px 24px 0;
+        }
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #e8e0d5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .avatar svg {
+            width: 52px;
+            height: 52px;
+        }
+        .avatar-info {
+            flex: 1;
+        }
+        .user-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1e2a3a;
+            margin-bottom: 4px;
+        }
+
+        /* 积分区域 - 整体居中 */
+        .credit-section {
+            padding: 24px 24px 0;
+            text-align: center;
+        }
+        .credit-number {
+            font-size: 64px;
+            font-weight: 800;
+            color: #3b82f6;
+            line-height: 1;
+            letter-spacing: -2px;
+        }
+        .credit-unit {
+            font-size: 13px;
+            color: #6c7a8a;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        /* 未认证区域 */
+        .verification-section {
+            background: #fef7e0;
+            border-radius: 20px;
+            padding: 14px 18px;
+            margin: 24px 24px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .verify-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .envelope-icon {
+            width: 20px;
+            height: 20px;
+            color: #b85c00;
+            flex-shrink: 0;
+        }
+        .verify-text-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .verify-label {
+            font-size: 15px;
+            font-weight: 600;
+            color: #b85c00;
+        }
+        .verify-hint {
+            font-size: 11px;
+            color: #9CA3AF;
+            font-weight: 400;
+        }
+        .verify-status {
+            font-size: 13px;
+            color: #e68a2e;
+            background: white;
+            padding: 5px 14px;
+            border-radius: 50px;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        /* 订阅按钮区域 */
+        .subscribe-section {
+            padding: 20px 24px 0;
+        }
+        .subscribe-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            border: none;
+            width: 100%;
+            padding: 16px 0;
+            border-radius: 60px;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .subscribe-btn:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+        .subscribe-note {
+            text-align: center;
+            font-size: 12px;
+            color: #8e9aaf;
+            margin-top: 10px;
+        }
+
+        /* 底部导航栏 - Profile 红色，Glow Up 白色 */
+        .bottom-nav {
+            margin-top: auto;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #FFF7FA;
+            border-radius: 36px;
+        }
+        .nav-container {
+            width: 348px;
+            height: 62px;
+            display: flex;
+            padding: 0px;
+            align-items: center;
+            justify-content: center;
+            background: #FFFFFF;
+            border-radius: 36px;
+        }
+        .nav-btn {
+            width: 174px;
+            height: 62px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .nav-btn:active {
+            transform: scale(0.98);
+        }
+        /* Profile 红色 */
+        .nav-btn-profile {
+            background: #E01C47;
+            border-radius: 26px;
+        }
+        .nav-btn-profile span {
+            color: #FFF;
+            font-family: 'Inter', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        /* Glow Up 白色 */
+        .nav-btn-glow {
+            background: #FFF;
+            border-radius: 26px;
+        }
+        .nav-btn-glow span {
+            color: #9CA3AF;
+            font-family: 'Inter', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-card">
+        <!-- 顶部: 账户信息 + 登录 右对齐 -->
+        <div class="top-bar">
+            <span class="brand">账户信息</span>
+            <button class="login-btn">登录</button>
+        </div>
+
+        <!-- 头像 + 用户名 -->
+        <div class="avatar-section">
+            <div class="avatar">
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="45" r="28" fill="#f4a261"/>
+                    <path d="M22 45c0-18 12-32 28-32s28 14 28 32" fill="#2d1810"/>
+                    <path d="M22 45c-2-8 2-16 8-20" fill="#2d1810"/>
+                    <circle cx="40" cy="48" r="3" fill="#2d1810"/>
+                    <circle cx="60" cy="48" r="3" fill="#2d1810"/>
+                    <path d="M42 58q8 6 16 0" stroke="#c75c3a" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    <rect x="42" y="70" width="16" height="12" fill="#f4a261"/>
+                    <path d="M25 82q25-8 50 0v18H25z" fill="#6b8cae"/>
+                </svg>
+            </div>
+            <div class="avatar-info">
+                <div class="user-name">user@example.com</div>
+            </div>
+        </div>
+
+        <!-- 积分 - 蓝色50，credits居中 -->
+        <div class="credit-section">
+            <div class="credit-number">50</div>
+            <div class="credit-unit">credits</div>
+        </div>
+
+        <!-- 邮箱未认证 -->
+        <div class="verification-section">
+            <div class="verify-left">
+                <svg class="envelope-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg>
+                <div class="verify-text-group">
+                    <span class="verify-label">邮箱未认证</span>
+                    <span class="verify-hint">未验证用户无法享受试衣服务</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 订阅按钮 -->
+        <div class="subscribe-section">
+            <button class="subscribe-btn">
+                <span>$</span>
+                <span>9.9 订阅月度专业版</span>
+            </button>
+        </div>
+
+        <!-- 底部导航栏 - Profile 红色，Glow Up 白色 -->
+        <div class="bottom-nav">
+            <div class="nav-container">
+                <button class="nav-btn nav-btn-glow" onclick="alert('前往试衣')">
+                    <span>Glow Up</span>
+                    <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="#9CA3AF">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        <path d="M12 6.38l1.45 3.56L18 11.15l-3.55 3.38 1.45 5.56L12 17.07l-4.9 2.43 1.45-5.56L6 11.15l4.55-1.21L12 6.38z"/>
+                    </svg>
+                </button>
+                <button class="nav-btn nav-btn-profile" onclick="alert('已在Profile')">
+                    <span>Profile</span>
+                    <svg style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="#FFF" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

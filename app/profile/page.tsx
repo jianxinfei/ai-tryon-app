@@ -124,72 +124,104 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-16">
-      {/* 蓝色渐变顶栏 */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 pt-12 pb-8">
-        <div className="flex items-center gap-4">
-          {/* 头像 */}
-          <div className="w-16 h-16 rounded-full bg-white/25 flex items-center justify-center flex-shrink-0">
-            <span className="text-2xl">{user ? '👤' : '👤'}</span>
-          </div>
-          {/* 昵称和邮箱 */}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-white truncate">
-              {loading ? '加载中...' : getNickname()}
-            </h1>
-            {user?.email && (
-              <p className="text-blue-100 text-sm truncate mt-0.5">
-                {user.email}
-              </p>
-            )}
+    <div className="min-h-screen bg-[#FFF7FA] pb-16" style={{ maxWidth: '390px', margin: '0 auto' }}>
+      {/* 顶部栏：账户信息入口 + 登录 */}
+      <div className="flex justify-end items-center gap-2.5 pt-16 px-6">
+        <button
+          onClick={() => router.push('/profile/account')}
+          className="text-[15px] font-semibold text-[#1f2e3a] bg-[#eef3fc] px-4 py-1.5 rounded-[30px]"
+        >
+          账户信息
+        </button>
+        <button
+          onClick={() => router.push('/profile/account')}
+          className="text-[15px] font-semibold text-[#1e2a3a] bg-[#eef3fc] px-4 py-1.5 rounded-[30px]"
+        >
+          登录
+        </button>
+      </div>
+
+      {/* 头像 + 用户信息 */}
+      <div className="flex items-center gap-4 pt-8 px-6">
+        <div className="w-20 h-20 rounded-full bg-[#e8e0d5] flex items-center justify-center flex-shrink-0 overflow-hidden">
+          <svg viewBox="0 0 100 100" fill="none" className="w-[52px] h-[52px]">
+            <circle cx="50" cy="45" r="28" fill="#f4a261"/>
+            <path d="M22 45c0-18 12-32 28-32s28 14 28 32" fill="#2d1810"/>
+            <path d="M22 45c-2-8 2-16 8-20" fill="#2d1810"/>
+            <circle cx="40" cy="48" r="3" fill="#2d1810"/>
+            <circle cx="60" cy="48" r="3" fill="#2d1810"/>
+            <path d="M42 58q8 6 16 0" stroke="#c75c3a" strokeWidth="2" fill="none" strokeLinecap="round"/>
+            <rect x="42" y="70" width="16" height="12" fill="#f4a261"/>
+            <path d="M25 82q25-8 50 0v18H25z" fill="#6b8cae"/>
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-[22px] font-bold text-[#1e2a3a] truncate">
+            {loading ? '加载中...' : (user?.email || 'user@example.com')}
+          </h1>
+        </div>
+      </div>
+
+      {/* 积分 - 蓝色居中 */}
+      <div className="text-center pt-6 px-6">
+        <div className="text-[64px] font-extrabold text-[#3b82f6] leading-none tracking-tight">
+          {loading ? '-' : (credits?.credits_balance ?? 0)}
+        </div>
+        <div className="text-[13px] text-[#6c7a8a] font-medium mt-1">credits</div>
+      </div>
+
+      {/* 邮箱未认证 */}
+      <div className="bg-[#fef7e0] rounded-[20px] p-3.5 mx-6 mt-6 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5 text-[#b85c00] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+          </svg>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[15px] font-semibold text-[#b85c00]">邮箱未认证</span>
+            <span className="text-[11px] text-[#9CA3AF]">未验证用户无法享受试衣服务</span>
           </div>
         </div>
       </div>
 
-      <div className="px-4 -mt-4">
-        {/* 统计卡片 - 精致仪表盘样式 */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          {/* 积分余额 */}
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-sm p-6 text-center border border-blue-200">
-            <div className="text-5xl font-bold text-blue-700 mb-3">
-              {loading ? '-' : (credits?.credits_balance ?? 0)}
-            </div>
-            <div className="text-xs text-slate-500">积分余额</div>
-          </div>
-          {/* 试衣次数 */}
-          <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl shadow-sm p-6 text-center border border-amber-200">
-            <div className="text-5xl font-bold text-amber-700 mb-3">
-              {loading ? '-' : (credits?.total_uses ?? 0)}
-            </div>
-            <div className="text-xs text-slate-500">试衣次数</div>
-          </div>
-        </div>
-
-        {/* 购买积分和会员 */}
+      {/* 购买积分和会员 */}
+      <div className="px-6 pt-5">
         <button
           onClick={() => router.push('/pricing')}
-          className="w-full py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200 hover:from-indigo-700 hover:to-indigo-600 transition-all mb-4"
+          className="w-full py-4 bg-gradient-to-br from-[#3b82f6] to-[#1e40af] text-white text-[18px] font-bold rounded-[60px] shadow-lg flex items-center justify-center gap-1 active:scale-[0.97] active:opacity-90 transition-all"
         >
-          购买积分和会员
+          <span>$</span>
+          <span>9.9 订阅月度专业版</span>
         </button>
+      </div>
 
-        {/* 账号与安全入口 */}
-        <button
-          onClick={() => router.push('/profile/account')}
-          className="w-full py-3.5 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl shadow-sm hover:bg-slate-50 transition-all flex items-center justify-between px-5 mb-4"
-        >
-          <span className="flex items-center gap-3">
-            <span className="text-lg">👤</span>
-            <span>账号与安全</span>
-          </span>
-          <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+      {/* 版本号 */}
+      <div className="text-center text-xs text-slate-400 mt-4">
+        AI Try-On v1.0.0
+      </div>
 
-        {/* 版本号 */}
-        <div className="text-center text-xs text-slate-400 mt-4">
-          AI Try-On v1.0.0
+      {/* 底部导航栏 - Profile 红色，Glow Up 白色 */}
+      <div className="mt-auto p-1 flex items-center justify-center bg-[#FFF7FA] rounded-[36px] mx-5 mb-4">
+        <div className="w-[348px] h-[62px] flex items-center justify-center bg-white rounded-[36px]">
+          <button
+            onClick={() => router.push('/tryon')}
+            className="w-[174px] h-[62px] flex flex-col justify-center items-center gap-1 bg-white rounded-[26px]"
+          >
+            <span className="text-[18px] font-semibold text-[#9CA3AF]" style={{ fontFamily: 'Inter, sans-serif' }}>Glow Up</span>
+            <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="#9CA3AF">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              <path d="M12 6.38l1.45 3.56L18 11.15l-3.55 3.38 1.45 5.56L12 17.07l-4.9 2.43 1.45-5.56L6 11.15l4.55-1.21L12 6.38z"/>
+            </svg>
+          </button>
+          <button
+            onClick={() => router.push('/profile')}
+            className="w-[174px] h-[62px] flex flex-col justify-center items-center gap-1 bg-[#E01C47] rounded-[26px]"
+          >
+            <span className="text-[18px] font-semibold text-white" style={{ fontFamily: 'Inter, sans-serif' }}>Profile</span>
+            <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="#FFF" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </button>
         </div>
       </div>
     </div>
