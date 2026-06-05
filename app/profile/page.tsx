@@ -227,3 +227,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+{/* 强制 Tailwind 编译所有自定义颜色 */}
+<div className="hidden bg-[#FFF7FA] text-[#3b82f6] bg-[#E01C47] bg-[#eef3fc] bg-[#fef7e0] text-[#1e2a3a] text-[#6c7a8a] text-[#b85c00] text-[#9CA3AF] bg-[#e8e0d5] from-[#3b82f6] to-[#1e40af]"></div>
