@@ -200,28 +200,32 @@ export default function ProfilePage() {
         AI Try-On v1.0.0
       </div>
 
-      {/* 底部导航栏 - Profile 红色，Glow Up 白色 */}
-      <div className="mt-auto p-1 flex items-center justify-center bg-[#FFF7FA] rounded-[36px] mx-5 mb-4">
-        <div className="w-[348px] h-[62px] flex items-center justify-center bg-white rounded-[36px]">
-          <button
-            onClick={() => router.push('/tryon')}
-            className="w-[174px] h-[62px] flex flex-col justify-center items-center gap-1 bg-white rounded-[26px]"
-          >
-            <span className="text-[18px] font-semibold text-[#9CA3AF]" style={{ fontFamily: 'Inter, sans-serif' }}>Glow Up</span>
-            <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="#9CA3AF">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-              <path d="M12 6.38l1.45 3.56L18 11.15l-3.55 3.38 1.45 5.56L12 17.07l-4.9 2.43 1.45-5.56L6 11.15l4.55-1.21L12 6.38z"/>
-            </svg>
-          </button>
-          <button
-            onClick={() => router.push('/profile')}
-            className="w-[174px] h-[62px] flex flex-col justify-center items-center gap-1 bg-[#E01C47] rounded-[26px]"
-          >
-            <span className="text-[18px] font-semibold text-white" style={{ fontFamily: 'Inter, sans-serif' }}>Profile</span>
-            <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="#FFF" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-            </svg>
-          </button>
+      {/* 底部导航栏 - 与主页完全一致 */}
+      <div className="mt-auto flex items-center justify-center" style={{ padding: '0' }}>
+        <div style={{ width: '390px', height: '95px', display: 'flex', padding: '4px', alignItems: 'center', justifyContent: 'center', background: '#FFF7FA', borderRadius: '36px' }}>
+          <div style={{ width: '348px', height: '62px', display: 'flex', padding: '0px', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF', borderRadius: '36px' }}>
+            <button
+              onClick={() => router.push('/tryon')}
+              className="hover:bg-gray-100 transition-all active:scale-98"
+              style={{ width: '174px', height: '62px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '4px', background: '#FFFFFF', borderRadius: '26px' }}
+            >
+              <span style={{ color: '#9CA3AF', fontFamily: 'Inter', fontSize: '18px', fontWeight: 600 }}>Glow Up</span>
+              <svg style={{ width: '18px', height: '18px' }} viewBox="0 0 24 24" fill="#9CA3AF">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                <path d="M12 6.38l1.45 3.56L18 11.15l-3.55 3.38 1.45 5.56L12 17.07l-4.9 2.43 1.45-5.56L6 11.15l4.55-1.21L12 6.38z"/>
+              </svg>
+            </button>
+            <button
+              onClick={() => router.push('/profile')}
+              className="hover:bg-red-700 transition-all active:scale-98"
+              style={{ width: '174px', height: '62px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '4px', background: '#E01C47', borderRadius: '26px' }}
+            >
+              <span style={{ color: '#FFF', fontFamily: 'Inter', fontSize: '18px', fontWeight: 600 }}>Profile</span>
+              <svg style={{ width: '18px', height: '18px' }} fill="none" viewBox="0 0 24 24" stroke="#FFF" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
