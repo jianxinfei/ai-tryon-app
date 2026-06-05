@@ -1,3 +1,5 @@
+import './globals.css'
+
 export const metadata = {
   title: 'AI Try-On',
   description: 'AI 虚拟试衣 - 上传照片和服装，AI 帮你一键试穿',
