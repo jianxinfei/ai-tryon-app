@@ -124,7 +124,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF7FA] pb-16" style={{ maxWidth: '390px', margin: '0 auto' }}>
+    <div className="" style={{ width: '390px', height: '844px', margin: '0 auto', background: '#FFF7FA', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* 顶部栏：账户信息入口 + 登录 */}
       <div className="flex justify-end items-center gap-2.5 pt-16 px-6">
         <button
