@@ -443,21 +443,41 @@ export async function POST(req: NextRequest) {
       hasAnonKey: !!supabaseAnonKey 
     });
     
-    const cookieStore = await cookies();
-    const allCookies = cookieStore.getAll();
+    // 优先从 Authorization header 读取 token
+    const authHeader = req.headers.get('authorization');
+    let token = authHeader?.replace('Bearer ', '');
     
-    const supabase = createServerClient(
+    // 如果没有 Authorization header，尝试从 Cookie 读取
+    if (!token) {
+      const cookieStore = await cookies();
+      const allCookies = cookieStore.getAll();
+      const authCookie = allCookies.find(c => c.name.includes('auth-token'));
+      if (authCookie) {
+        try {
+          const parsed = JSON.parse(atob(authCookie.value.replace('base64-', '')));
+          token = parsed.access_token;
+        } catch (e) {
+          console.error('[TryOn API] parse cookie error:', e);
+        }
+      }
+    }
+    
+    console.log('[TryOn API] has token:', !!token);
+    
+    if (!token) {
+      console.error('[TryOn API] 错误: 未找到认证 token');
+      return NextResponse.json({ success: false, error: '请先登录后再试衣', needLogin: true }, { status: 401 });
+    }
+
+    // 使用 supabase-js 直接验证 token
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
       supabaseUrl,
       supabaseAnonKey,
       {
-        cookies: {
-          getAll() { return allCookies; },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              );
-            } catch (e) { console.error('[TryOn API] setAll() 错误:', e); }
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
         },
       }

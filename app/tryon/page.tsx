@@ -214,9 +214,25 @@ export default function TryOnPage() {
     setPollProgress({ count: 0, estimatedTime: 30 });
 
     try {
+      // 从 localStorage 获取 token
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+      const storageKey = supabaseUrl ? `sb-${new URL(supabaseUrl).hostname}-auth-token` : 'sb-placeholder-auth-token';
+      const tokenData = localStorage.getItem(storageKey);
+      let accessToken = '';
+      if (tokenData) {
+        try {
+          const parsed = JSON.parse(tokenData);
+          accessToken = parsed.access_token || '';
+        } catch { /* ignore */ }
+      }
+      
       const response = await fetch('/api/tryon', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': accessToken ? `Bearer ${accessToken}` : '',
+        },
         body: JSON.stringify({
           personImage,
           clothingImage
