@@ -6,22 +6,31 @@
  * GET  → 查询用户积分状态
  * POST → 消耗一次试衣机会
  *
- * 认证方式：通过 createServerClient + cookies() 读取 Supabase session
+ * 认证方式：通过 req.headers.cookie 读取 Supabase session
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { checkUserCanTryOn, consumeTryOn } from '@/lib/credits';
 
 // ══════════════════════════════════════════════
-// 服务端用户认证（从 cookie 中获取 Supabase session）
+// 服务端用户认证（从 req.headers.cookie 中获取 Supabase session）
 // ══════════════════════════════════════════════
 
-async function getAuthUser() {
-  const cookieStore = await cookies();
-  const allCookies = cookieStore.getAll();
-  console.log('[Credits API] cookies count:', allCookies.length);
+function parseCookieHeader(cookieHeader: string | null) {
+  if (!cookieHeader) return [];
+  return cookieHeader.split(';').map((cookie) => {
+    const [name, ...rest] = cookie.trim().split('=');
+    return { name, value: rest.join('=') };
+  });
+}
+
+async function getAuthUser(req: NextRequest) {
+  const cookieHeader = req.headers.get('cookie');
+  const allCookies = parseCookieHeader(cookieHeader);
+  
+  console.log('[Credits API] cookie header length:', cookieHeader?.length || 0);
+  console.log('[Credits API] parsed cookies count:', allCookies.length);
   console.log('[Credits API] cookie names:', allCookies.map(c => c.name));
 
   const supabase = createServerClient(
@@ -30,13 +39,7 @@ async function getAuthUser() {
     {
       cookies: {
         getAll() { return allCookies; },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch (e) { console.error('[Credits API] setAll error:', e); }
-        },
+        setAll() { /* 只读，不需要设置 */ },
       },
     }
   );
@@ -57,7 +60,7 @@ async function getAuthUser() {
 // ── GET: 查询积分 ──
 export async function GET(req: NextRequest) {
   try {
-    const user = await getAuthUser();
+    const user = await getAuthUser(req);
     if (!user) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
     }
@@ -83,7 +86,7 @@ export async function GET(req: NextRequest) {
       use_type: check.use_type,
     });
   } catch (err: any) {
-    console.error('[Credits] GET 出错:', err);
+    console.error('[Credits API] GET 出错:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
@@ -91,7 +94,7 @@ export async function GET(req: NextRequest) {
 // ── POST: 消耗一次试衣 ──
 export async function POST(req: NextRequest) {
   try {
-    const user = await getAuthUser();
+    const user = await getAuthUser(req);
     if (!user) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
     }
@@ -135,7 +138,7 @@ export async function POST(req: NextRequest) {
       credits_balance: result.credits_balance,
     });
   } catch (err: any) {
-    console.error('[Credits] POST 出错:', err);
+    console.error('[Credits API] POST 出错:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
