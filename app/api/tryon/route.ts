@@ -34,8 +34,11 @@ const KLING_MODEL = 'kolors-virtual-try-on-v1';
 const POLL_TIMEOUT = 120;
 // 轮询间隔（毫秒）
 const POLL_INTERVAL = 3000;
-// 单次 API 调用超时（毫秒）
+// 单个 API 调用超时（毫秒）
 const API_CALL_TIMEOUT = 15000;
+
+// 整个 POST 接口超时（毫秒）— 认证 + 下载图片 + 创建任务
+const POST_TIMEOUT = 15000;
 
 // ══════════════════════════════════════════════
 // 可灵 AI 错误码定义
@@ -432,6 +435,27 @@ async function createKlingTryOnTask(
 export async function POST(req: NextRequest) {
   console.log('[TryOn API] === 收到试衣请求 ===');
 
+  // 整体超时控制（15 秒）
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), POST_TIMEOUT);
+
+  try {
+    return await handleTryOnRequest(req, controller.signal);
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      console.error('[TryOn API] 整体超时（15秒），已中止');
+      return NextResponse.json(
+        { success: false, error: '请求超时，请稍后重试', message: '服务器处理超时，请重试' },
+        { status: 504 }
+      );
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
   try {
     // ── 1. 用户认证（使用 createServerClient 自动处理 token 刷新） ──
     console.log('[TryOn API] 开始用户认证...');

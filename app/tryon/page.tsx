@@ -204,59 +204,7 @@ export default function TryOnPage() {
     }
   };
 
-  // 创建试衣任务
-  const createTryOnTask = useCallback(async () => {
-    if (!personImage || !clothingImage) {
-      setError('请先上传人物照片和服装照片');
-      return;
-    }
-
-    setError('');
-    setIsLoading(true);
-    setResult(null);
-    setPollProgress({ count: 0, estimatedTime: 30 });
-
-    try {
-      // 从 localStorage 获取 token（Supabase token 存储在第三方 Cookie 中，无法通过 credentials 发送）
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-      const storageKey = supabaseUrl ? `sb-${new URL(supabaseUrl).hostname}-auth-token` : 'sb-placeholder-auth-token';
-      const tokenData = localStorage.getItem(storageKey);
-      let accessToken = '';
-      if (tokenData) {
-        try {
-          const parsed = JSON.parse(tokenData);
-          accessToken = parsed.access_token || '';
-        } catch { /* ignore */ }
-      }
-      
-      const response = await fetch('/api/tryon', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 
-          'Content-Type': 'application/json',
-          ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
-        },
-        body: JSON.stringify({
-          personImage,
-          clothingImage
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '创建试衣任务失败');
-      }
-
-      setTaskId(data.taskId);
-      startPolling(data.taskId);
-    } catch (err: any) {
-      setError(err.message || '试衣失败，请重试');
-      setIsLoading(false);
-    }
-  }, [personImage, clothingImage]);
-
-  // 开始轮询
+  // 开始轮询（定义在 createTryOnTask 之前，确保闭包引用正确）
   const startPolling = useCallback((taskId: string) => {
     // 清除之前的定时器
     if (pollIntervalRef.current) {
@@ -336,7 +284,59 @@ export default function TryOnPage() {
         setIsLoading(false);
       }
     }, 2000);
-  }, []); // 移除 pollProgress.count 依赖
+  }, []);
+
+  // 创建试衣任务
+  const createTryOnTask = useCallback(async () => {
+    if (!personImage || !clothingImage) {
+      setError('请先上传人物照片和服装照片');
+      return;
+    }
+
+    setError('');
+    setIsLoading(true);
+    setResult(null);
+    setPollProgress({ count: 0, estimatedTime: 30 });
+
+    try {
+      // 从 localStorage 获取 token（Supabase token 存储在第三方 Cookie 中，无法通过 credentials 发送）
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+      const storageKey = supabaseUrl ? `sb-${new URL(supabaseUrl).hostname}-auth-token` : 'sb-placeholder-auth-token';
+      const tokenData = localStorage.getItem(storageKey);
+      let accessToken = '';
+      if (tokenData) {
+        try {
+          const parsed = JSON.parse(tokenData);
+          accessToken = parsed.access_token || '';
+        } catch { /* ignore */ }
+      }
+      
+      const response = await fetch('/api/tryon', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({
+          personImage,
+          clothingImage
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '创建试衣任务失败');
+      }
+
+      setTaskId(data.taskId);
+      startPolling(data.taskId);
+    } catch (err: any) {
+      setError(err.message || '试衣失败，请重试');
+      setIsLoading(false);
+    }
+  }, [personImage, clothingImage, startPolling]);
 
   // 更换服装
   const handleChangeClothing = useCallback(() => {
