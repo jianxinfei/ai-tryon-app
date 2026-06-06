@@ -564,14 +564,33 @@ export default function TryOnPage() {
                 {result.success ? '试衣成功' : '试衣失败'}
               </span>
             </div>
-            {result.success && result.resultImageUrl ? (
+            {result.success ? (
               <>
-                <div className="relative rounded-xl overflow-hidden bg-slate-100">
-                  <img
-                    src={result.resultImageUrl}
-                    alt="试衣结果"
-                    className="w-full max-h-[600px] object-contain"
-                  />
+                {/* 图片展示区域 - 使用 resultUrl 或 resultImageUrl */}
+                <div className="relative rounded-xl overflow-hidden bg-slate-100" style={{ minHeight: '200px' }}>
+                  {(result.resultUrl || result.resultImageUrl) ? (
+                    <>
+                      <img
+                        src={result.resultUrl || result.resultImageUrl}
+                        alt="试衣结果"
+                        className="w-full max-h-[600px] object-contain"
+                        onError={(e) => {
+                          console.error('[TryOn] 图片加载失败:', result.resultUrl || result.resultImageUrl);
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const fallback = target.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                      <div className="hidden w-full h-[200px] items-center justify-center text-red-500 text-sm">
+                        图片加载失败，请刷新页面重试
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full h-[200px] flex items-center justify-center text-amber-600 text-sm">
+                      未获取到图片 URL
+                    </div>
+                  )}
                   <span className="absolute bottom-2 right-2 text-white bg-black/40 px-2 py-0.5 rounded-md text-[11px] z-10">
                     AI TryOn · 生成
                   </span>
