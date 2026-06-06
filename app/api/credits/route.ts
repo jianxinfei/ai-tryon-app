@@ -20,25 +20,37 @@ import { checkUserCanTryOn, consumeTryOn } from '@/lib/credits';
 
 async function getAuthUser() {
   const cookieStore = await cookies();
+  const allCookies = cookieStore.getAll();
+  console.log('[Credits API] cookies count:', allCookies.length);
+  console.log('[Credits API] cookie names:', allCookies.map(c => c.name));
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() { return cookieStore.getAll(); },
+        getAll() { return allCookies; },
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             );
-          } catch { /* 忽略 */ }
+          } catch (e) { console.error('[Credits API] setAll error:', e); }
         },
       },
     }
   );
 
   const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) return null;
+  if (error) {
+    console.error('[Credits API] getUser error:', error.message);
+    return null;
+  }
+  if (!user) {
+    console.log('[Credits API] getUser returned no user');
+    return null;
+  }
+  console.log('[Credits API] authenticated user:', user.id);
   return user;
 }
 
