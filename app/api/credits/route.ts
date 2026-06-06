@@ -6,67 +6,58 @@
  * GET  → 查询用户积分状态
  * POST → 消耗一次试衣机会
  *
- * 认证方式：通过 req.headers.cookie 读取 Supabase session
+ * 认证方式：使用 @supabase/ssr createServerClient，自动处理 token 刷新
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { checkUserCanTryOn, consumeTryOn } from '@/lib/credits';
 
 // ══════════════════════════════════════════════
-// 服务端用户认证（从 req.headers.cookie 中获取 Supabase session）
+// 服务端用户认证（使用 createServerClient 自动处理 token 刷新）
 // ══════════════════════════════════════════════
 
-function parseCookieHeader(cookieHeader: string | null) {
-  if (!cookieHeader) return [];
-  return cookieHeader.split(';').map((cookie) => {
-    const [name, ...rest] = cookie.trim().split('=');
-    return { name, value: rest.join('=') };
-  });
-}
-
-async function getAuthUser(req: NextRequest) {
-  // 优先从 Authorization header 读取 token
-  const authHeader = req.headers.get('authorization');
-  let token = authHeader?.replace('Bearer ', '');
+async function getAuthUser() {
+  const cookieStore = await cookies();
   
-  // 如果没有 Authorization header，尝试从 Cookie 读取
-  if (!token) {
-    const cookieHeader = req.headers.get('cookie');
-    const allCookies = parseCookieHeader(cookieHeader);
-    const authCookie = allCookies.find(c => c.name.includes('auth-token'));
-    if (authCookie) {
-      try {
-        const parsed = JSON.parse(atob(authCookie.value.replace('base64-', '')));
-        token = parsed.access_token;
-      } catch (e) {
-        console.error('[Credits API] parse cookie error:', e);
-      }
-    }
-  }
-  
-  console.log('[Credits API] has token:', !!token);
-  
-  if (!token) {
-    console.log('[Credits API] no token found');
-    return null;
-  }
-
-  // 使用 supabase-js 直接验证 token
-  const { createClient } = await import('@supabase/supabase-js');
-  const supabase = createClient(
+  const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch (e) {
+            console.error('[Credits API] setAll cookies error:', e);
+          }
         },
       },
     }
   );
 
-  const { data: { user }, error } = await supabase.auth.getUser();
+  let { data: { user }, error } = await supabase.auth.getUser();
+  
+  // 如果 token 过期，尝试刷新
+  if (error && error.message?.includes('token is expired')) {
+    console.log('[Credits API] token 过期，尝试刷新...');
+    const { error: refreshError } = await supabase.auth.refreshSession();
+    
+    if (refreshError) {
+      console.error('[Credits API] token 刷新失败:', refreshError.message);
+      return null;
+    }
+    
+    console.log('[Credits API] token 刷新成功，重新获取用户...');
+    const retryResult = await supabase.auth.getUser();
+    user = retryResult.data.user;
+    error = retryResult.error;
+  }
+
   if (error) {
     console.error('[Credits API] getUser error:', error.message);
     return null;
@@ -82,7 +73,7 @@ async function getAuthUser(req: NextRequest) {
 // ── GET: 查询积分 ──
 export async function GET(req: NextRequest) {
   try {
-    const user = await getAuthUser(req);
+    const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
     }
@@ -116,7 +107,7 @@ export async function GET(req: NextRequest) {
 // ── POST: 消耗一次试衣 ──
 export async function POST(req: NextRequest) {
   try {
-    const user = await getAuthUser(req);
+    const user = await getAuthUser();
     if (!user) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
     }

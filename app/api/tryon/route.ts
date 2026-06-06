@@ -433,74 +433,65 @@ export async function POST(req: NextRequest) {
   console.log('[TryOn API] === 收到试衣请求 ===');
 
   try {
-    // ── 1. 验证用户登录 ──
-    console.log('[TryOn API] 开始验证用户登录...');
-    
-    // 检查环境变量
+    // ── 1. 用户认证（使用 createServerClient 自动处理 token 刷新） ──
+    console.log('[TryOn API] 开始用户认证...');
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
-    if (!supabaseUrl) {
-      console.error('[TryOn API] 错误: NEXT_PUBLIC_SUPABASE_URL 环境变量未设置');
-      return NextResponse.json({ error: '服务器配置错误', message: 'Supabase URL 未配置' }, { status: 500 });
-    }
-    
-    if (!supabaseAnonKey) {
-      console.error('[TryOn API] 错误: NEXT_PUBLIC_SUPABASE_ANON_KEY 环境变量未设置');
-      return NextResponse.json({ error: '服务器配置错误', message: 'Supabase Anon Key 未配置' }, { status: 500 });
-    }
-    
-    console.log('[TryOn API] 环境变量检查通过:', { 
-      supabaseUrl: supabaseUrl.substring(0, 20) + '...', 
-      hasAnonKey: !!supabaseAnonKey 
-    });
-    
-    // 优先从 Authorization header 读取 token
-    const authHeader = req.headers.get('authorization');
-    let token = authHeader?.replace('Bearer ', '');
-    
-    // 如果没有 Authorization header，尝试从 Cookie 读取
-    if (!token) {
-      const cookieStore = await cookies();
-      const allCookies = cookieStore.getAll();
-      const authCookie = allCookies.find(c => c.name.includes('auth-token'));
-      if (authCookie) {
-        try {
-          const parsed = JSON.parse(atob(authCookie.value.replace('base64-', '')));
-          token = parsed.access_token;
-        } catch (e) {
-          console.error('[TryOn API] parse cookie error:', e);
-        }
-      }
-    }
-    
-    console.log('[TryOn API] has token:', !!token);
-    
-    if (!token) {
-      console.error('[TryOn API] 错误: 未找到认证 token');
-      return NextResponse.json({ success: false, error: '请先登录后再试衣', needLogin: true }, { status: 401 });
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('[TryOn API] 错误: Supabase 环境变量未设置');
+      return NextResponse.json({ success: false, error: '服务器配置错误' }, { status: 500 });
     }
 
-    // 使用 supabase-js 直接验证 token
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+    // 创建 cookie store 用于 createServerClient
+    const cookieStore = await cookies();
+    
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
         },
-      }
-    );
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch (e) {
+            console.error('[TryOn API] setAll cookies error:', e);
+          }
+        },
+      },
+    });
 
-    console.log('[TryOn API] 调用 supabase.auth.getUser()...');
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // 第一次尝试获取用户
+    let { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    // 如果 token 过期，尝试刷新
+    if (authError && authError.message?.includes('token is expired')) {
+      console.log('[TryOn API] token 过期，尝试刷新...');
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      
+      if (refreshError) {
+        console.error('[TryOn API] token 刷新失败:', refreshError.message);
+        return NextResponse.json(
+          { success: false, error: '登录已过期，请重新登录', needLogin: true },
+          { status: 401 }
+        );
+      }
+      
+      console.log('[TryOn API] token 刷新成功，重新获取用户...');
+      const retryResult = await supabase.auth.getUser();
+      user = retryResult.data.user;
+      authError = retryResult.error;
+    }
     
     if (authError) {
-      console.error('[TryOn API] 认证错误:', authError.message, authError);
-      return NextResponse.json({ success: false, error: '认证失败', message: authError.message, needLogin: true }, { status: 401 });
+      console.error('[TryOn API] 认证错误:', authError.message);
+      return NextResponse.json(
+        { success: false, error: '认证失败', message: authError.message, needLogin: true },
+        { status: 401 }
+      );
     }
     
     if (!user) {
