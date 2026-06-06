@@ -214,11 +214,13 @@ export default function TryOnPage() {
     // 重置轮询计数
     pollCountRef.current = 0;
 
-    pollIntervalRef.current = window.setInterval(async () => {
+    // 轮询函数
+    const pollOnce = async () => {
       try {
-        // 使用 useRef 计数，避免闭包问题
         pollCountRef.current += 1;
         const currentCount = pollCountRef.current;
+        
+        console.log(`[TryOn] 轮询第 ${currentCount} 次, taskId: ${taskId}`);
         
         const response = await fetch('/api/tryon/status', {
           method: 'POST',
@@ -227,6 +229,7 @@ export default function TryOnPage() {
         });
 
         const data = await response.json();
+        console.log(`[TryOn] 轮询第 ${currentCount} 次响应:`, data);
 
         if (!response.ok) {
           throw new Error(data.error || '查询状态失败');
@@ -283,7 +286,13 @@ export default function TryOnPage() {
         setError('查询状态失败，请重试');
         setIsLoading(false);
       }
-    }, 2000);
+    };
+
+    // 立即执行第一次轮询（不等待 2 秒）
+    pollOnce();
+
+    // 之后每 2 秒轮询一次
+    pollIntervalRef.current = window.setInterval(pollOnce, 2000);
   }, []);
 
   // 创建试衣任务
