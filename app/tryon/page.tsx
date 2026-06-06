@@ -134,7 +134,9 @@ export default function TryOnPage() {
   const uploadImage = async (file: File): Promise<string> => {
     if (!supabase) throw new Error('Supabase 客户端未初始化');
     
-    const fileName = `${Date.now()}-${file.name}`;
+    // 生成纯英文数字文件名（避免中文导致上传失败）
+    const ext = file.name.split('.').pop() || 'jpg';
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
     const filePath = `tryon-images/${fileName}`;
 
     const { data, error } = await supabase.storage
