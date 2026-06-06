@@ -28,6 +28,9 @@ export default function HomePage() {
       if (res.ok) {
         const data = await res.json();
         setCredits(data);
+      } else if (res.status === 401) {
+        // 未登录，不显示错误，积分保持为 null
+        console.log('首页：用户未登录，不显示积分');
       }
     } catch (err) {
       console.error('获取积分失败:', err);
