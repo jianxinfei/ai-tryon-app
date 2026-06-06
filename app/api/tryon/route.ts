@@ -341,19 +341,28 @@ async function fetchWithSmartRetry(
 async function downloadImageAsBase64(imageUrl: string): Promise<string> {
   console.log('[TryOn API] 下载图片:', imageUrl.substring(0, 80));
 
-  const response = await fetch(imageUrl, {
-    signal: AbortSignal.timeout(15000),
-  });
+  try {
+    const response = await fetch(imageUrl, {
+      signal: AbortSignal.timeout(15000),
+    });
 
-  if (!response.ok) {
-    throw new Error(`图片下载失败 (HTTP ${response.status}): ${imageUrl}`);
+    if (!response.ok) {
+      console.error(`[TryOn API] 图片下载失败 HTTP ${response.status}: ${imageUrl}`);
+      throw new Error(`图片下载失败 (HTTP ${response.status}): ${imageUrl}`);
+    }
+
+    const contentType = response.headers.get('content-type');
+    console.log('[TryOn API] 图片 Content-Type:', contentType);
+
+    const buffer = await response.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString('base64');
+
+    console.log('[TryOn API] 图片已转为 Base64，大小:', (buffer.byteLength / 1024).toFixed(1), 'KB');
+    return base64;
+  } catch (err: any) {
+    console.error('[TryOn API] 下载图片异常:', err.message);
+    throw err;
   }
-
-  const buffer = await response.arrayBuffer();
-  const base64 = Buffer.from(buffer).toString('base64');
-
-  console.log('[TryOn API] 图片已转为 Base64，大小:', (buffer.byteLength / 1024).toFixed(1), 'KB');
-  return base64;
 }
 
 /**
@@ -391,6 +400,9 @@ async function createKlingTryOnTask(
 
   const bodyStr = JSON.stringify(requestBody);
   const headers = getKlingAuthHeaders();
+  
+  console.log('[TryOn API] 可灵 AI 请求头:', JSON.stringify(headers));
+  console.log('[TryOn API] 可灵 AI 请求体大小:', (bodyStr.length / 1024).toFixed(1), 'KB');
 
   const response = await fetchWithSmartRetry(url, {
     method: 'POST',
