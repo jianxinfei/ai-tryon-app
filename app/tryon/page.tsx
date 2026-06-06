@@ -38,12 +38,33 @@ export default function TryOnPage() {
   const personInputRef = useRef<HTMLInputElement>(null);
   const clothingInputRef = useRef<HTMLInputElement>(null);
 
-  // Supabase 客户端（延迟初始化）
-  const [supabase] = useState(() => {
+  // Supabase 客户端（客户端初始化）
+  const [supabase, setSupabase] = useState<any>(null);
+  
+  useEffect(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-    return createBrowserClient(supabaseUrl, supabaseKey);
-  });
+    const client = createBrowserClient(supabaseUrl, supabaseKey, {
+      auth: {
+        storageKey: supabaseUrl ? `sb-${new URL(supabaseUrl).hostname}-auth-token` : 'sb-placeholder-auth-token',
+        storage: {
+          getItem: (key) => {
+            try { return localStorage.getItem(key); } catch { return null; }
+          },
+          setItem: (key, value) => {
+            try { localStorage.setItem(key, value); } catch (e) { console.error('[TryOn] localStorage.setItem 失败:', e); }
+          },
+          removeItem: (key) => {
+            try { localStorage.removeItem(key); } catch (e) { console.error('[TryOn] localStorage.removeItem 失败:', e); }
+          },
+        },
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+      },
+    });
+    setSupabase(client);
+  }, []);
 
   // 用户状态
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -70,6 +91,8 @@ export default function TryOnPage() {
 
   // 初始化 - 检查登录状态
   useEffect(() => {
+    if (!supabase) return;
+    
     const checkUser = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -109,6 +132,8 @@ export default function TryOnPage() {
 
   // 上传图片到 Supabase Storage
   const uploadImage = async (file: File): Promise<string> => {
+    if (!supabase) throw new Error('Supabase 客户端未初始化');
+    
     const fileName = `${Date.now()}-${file.name}`;
     const filePath = `tryon-images/${fileName}`;
 
