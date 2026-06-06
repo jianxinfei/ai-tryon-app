@@ -73,7 +73,12 @@ export default function ProfilePage() {
           email: session.user.email,
         });
 
-        const creditRes = await fetch('/api/credits', { credentials: 'include' });
+        const creditRes = await fetch('/api/credits', {
+          credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        });
         const creditData = await creditRes.json();
 
         if (creditRes.ok && creditData.credits_balance !== undefined) {

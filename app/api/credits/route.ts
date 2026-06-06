@@ -26,20 +26,42 @@ function parseCookieHeader(cookieHeader: string | null) {
 }
 
 async function getAuthUser(req: NextRequest) {
-  const cookieHeader = req.headers.get('cookie');
-  const allCookies = parseCookieHeader(cookieHeader);
+  // 优先从 Authorization header 读取 token
+  const authHeader = req.headers.get('authorization');
+  let token = authHeader?.replace('Bearer ', '');
   
-  console.log('[Credits API] cookie header length:', cookieHeader?.length || 0);
-  console.log('[Credits API] parsed cookies count:', allCookies.length);
-  console.log('[Credits API] cookie names:', allCookies.map(c => c.name));
+  // 如果没有 Authorization header，尝试从 Cookie 读取
+  if (!token) {
+    const cookieHeader = req.headers.get('cookie');
+    const allCookies = parseCookieHeader(cookieHeader);
+    const authCookie = allCookies.find(c => c.name.includes('auth-token'));
+    if (authCookie) {
+      try {
+        const parsed = JSON.parse(atob(authCookie.value.replace('base64-', '')));
+        token = parsed.access_token;
+      } catch (e) {
+        console.error('[Credits API] parse cookie error:', e);
+      }
+    }
+  }
+  
+  console.log('[Credits API] has token:', !!token);
+  
+  if (!token) {
+    console.log('[Credits API] no token found');
+    return null;
+  }
 
-  const supabase = createServerClient(
+  // 使用 supabase-js 直接验证 token
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookies: {
-        getAll() { return allCookies; },
-        setAll() { /* 只读，不需要设置 */ },
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
     }
   );
