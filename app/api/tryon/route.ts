@@ -20,7 +20,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { checkUserHasEnoughCredits } from '@/lib/credits';
+import { checkUserHasEnoughCredits, consumeTryOn, rollbackCredits } from '@/lib/credits';
 import { createHmac } from 'crypto';
 
 // ══════════════════════════════════════════════
@@ -544,28 +544,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: '服装图片 URL 格式无效' }, { status: 400 });
     }
 
-    // ── 5. 调用可灵 AI 创建试衣任务（异步模式） ──
+    // ── 5. 扣减积分（预扣，防止免费试衣） ──
+    console.log('[TryOn API] 开始扣减积分...');
+    const consumeResult = await consumeTryOn(userId, `tryon-${Date.now()}`);
+    if (!consumeResult.success) {
+      console.error('[TryOn API] 积分扣减失败:', consumeResult.error);
+      return NextResponse.json(
+        { success: false, error: '积分扣减失败', message: consumeResult.error || '请重试' },
+        { status: 500 }
+      );
+    }
+    console.log('[TryOn API] 积分扣减成功，剩余:', consumeResult.credits_balance);
+
+    // ── 6. 调用可灵 AI 创建试衣任务（异步模式） ──
     console.log('[TryOn API] 创建可灵 AI 试衣任务...');
     let taskId: string;
 
     try {
-      // 只创建任务，不等待结果，积分扣减由前端在成功后调用
       taskId = await createKlingTryOnTask(personImage, clothingImage);
       console.log('[TryOn API] 任务创建成功，task_id:', taskId);
     } catch (err: any) {
       console.error('[TryOn API] 创建试衣任务失败:', err.message);
+      // 任务创建失败，回滚积分
+      console.log('[TryOn API] 任务创建失败，回滚积分...');
+      await rollbackCredits(userId, 1, '试衣任务创建失败，回滚积分');
+      console.log('[TryOn API] 积分回滚成功');
       return NextResponse.json(
         { success: false, error: '创建试衣任务失败', message: err.message || '请重试或更换图片' },
         { status: 500 }
       );
     }
 
-    // ── 6. 返回结果（立即返回 task_id，不等待图片生成） ──
+    // ── 7. 返回结果（立即返回 task_id，不等待图片生成） ──
     console.log('[TryOn API] 任务创建完成，返回 taskId:', taskId);
 
     return NextResponse.json({
       success: true,
       taskId,
+      creditsBalance: consumeResult.credits_balance,
       message: '任务已创建',
     });
 

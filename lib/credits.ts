@@ -349,3 +349,33 @@ export async function consumeTryOn(
 ): Promise<ConsumeResult> {
   return consumeCredits(userId, 1, 'AI试衣消耗', referenceId);
 }
+
+/**
+ * 回滚积分（任务失败时返还）
+ * 
+ * @param userId  用户 ID
+ * @param amount  返还数量（默认 1）
+ * @param reason  回滚原因
+ */
+export async function rollbackCredits(
+  userId: string,
+  amount: number = 1,
+  reason: string = '试衣任务失败，回滚积分',
+): Promise<{ success: boolean; newBalance: number }> {
+  console.log('[Credits] 回滚积分:', { userId, amount, reason });
+  
+  try {
+    const result = await addCredits({
+      userId,
+      amount,
+      transactionType: 'refund',
+      description: reason,
+    });
+    
+    console.log('[Credits] 回滚积分成功:', { userId, newBalance: result.newBalance });
+    return { success: true, newBalance: result.newBalance };
+  } catch (error: any) {
+    console.error('[Credits] 回滚积分失败:', { userId, error: error.message });
+    return { success: false, newBalance: 0 };
+  }
+}

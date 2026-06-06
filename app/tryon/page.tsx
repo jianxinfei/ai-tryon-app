@@ -88,6 +88,7 @@ export default function TryOnPage() {
   // 轮询状态
   const [pollProgress, setPollProgress] = useState<PollProgress>({ count: 0, estimatedTime: 30 });
   const pollIntervalRef = useRef<number | null>(null);
+  const pollCountRef = useRef<number>(0); // 使用 useRef 存储轮询次数，避免闭包问题
 
   // 初始化 - 检查登录状态
   useEffect(() => {
@@ -216,7 +217,7 @@ export default function TryOnPage() {
     setPollProgress({ count: 0, estimatedTime: 30 });
 
     try {
-      // 从 localStorage 获取 token
+      // 从 localStorage 获取 token（Supabase token 存储在第三方 Cookie 中，无法通过 credentials 发送）
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
       const storageKey = supabaseUrl ? `sb-${new URL(supabaseUrl).hostname}-auth-token` : 'sb-placeholder-auth-token';
       const tokenData = localStorage.getItem(storageKey);
@@ -233,7 +234,7 @@ export default function TryOnPage() {
         credentials: 'include',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': accessToken ? `Bearer ${accessToken}` : '',
+          ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
         },
         body: JSON.stringify({
           personImage,
@@ -261,9 +262,16 @@ export default function TryOnPage() {
     if (pollIntervalRef.current) {
       clearInterval(pollIntervalRef.current);
     }
+    
+    // 重置轮询计数
+    pollCountRef.current = 0;
 
     pollIntervalRef.current = window.setInterval(async () => {
       try {
+        // 使用 useRef 计数，避免闭包问题
+        pollCountRef.current += 1;
+        const currentCount = pollCountRef.current;
+        
         const response = await fetch('/api/tryon/status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -276,17 +284,13 @@ export default function TryOnPage() {
           throw new Error(data.error || '查询状态失败');
         }
 
-        // 更新轮询进度
-        setPollProgress(prev => {
-          const newCount = prev.count + 1;
-          const elapsed = newCount * 2;
-          const estimated = Math.max(0, 30 - elapsed);
-          return { count: newCount, estimatedTime: estimated };
-        });
+        // 更新轮询进度（仅用于 UI 显示）
+        const elapsed = currentCount * 2;
+        const estimated = Math.max(0, 30 - elapsed);
+        setPollProgress({ count: currentCount, estimatedTime: estimated });
 
-        // 检查超时（30秒）
-        const currentCount = pollProgress.count + 1;
-        if (currentCount >= 15) { // 15 * 2 = 30秒
+        // 检查超时（30秒 = 15次 * 2秒）
+        if (currentCount >= 15) {
           if (pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;
@@ -332,7 +336,7 @@ export default function TryOnPage() {
         setIsLoading(false);
       }
     }, 2000);
-  }, [pollProgress.count]);
+  }, []); // 移除 pollProgress.count 依赖
 
   // 更换服装
   const handleChangeClothing = useCallback(() => {

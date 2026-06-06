@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac } from 'crypto';
+import { rollbackCredits } from '@/lib/credits';
 
 // ══════════════════════════════════════════════
 // 可灵 AI 配置
@@ -83,6 +84,7 @@ export async function POST(req: NextRequest) {
     // 解析请求体
     const body = await req.json().catch(() => ({}));
     taskId = body.taskId;
+    const userId = body.userId; // 用于积分回滚
 
     if (!taskId) {
       console.log('[TryOn Status] 参数错误：缺少 taskId');
@@ -188,6 +190,18 @@ export async function POST(req: NextRequest) {
     if (taskStatus === 'failed') {
       const errorMsg = taskData.error?.message || taskData.message || taskData.fail_reason || '任务失败';
       console.error('[TryOn Status] 任务失败:', errorMsg);
+      
+      // 回滚积分（如果提供了 userId）
+      if (userId) {
+        try {
+          console.log('[TryOn Status] 任务失败，回滚积分...');
+          await rollbackCredits(userId, 1, '试衣任务失败，回滚积分');
+          console.log('[TryOn Status] 积分回滚成功');
+        } catch (rollbackErr: any) {
+          console.error('[TryOn Status] 积分回滚失败:', rollbackErr.message);
+        }
+      }
+      
       return NextResponse.json({
         success: false,
         error: errorMsg,
