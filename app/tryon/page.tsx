@@ -201,11 +201,29 @@ export default function TryOnPage() {
 
     // 轮询函数
     const pollOnce = async () => {
+      // 先增加计数并更新 UI，确保即使 fetch 卡住也能看到进度变化
+      pollCountRef.current += 1;
+      const currentCount = pollCountRef.current;
+      const elapsed = currentCount * 2;
+      const estimated = Math.max(0, 40 - elapsed);
+      
+      console.log(`[TryOn] 轮询第 ${currentCount} 次, 已等待 ${elapsed} 秒, 预计还需 ${estimated} 秒, taskId: ${taskId}`);
+      setPollProgress({ count: currentCount, estimatedTime: estimated });
+
+      // 检查超时（40秒 = 20次 * 2秒）
+      if (currentCount >= 20) {
+        console.log('[TryOn] 轮询达到上限 20 次，超时');
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+        }
+        setError('生成超时，请稍后重试');
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        pollCountRef.current += 1;
-        const currentCount = pollCountRef.current;
-        
-        console.log(`[TryOn] 轮询第 ${currentCount} 次, taskId: ${taskId}`);
+        console.log(`[TryOn] 发起请求: POST /api/tryon/status, taskId: ${taskId}`);
         
         const response = await fetch('/api/tryon/status', {
           method: 'POST',
@@ -264,22 +282,6 @@ export default function TryOnPage() {
           return;
         }
 
-        // 更新轮询进度（仅用于 UI 显示）
-        const elapsed = currentCount * 2;
-        const estimated = Math.max(0, 40 - elapsed);
-        setPollProgress({ count: currentCount, estimatedTime: estimated });
-
-        // 检查超时（40秒 = 20次 * 2秒）
-        if (currentCount >= 20) {
-          if (pollIntervalRef.current) {
-            clearInterval(pollIntervalRef.current);
-            pollIntervalRef.current = null;
-          }
-          setError('生成超时，请稍后重试');
-          setIsLoading(false);
-          return;
-        }
-
         // 检查任务状态
         if (data.status === 'completed') {
           if (pollIntervalRef.current) {
@@ -311,7 +313,7 @@ export default function TryOnPage() {
           setIsLoading(false);
         }
       } catch (err: any) {
-        console.error('[TryOn] 轮询失败:', err);
+        console.error('[TryOn] 轮询第', currentCount, '次失败:', err);
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current);
           pollIntervalRef.current = null;
