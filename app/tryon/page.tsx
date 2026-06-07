@@ -82,6 +82,7 @@ export default function TryOnPage() {
   // 试衣状态
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<TryOnResult | null>(null);
+  const [resultUrl, setResultUrl] = useState<string>(''); // 独立的图片 URL 状态
   const [error, setError] = useState('');
   const [taskId, setTaskId] = useState('');
 
@@ -258,6 +259,10 @@ export default function TryOnPage() {
             pollIntervalRef.current = null;
           }
 
+          console.log('[TryOn] 任务完成，设置 resultUrl:', data.resultUrl);
+          
+          // 同时更新独立状态和 result 对象
+          setResultUrl(data.resultUrl || '');
           setResult({
             success: true,
             resultImageUrl: data.resultUrl,
@@ -359,6 +364,7 @@ export default function TryOnPage() {
     setClothingPreview('');
     setClothingImage('');
     setResult(null);
+    setResultUrl(''); // 清空图片 URL
     setError('');
     setTaskId('');
     setPollProgress({ count: 0, estimatedTime: 30 });
@@ -555,62 +561,59 @@ export default function TryOnPage() {
           </div>
         )}
 
-        {/* 结果展示 */}
-        {result && (
-          <div className="mt-8 bg-white rounded-2xl border border-slate-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-lg text-slate-900">试衣结果</h3>
-              <span className={`text-xs px-2 py-1 rounded-full ${result.success ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
-                {result.success ? '试衣成功' : '试衣失败'}
-              </span>
+        {/* 结果展示 - 使用独立的 resultUrl 状态 */}
+        <div className="mt-8">
+          {/* 成功结果 */}
+          {resultUrl && (
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-lg text-slate-900">试衣结果</h3>
+                <span className="text-xs px-2 py-1 rounded-full text-green-600 bg-green-50">
+                  试衣成功
+                </span>
+              </div>
+              <div className="relative rounded-xl overflow-hidden bg-slate-100">
+                <img
+                  src={resultUrl}
+                  alt="试衣结果"
+                  className="w-full max-h-[600px] object-contain"
+                  onLoad={() => console.log('[TryOn] 图片加载成功:', resultUrl)}
+                  onError={(e) => {
+                    console.error('[TryOn] 图片加载失败:', resultUrl);
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
+                />
+                <span className="absolute bottom-2 right-2 text-white bg-black/40 px-2 py-0.5 rounded-md text-[11px] z-10">
+                  AI TryOn · 生成
+                </span>
+              </div>
+              <div className="mt-4 flex justify-center">
+                <button
+                  onClick={handleChangeClothing}
+                  className="py-2.5 px-6 border border-indigo-200 text-indigo-600 text-base font-medium rounded-lg hover:bg-indigo-50 transition-colors"
+                >
+                  更换服装
+                </button>
+              </div>
             </div>
-            {result.success ? (
-              <>
-                {/* 图片展示区域 - 使用 resultUrl 或 resultImageUrl */}
-                <div className="relative rounded-xl overflow-hidden bg-slate-100" style={{ minHeight: '200px' }}>
-                  {(result.resultUrl || result.resultImageUrl) ? (
-                    <>
-                      <img
-                        src={result.resultUrl || result.resultImageUrl}
-                        alt="试衣结果"
-                        className="w-full max-h-[600px] object-contain"
-                        onError={(e) => {
-                          console.error('[TryOn] 图片加载失败:', result.resultUrl || result.resultImageUrl);
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const fallback = target.nextElementSibling as HTMLElement;
-                          if (fallback) fallback.style.display = 'flex';
-                        }}
-                      />
-                      <div className="hidden w-full h-[200px] items-center justify-center text-red-500 text-sm">
-                        图片加载失败，请刷新页面重试
-                      </div>
-                    </>
-                  ) : (
-                    <div className="w-full h-[200px] flex items-center justify-center text-amber-600 text-sm">
-                      未获取到图片 URL
-                    </div>
-                  )}
-                  <span className="absolute bottom-2 right-2 text-white bg-black/40 px-2 py-0.5 rounded-md text-[11px] z-10">
-                    AI TryOn · 生成
-                  </span>
-                </div>
-                <div className="mt-4 flex justify-center">
-                  <button
-                    onClick={handleChangeClothing}
-                    className="py-2.5 px-6 border border-indigo-200 text-indigo-600 text-base font-medium rounded-lg hover:bg-indigo-50 transition-colors"
-                  >
-                    更换服装
-                  </button>
-                </div>
-              </>
-            ) : (
+          )}
+
+          {/* 失败结果 */}
+          {result && !result.success && (
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-lg text-slate-900">试衣结果</h3>
+                <span className="text-xs px-2 py-1 rounded-full text-red-600 bg-red-50">
+                  试衣失败
+                </span>
+              </div>
               <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
                 {result.error || result.message || '试衣失败，请重试'}
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
         {/* 服务声明 */}
         <div className="mt-12 pt-6 border-t border-slate-200 space-y-1.5">
