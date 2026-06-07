@@ -44,25 +44,7 @@ export default function TryOnPage() {
   useEffect(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-    const client = createBrowserClient(supabaseUrl, supabaseKey, {
-      auth: {
-        storageKey: supabaseUrl ? `sb-${new URL(supabaseUrl).hostname}-auth-token` : 'sb-placeholder-auth-token',
-        storage: {
-          getItem: (key) => {
-            try { return localStorage.getItem(key); } catch { return null; }
-          },
-          setItem: (key, value) => {
-            try { localStorage.setItem(key, value); } catch (e) { console.error('[TryOn] localStorage.setItem 失败:', e); }
-          },
-          removeItem: (key) => {
-            try { localStorage.removeItem(key); } catch (e) { console.error('[TryOn] localStorage.removeItem 失败:', e); }
-          },
-        },
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-      },
-    });
+    const client = createBrowserClient(supabaseUrl, supabaseKey);
     setSupabase(client);
   }, []);
 

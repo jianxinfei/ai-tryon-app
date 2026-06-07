@@ -34,44 +34,7 @@ export default function ProfilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   
-  const supabase = createBrowserClient(
-    supabaseUrl,
-    supabaseAnonKey,
-    {
-      auth: {
-        storageKey: supabaseUrl ? `sb-${new URL(supabaseUrl).hostname}-auth-token` : 'sb-placeholder-auth-token',
-        storage: {
-          getItem: (key) => {
-            if (typeof window === 'undefined') return null;
-            try {
-              return localStorage.getItem(key);
-            } catch {
-              return null;
-            }
-          },
-          setItem: (key, value) => {
-            if (typeof window === 'undefined') return;
-            try {
-              localStorage.setItem(key, value);
-            } catch (e) {
-              console.error('[Profile] localStorage.setItem 失败:', e);
-            }
-          },
-          removeItem: (key) => {
-            if (typeof window === 'undefined') return;
-            try {
-              localStorage.removeItem(key);
-            } catch (e) {
-              console.error('[Profile] localStorage.removeItem 失败:', e);
-            }
-          },
-        },
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-      },
-    }
-  );
+  const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
   // 获取用户和积分数据
   const fetchUserData = useCallback(async () => {
