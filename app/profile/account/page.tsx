@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
@@ -24,6 +24,19 @@ export default function AccountPage() {
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
   const [showResendButton, setShowResendButton] = useState(false);
   const [verificationSuccess, setVerificationSuccess] = useState(false);
+  
+  // 邮箱输入框 ref，用于自动聚焦
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  
+  // 从 ?login=true 过来的标记（使用 window.location.search 避免 Suspense 问题）
+  const [fromLoginParam, setFromLoginParam] = useState(false);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setFromLoginParam(params.get('login') === 'true');
+    }
+  }, []);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -98,6 +111,12 @@ export default function AccountPage() {
           email: session.user.email,
         });
         fetchUserData();
+        
+        // 登录成功后，如果从 ?login=true 过来，返回 /profile 并清除参数
+        if (fromLoginParam) {
+          console.log('[Account] 登录成功，从 login=true 返回 /profile');
+          router.push('/profile');
+        }
       } else {
         setUser(null);
       }
@@ -106,7 +125,16 @@ export default function AccountPage() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [fetchUserData, supabase]);
+  }, [fetchUserData, supabase, fromLoginParam, router]);
+  
+  // 从 ?login=true 过来时，自动聚焦邮箱输入框
+  useEffect(() => {
+    if (fromLoginParam && emailInputRef.current && !user && !loading) {
+      setTimeout(() => {
+        emailInputRef.current?.focus();
+      }, 300);
+    }
+  }, [fromLoginParam, user, loading]);
 
   // 监听 URL 中的验证参数，检测验证成功
   useEffect(() => {
@@ -287,6 +315,7 @@ export default function AccountPage() {
                   邮箱地址
                 </label>
                 <input
+                  ref={emailInputRef}
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

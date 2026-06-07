@@ -421,7 +421,7 @@ export default function TryOnPage() {
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">请先登录后再试穿</h2>
             <p className="text-sm text-slate-500 mb-6">登录后即可体验 AI 虚拟试衣功能</p>
             <button
-              onClick={() => router.push('/profile')}
+              onClick={() => router.push('/profile?login=true')}
               className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -471,7 +471,7 @@ export default function TryOnPage() {
               <span className="text-sm font-medium text-amber-800">请先验证邮箱再试衣</span>
             </div>
             <button
-              onClick={() => router.push('/profile')}
+              onClick={() => router.push('/profile?login=true')}
               className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
             >
               去验证

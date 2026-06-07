@@ -21,6 +21,15 @@ export default function ProfilePage() {
   const [credits, setCredits] = useState<CreditInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [emailSent, setEmailSent] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  
+  // 从 URL 读取 login 参数（避免 useSearchParams 的 Suspense 问题）
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setShowLogin(params.get('login') === 'true');
+    }
+  }, []);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -124,6 +133,14 @@ export default function ProfilePage() {
       subscription.unsubscribe();
     };
   }, [fetchUserData, supabase]);
+
+  // 如果 URL 有 ?login=true 且未登录，自动跳转到登录表单页面
+  useEffect(() => {
+    if (!loading && !user && showLogin) {
+      console.log('[Profile] 检测到 login=true 且未登录，跳转到登录表单');
+      router.push('/profile/account?login=true');
+    }
+  }, [loading, user, showLogin, router]);
 
   // 获取昵称
   const getNickname = () => {
