@@ -87,7 +87,7 @@ export default function TryOnPage() {
   const [taskId, setTaskId] = useState('');
 
   // 轮询状态
-  const [pollProgress, setPollProgress] = useState<PollProgress>({ count: 0, estimatedTime: 30 });
+  const [pollProgress, setPollProgress] = useState<PollProgress>({ count: 0, estimatedTime: 40 });
   const pollIntervalRef = useRef<number | null>(null);
   const pollCountRef = useRef<number>(0); // 使用 useRef 存储轮询次数，避免闭包问题
 
@@ -236,13 +236,37 @@ export default function TryOnPage() {
           throw new Error(data.error || '查询状态失败');
         }
 
+        // 优先检查是否已拿到 resultUrl（即使状态不是 completed）
+        if (data.resultUrl) {
+          console.log('[TryOn] 已获取到 resultUrl，立即展示图片:', data.resultUrl);
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+          setResultUrl(data.resultUrl);
+          setResult({
+            success: true,
+            resultImageUrl: data.resultUrl,
+            resultUrl: data.resultUrl,
+            useType: data.useType || '',
+            creditsBalance: data.creditsBalance || 0,
+            message: data.message || '试衣成功',
+            creditsConsumed: 1
+          });
+          if (data.creditsBalance !== undefined) {
+            setCredits(data.creditsBalance);
+          }
+          setIsLoading(false);
+          return;
+        }
+
         // 更新轮询进度（仅用于 UI 显示）
         const elapsed = currentCount * 2;
-        const estimated = Math.max(0, 30 - elapsed);
+        const estimated = Math.max(0, 40 - elapsed);
         setPollProgress({ count: currentCount, estimatedTime: estimated });
 
-        // 检查超时（30秒 = 15次 * 2秒）
-        if (currentCount >= 15) {
+        // 检查超时（40秒 = 20次 * 2秒）
+        if (currentCount >= 20) {
           if (pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;
@@ -310,7 +334,7 @@ export default function TryOnPage() {
     setError('');
     setIsLoading(true);
     setResult(null);
-    setPollProgress({ count: 0, estimatedTime: 30 });
+    setPollProgress({ count: 0, estimatedTime: 40 });
 
     try {
       // 从 localStorage 获取 token（Supabase token 存储在第三方 Cookie 中，无法通过 credentials 发送）
@@ -367,7 +391,7 @@ export default function TryOnPage() {
     setResultUrl(''); // 清空图片 URL
     setError('');
     setTaskId('');
-    setPollProgress({ count: 0, estimatedTime: 30 });
+    setPollProgress({ count: 0, estimatedTime: 40 });
 
     // 自动聚焦到服装上传区
     setTimeout(() => clothingInputRef.current?.click(), 100);
