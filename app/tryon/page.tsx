@@ -191,6 +191,8 @@ export default function TryOnPage() {
 
   // 开始轮询（定义在 createTryOnTask 之前，确保闭包引用正确）
   const startPolling = useCallback((taskId: string) => {
+    console.log('[TryOn] 即将启动轮询，taskId:', taskId);
+    
     // 清除之前的定时器
     if (pollIntervalRef.current) {
       clearInterval(pollIntervalRef.current);
@@ -199,15 +201,17 @@ export default function TryOnPage() {
     // 重置轮询计数
     pollCountRef.current = 0;
 
-    // 轮询函数
-    const pollOnce = async () => {
+    // 轮询函数（使用传入的 taskId，避免闭包问题）
+    const pollOnce = async (currentTaskId: string) => {
+      console.log('[TryOn] 轮询中..., taskId:', currentTaskId);
+      
       // 先增加计数并更新 UI，确保即使 fetch 卡住也能看到进度变化
       pollCountRef.current += 1;
       const currentCount = pollCountRef.current;
       const elapsed = currentCount * 2;
       const estimated = Math.max(0, 40 - elapsed);
       
-      console.log(`[TryOn] 轮询第 ${currentCount} 次, 已等待 ${elapsed} 秒, 预计还需 ${estimated} 秒, taskId: ${taskId}`);
+      console.log(`[TryOn] 轮询第 ${currentCount} 次, 已等待 ${elapsed} 秒, 预计还需 ${estimated} 秒, taskId: ${currentTaskId}`);
       setPollProgress({ count: currentCount, estimatedTime: estimated });
 
       // 检查超时（40秒 = 20次 * 2秒）
@@ -223,13 +227,13 @@ export default function TryOnPage() {
       }
 
       try {
-        console.log(`[TryOn] 发起请求: POST /api/tryon/status, taskId: ${taskId}`);
+        console.log(`[TryOn] 发起请求: POST /api/tryon/status, taskId: ${currentTaskId}`);
         
         const response = await fetch('/api/tryon/status', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-          body: JSON.stringify({ taskId })
+          body: JSON.stringify({ taskId: currentTaskId })
         });
 
         const data = await response.json();
@@ -324,10 +328,10 @@ export default function TryOnPage() {
     };
 
     // 立即执行第一次轮询（不等待 2 秒）
-    pollOnce();
+    pollOnce(taskId);
 
     // 之后每 2 秒轮询一次
-    pollIntervalRef.current = window.setInterval(pollOnce, 2000);
+    pollIntervalRef.current = window.setInterval(() => pollOnce(taskId), 2000);
   }, []);
 
   // 创建试衣任务
