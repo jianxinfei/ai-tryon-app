@@ -130,20 +130,23 @@ export default function ProfilePage() {
 
   return (
     <div className="" style={{ width: '390px', height: '844px', margin: '0 auto', background: '#FFF7FA', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {/* 顶部栏：账户信息入口 + 登录 */}
+      {/* 顶部栏：账户信息入口 + 登录状态 */}
       <div className="flex justify-end items-center gap-2.5 pt-16 px-6">
-        <button
-          onClick={() => router.push('/profile/account')}
-          className="text-[15px] font-semibold text-[#1f2e3a] bg-[#eef3fc] px-4 py-1.5 rounded-[30px]"
-        >
-          账户信息
-        </button>
-        <button
-          onClick={() => router.push('/profile/account')}
-          className="text-[15px] font-semibold text-[#1e2a3a] bg-[#eef3fc] px-4 py-1.5 rounded-[30px]"
-        >
-          登录
-        </button>
+        {user ? (
+          <button
+            onClick={() => router.push('/profile/account')}
+            className="text-[15px] font-semibold text-[#1e2a3a] bg-[#eef3fc] px-4 py-1.5 rounded-[30px]"
+          >
+            已登录
+          </button>
+        ) : (
+          <button
+            onClick={() => router.push('/profile/account')}
+            className="text-[15px] font-semibold text-[#1e2a3a] bg-[#eef3fc] px-4 py-1.5 rounded-[30px]"
+          >
+            登录
+          </button>
+        )}
       </div>
 
       {/* 头像 + 用户信息 */}
