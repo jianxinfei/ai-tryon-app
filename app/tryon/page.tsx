@@ -443,7 +443,14 @@ export default function TryOnPage() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white pb-16">
       {/* 导航栏 */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
-        <div className="max-w-5xl mx-auto px-4 py-3" />
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center">
+          <button
+            onClick={() => router.push('/')}
+            className="px-3 py-1.5 text-sm text-slate-600 border border-slate-200 rounded-lg bg-white/80 backdrop-blur hover:bg-slate-50 transition-colors"
+          >
+            ← 首页
+          </button>
+        </div>
       </nav>
 
       {/* 主内容 */}
