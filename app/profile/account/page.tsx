@@ -161,11 +161,10 @@ export default function AccountPage() {
 
         if (error) throw error;
 
-        setMessage({
-          type: 'success',
-          text: '验证邮件已发送至您的邮箱，请点击邮件中的链接完成验证',
-        });
-        setShowResendButton(true);
+        // 注册成功，跳转到个人中心（/profile 会检测邮箱未验证并显示提示条）
+        console.log('[Account] 注册成功，跳转到 /profile');
+        router.push('/profile');
+        return;
       } else {
         // 登录
         const { data, error } = await supabase.auth.signInWithPassword({
