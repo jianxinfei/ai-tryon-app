@@ -24,7 +24,7 @@ export default function HomePage() {
 
   const fetchCredits = useCallback(async () => {
     try {
-      const res = await fetch('/api/credits', { credentials: 'include' });
+      const res = await fetch('/api/credits', { credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       if (res.ok) {
         const data = await res.json();
         setCredits(data);

@@ -227,7 +227,8 @@ export default function TryOnPage() {
         
         const response = await fetch('/api/tryon/status', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
           body: JSON.stringify({ taskId })
         });
 
@@ -345,24 +346,12 @@ export default function TryOnPage() {
     setPollProgress({ count: 0, estimatedTime: 40 });
 
     try {
-      // 从 localStorage 获取 token（Supabase token 存储在第三方 Cookie 中，无法通过 credentials 发送）
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-      const storageKey = supabaseUrl ? `sb-${new URL(supabaseUrl).hostname}-auth-token` : 'sb-placeholder-auth-token';
-      const tokenData = localStorage.getItem(storageKey);
-      let accessToken = '';
-      if (tokenData) {
-        try {
-          const parsed = JSON.parse(tokenData);
-          accessToken = parsed.access_token || '';
-        } catch { /* ignore */ }
-      }
-      
       const response = await fetch('/api/tryon', {
         method: 'POST',
         credentials: 'include',
         headers: { 
           'Content-Type': 'application/json',
-          ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+          'X-Requested-With': 'XMLHttpRequest',
         },
         body: JSON.stringify({
           personImage,

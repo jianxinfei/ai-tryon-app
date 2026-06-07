@@ -79,7 +79,7 @@ export default function ProfilePage() {
         const creditRes = await fetch('/api/credits', {
           credentials: 'include',
           headers: {
-            'Authorization': `Bearer ${session.access_token}`,
+            'X-Requested-With': 'XMLHttpRequest',
           },
         });
         const creditData = await creditRes.json();

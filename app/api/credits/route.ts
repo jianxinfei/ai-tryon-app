@@ -49,6 +49,8 @@ async function getAuthUser() {
     
     if (refreshError) {
       console.error('[Credits API] token 刷新失败:', refreshError.message);
+      // 刷新也失败，清除所有认证 Cookie，让前端恢复到未登录状态
+      clearAuthCookies(cookieStore);
       return null;
     }
     
@@ -60,6 +62,7 @@ async function getAuthUser() {
 
   if (error) {
     console.error('[Credits API] getUser error:', error.message);
+    clearAuthCookies(cookieStore);
     return null;
   }
   if (!user) {
@@ -68,6 +71,21 @@ async function getAuthUser() {
   }
   console.log('[Credits API] authenticated user:', user.id);
   return user;
+}
+
+// 清除所有 Supabase 认证 Cookie
+function clearAuthCookies(cookieStore: Awaited<ReturnType<typeof cookies>>) {
+  try {
+    const allCookies = cookieStore.getAll();
+    allCookies.forEach(({ name }) => {
+      if (name.startsWith('sb-')) {
+        cookieStore.set(name, '', { maxAge: 0, path: '/' });
+      }
+    });
+    console.log('[Credits API] 已清除所有认证 Cookie');
+  } catch (e) {
+    console.error('[Credits API] 清除 Cookie 失败:', e);
+  }
 }
 
 // ── GET: 查询积分 ──

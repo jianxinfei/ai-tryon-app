@@ -47,12 +47,28 @@ export async function POST(req: NextRequest) {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
+    let userId = '';
+
+    // 如果 token 过期，尝试刷新
+    if (authError && authError.message?.includes('token is expired')) {
+      console.log('[TryOn Deduct] token 过期，尝试刷新...');
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error('[TryOn Deduct] token 刷新失败:', refreshError.message);
+        return NextResponse.json({ success: false, error: '登录已过期，请重新登录', needLogin: true }, { status: 401 });
+      }
+      const retryResult = await supabase.auth.getUser();
+      if (!retryResult.data.user) {
+        return NextResponse.json({ success: false, error: '用户未登录' }, { status: 401 });
+      }
+      userId = retryResult.data.user.id;
+    } else if (authError || !user) {
       console.error('[TryOn Deduct] 用户未登录');
       return NextResponse.json({ success: false, error: '用户未登录' }, { status: 401 });
+    } else {
+      userId = user.id;
     }
 
-    const userId = user.id;
     console.log('[TryOn Deduct] 用户ID:', userId);
 
     // 扣减 1 积分
