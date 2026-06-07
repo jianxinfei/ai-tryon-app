@@ -328,6 +328,10 @@ export default function TryOnPage() {
     setPollProgress({ count: 0, estimatedTime: 40 });
 
     try {
+      // 前端也设置 20 秒超时，避免无限等待
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+      
       const response = await fetch('/api/tryon', {
         method: 'POST',
         credentials: 'include',
@@ -338,8 +342,11 @@ export default function TryOnPage() {
         body: JSON.stringify({
           personImage,
           clothingImage
-        })
+        }),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       const data = await response.json();
 
@@ -350,7 +357,11 @@ export default function TryOnPage() {
       setTaskId(data.taskId);
       startPolling(data.taskId);
     } catch (err: any) {
-      setError(err.message || '试衣失败，请重试');
+      if (err.name === 'AbortError') {
+        setError('请求超时，请稍后重试');
+      } else {
+        setError(err.message || '试衣失败，请重试');
+      }
       setIsLoading(false);
     }
   }, [personImage, clothingImage, startPolling]);

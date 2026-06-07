@@ -603,6 +603,10 @@ async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
     });
 
   } catch (err: any) {
+    // 如果是 AbortError（超时），重新抛出让外层 POST 函数处理
+    if (err.name === 'AbortError') {
+      throw err;
+    }
     console.error('[TryOn API] 未捕获的异常:', err);
     return NextResponse.json(
       { success: false, error: '操作失败，请稍后重试', message: err.message },
