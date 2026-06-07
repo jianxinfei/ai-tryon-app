@@ -7,20 +7,19 @@
  * 使用可灵 AI kolors-virtual-try-on 模型
  * 文档: https://klingai.com/document-api/apiReference/model/virtualTryOn
  *
- * 统一消耗 1 积分（AI 模特生成已由 /api/model/generate 单独扣减）
+ * 注意：此接口只创建任务，不扣积分。
+ * 积分扣减在 /api/tryon/deduct 中，由前端在轮询成功后调用。
  *
  * 错误处理：
  * - Token 过期自动刷新重试
  * - 速率限制自动等待重试
  * - 服务器错误自动重试
  * - 账户异常友好提示
- * - API 失败时积分回滚
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { checkUserHasEnoughCredits, consumeTryOn, rollbackCredits } from '@/lib/credits';
 import { createHmac } from 'crypto';
 
 // ══════════════════════════════════════════════
@@ -535,18 +534,7 @@ async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
     console.log('[TryOn API] 请求模式: 虚拟试衣，所需积分: 1');
     console.log('[TryOn API] 当前用户ID:', userId);
 
-    // ── 3. 检查积分（≥1） ──
-    console.log('[TryOn API] 开始检查用户积分...');
-    const creditCheck = await checkUserHasEnoughCredits(userId, 1);
-    console.log('[TryOn API] 积分检查结果:', creditCheck);
-    if (!creditCheck.can_try) {
-      return NextResponse.json(
-        { success: false, error: '积分不足', message: '虚拟试衣需要 1 积分，请购买积分包后继续。', needPurchase: true, redirectTo: '/pricing', currentCredits: creditCheck.credits, requiredCredits: 1 },
-        { status: 403 }
-      );
-    }
-
-    // ── 4. 验证参数 ──
+    // ── 3. 验证参数 ──
     if (!personImage) {
       return NextResponse.json({ success: false, error: '请上传人物图或使用 AI 模特' }, { status: 400 });
     }
@@ -561,19 +549,7 @@ async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
       return NextResponse.json({ success: false, error: '服装图片 URL 格式无效' }, { status: 400 });
     }
 
-    // ── 5. 扣减积分（预扣，防止免费试衣） ──
-    console.log('[TryOn API] 开始扣减积分...');
-    const consumeResult = await consumeTryOn(userId, `tryon-${Date.now()}`);
-    if (!consumeResult.success) {
-      console.error('[TryOn API] 积分扣减失败:', consumeResult.error);
-      return NextResponse.json(
-        { success: false, error: '积分扣减失败', message: consumeResult.error || '请重试' },
-        { status: 500 }
-      );
-    }
-    console.log('[TryOn API] 积分扣减成功，剩余:', consumeResult.credits_balance);
-
-    // ── 6. 调用可灵 AI 创建试衣任务（异步模式） ──
+    // ── 4. 调用可灵 AI 创建试衣任务（异步模式，不扣积分） ──
     console.log('[TryOn API] 创建可灵 AI 试衣任务...');
     let taskId: string;
 
@@ -582,23 +558,18 @@ async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
       console.log('[TryOn API] 任务创建成功，task_id:', taskId);
     } catch (err: any) {
       console.error('[TryOn API] 创建试衣任务失败:', err.message);
-      // 任务创建失败，回滚积分
-      console.log('[TryOn API] 任务创建失败，回滚积分...');
-      await rollbackCredits(userId, 1, '试衣任务创建失败，回滚积分');
-      console.log('[TryOn API] 积分回滚成功');
       return NextResponse.json(
         { success: false, error: '创建试衣任务失败', message: err.message || '请重试或更换图片' },
         { status: 500 }
       );
     }
 
-    // ── 7. 返回结果（立即返回 task_id，不等待图片生成） ──
+    // ── 5. 返回结果（立即返回 task_id，不等待图片生成，不扣积分） ──
     console.log('[TryOn API] 任务创建完成，返回 taskId:', taskId);
 
     return NextResponse.json({
       success: true,
       taskId,
-      creditsBalance: consumeResult.credits_balance,
       message: '任务已创建',
     });
 

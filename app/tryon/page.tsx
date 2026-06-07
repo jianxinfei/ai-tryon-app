@@ -228,6 +228,28 @@ export default function TryOnPage() {
             clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;
           }
+          
+          // 试衣成功，扣减积分
+          try {
+            const deductRes = await fetch('/api/tryon/deduct', {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+              },
+            });
+            const deductData = await deductRes.json();
+            if (deductData.success) {
+              console.log('[TryOn] 积分扣减成功，剩余:', deductData.creditsBalance);
+              setCredits(deductData.creditsBalance);
+            } else {
+              console.error('[TryOn] 积分扣减失败:', deductData.error);
+            }
+          } catch (deductErr: any) {
+            console.error('[TryOn] 积分扣减请求失败:', deductErr.message);
+          }
+          
           setResultUrl(data.resultUrl);
           setResult({
             success: true,
@@ -238,9 +260,6 @@ export default function TryOnPage() {
             message: data.message || '试衣成功',
             creditsConsumed: 1
           });
-          if (data.creditsBalance !== undefined) {
-            setCredits(data.creditsBalance);
-          }
           setIsLoading(false);
           return;
         }
