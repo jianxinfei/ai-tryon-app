@@ -7,6 +7,7 @@ import { createBrowserClient } from '@supabase/ssr';
 interface User {
   id: string;
   email?: string;
+  email_confirmed_at?: string;
 }
 
 interface CreditInfo {
@@ -19,6 +20,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [credits, setCredits] = useState<CreditInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [emailSent, setEmailSent] = useState(false);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -71,6 +73,7 @@ export default function ProfilePage() {
         setUser({
           id: session.user.id,
           email: session.user.email,
+          email_confirmed_at: session.user.email_confirmed_at,
         });
 
         const creditRes = await fetch('/api/credits', {
@@ -108,6 +111,7 @@ export default function ProfilePage() {
         setUser({
           id: session.user.id,
           email: session.user.email,
+          email_confirmed_at: session.user.email_confirmed_at,
         });
         fetchUserData();
       } else {
@@ -178,19 +182,49 @@ export default function ProfilePage() {
         <div className="text-[13px] text-[#6c7a8a] font-medium mt-1">credits</div>
       </div>
 
-      {/* 邮箱未认证 */}
-      <div className="bg-[#fef7e0] rounded-[20px] p-3.5 mx-6 mt-6 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-[#b85c00] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="4" width="20" height="16" rx="2"/>
-            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-          </svg>
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[15px] font-semibold text-[#b85c00]">邮箱未认证</span>
-            <span className="text-[11px] text-[#9CA3AF]">未验证用户无法享受试衣服务</span>
+      {/* 邮箱认证状态 */}
+      {user && !user.email_confirmed_at && (
+        <div className="bg-[#fef7e0] rounded-[20px] p-3.5 mx-6 mt-6">
+          <div className="flex items-center gap-2 mb-2">
+            <svg className="w-5 h-5 text-[#b85c00] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+            </svg>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[15px] font-semibold text-[#b85c00]">邮箱未验证，部分功能可能受限</span>
+              <span className="text-[11px] text-[#9CA3AF]">未验证用户无法享受试衣服务</span>
+            </div>
           </div>
+          {emailSent ? (
+            <div className="text-[13px] text-green-600 bg-green-50 px-3 py-2 rounded-lg text-center">
+              验证邮件已发送，请前往邮箱查看
+            </div>
+          ) : (
+            <button
+              onClick={async () => {
+                try {
+                  const { error } = await supabase.auth.resend({
+                    type: 'signup',
+                    email: user.email || '',
+                  });
+                  if (error) {
+                    console.error('发送验证邮件失败:', error);
+                    alert('发送失败: ' + error.message);
+                  } else {
+                    setEmailSent(true);
+                  }
+                } catch (err: any) {
+                  console.error('发送验证邮件异常:', err);
+                  alert('发送失败，请重试');
+                }
+              }}
+              className="w-full py-2 bg-[#b85c00] text-white text-[14px] font-medium rounded-[12px] hover:bg-[#a05000] transition-colors"
+            >
+              去验证
+            </button>
+          )}
         </div>
-      </div>
+      )}
 
       {/* 购买积分和会员 */}
       <div className="px-6 pt-5">

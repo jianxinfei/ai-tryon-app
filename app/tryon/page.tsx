@@ -68,6 +68,7 @@ export default function TryOnPage() {
 
   // 用户状态
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(true);
   const [credits, setCredits] = useState(0);
 
   // 图片状态
@@ -104,6 +105,7 @@ export default function TryOnPage() {
         }
         
         setIsLoggedIn(true);
+        setEmailVerified(!!user.email_confirmed_at);
         
         // 获取积分
         const { data: creditsData } = await supabase
@@ -331,6 +333,12 @@ export default function TryOnPage() {
       return;
     }
 
+    // 检查邮箱验证状态
+    if (!emailVerified) {
+      setError('请先验证邮箱再试衣');
+      return;
+    }
+
     setError('');
     setIsLoading(true);
     setResult(null);
@@ -463,6 +471,24 @@ export default function TryOnPage() {
             每次消耗 1 积分 | 支持 JPG / PNG | 积分长期有效，放心囤！
           </p>
         </div>
+
+        {/* 邮箱未验证提示 */}
+        {!emailVerified && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+              <span className="text-sm font-medium text-amber-800">请先验证邮箱再试衣</span>
+            </div>
+            <button
+              onClick={() => router.push('/profile')}
+              className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              去验证
+            </button>
+          </div>
+        )}
 
         {/* 错误提示 */}
         {error && (
