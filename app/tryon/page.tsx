@@ -327,41 +327,65 @@ export default function TryOnPage() {
     setResult(null);
     setPollProgress({ count: 0, estimatedTime: 40 });
 
-    try {
-      // 前端也设置 20 秒超时，避免无限等待
+    // 创建任务请求（带 8 秒超时 + 自动重试）
+    const doCreateTask = async (isRetry: boolean): Promise<{ taskId: string } | null> => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       
-      const response = await fetch('/api/tryon', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify({
-          personImage,
-          clothingImage
-        }),
-        signal: controller.signal,
-      });
-      
-      clearTimeout(timeoutId);
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '创建试衣任务失败');
+      try {
+        const response = await fetch('/api/tryon', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({
+            personImage,
+            clothingImage
+          }),
+          signal: controller.signal,
+        });
+        
+        const data = await response.json();
+        
+        // 只要返回了 taskId，就认为成功（即使状态码非 200）
+        if (data.taskId) {
+          return { taskId: data.taskId };
+        }
+        
+        // 没有 taskId，记录错误
+        if (!response.ok) {
+          console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}失败:`, data.error);
+          return null;
+        }
+        
+        return null;
+      } catch (err: any) {
+        console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}异常:`, err.name === 'AbortError' ? '超时' : err.message);
+        return null;
+      } finally {
+        clearTimeout(timeoutId);
       }
+    };
 
-      setTaskId(data.taskId);
-      startPolling(data.taskId);
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        setError('请求超时，请稍后重试');
-      } else {
-        setError(err.message || '试衣失败，请重试');
-      }
+    // 第一次尝试
+    let result = await doCreateTask(false);
+    
+    // 第一次失败，自动重试一次
+    if (!result) {
+      console.log('[TryOn] 创建任务失败，1秒后自动重试...');
+      await new Promise(r => setTimeout(r, 1000));
+      result = await doCreateTask(true);
+    }
+    
+    // 拿到 taskId，立即启动轮询
+    if (result) {
+      setTaskId(result.taskId);
+      startPolling(result.taskId);
+    } else {
+      // 两次都失败，提示用户
+      setError('创建任务失败，请稍后重试');
       setIsLoading(false);
     }
   }, [personImage, clothingImage, startPolling]);
