@@ -341,12 +341,12 @@ async function fetchWithSmartRetry(
  * 将图片 URL 下载并转为 Base64（无前缀）
  * 可灵 API 要求纯 Base64 字符串，不能带 data:image/png;base64, 前缀
  */
-async function downloadImageAsBase64(imageUrl: string): Promise<string> {
+async function downloadImageAsBase64(imageUrl: string, signal?: AbortSignal): Promise<string> {
   console.log('[TryOn API] 下载图片:', imageUrl.substring(0, 80));
 
   try {
     const response = await fetch(imageUrl, {
-      signal: AbortSignal.timeout(15000),
+      signal: signal || AbortSignal.timeout(15000),
     });
 
     if (!response.ok) {
@@ -374,6 +374,7 @@ async function downloadImageAsBase64(imageUrl: string): Promise<string> {
 async function createKlingTryOnTask(
   personImage: string,
   clothingImage: string,
+  signal?: AbortSignal,
 ): Promise<string> {
   // 正确路径：/v1/images/kolors-virtual-try-on
   const path = '/v1/images/kolors-virtual-try-on';
@@ -384,8 +385,8 @@ async function createKlingTryOnTask(
 
   // 下载图片并转为 Base64
   const [humanImageBase64, clothImageBase64] = await Promise.all([
-    downloadImageAsBase64(personImage),
-    downloadImageAsBase64(clothingImage),
+    downloadImageAsBase64(personImage, signal),
+    downloadImageAsBase64(clothingImage, signal),
   ]);
 
   // 正确参数名：model_name, human_image, cloth_image
@@ -411,6 +412,7 @@ async function createKlingTryOnTask(
     method: 'POST',
     headers,
     body: bodyStr,
+    signal,
   }, '创建试衣任务');
 
   const responseData = await response.json();
@@ -576,7 +578,7 @@ async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
     let taskId: string;
 
     try {
-      taskId = await createKlingTryOnTask(personImage, clothingImage);
+      taskId = await createKlingTryOnTask(personImage, clothingImage, signal);
       console.log('[TryOn API] 任务创建成功，task_id:', taskId);
     } catch (err: any) {
       console.error('[TryOn API] 创建试衣任务失败:', err.message);
