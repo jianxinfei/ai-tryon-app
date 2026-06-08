@@ -67,6 +67,7 @@ export default function TryOnPage() {
   const [result, setResult] = useState<TryOnResult | null>(null);
   const [resultUrl, setResultUrl] = useState<string>(''); // 独立的图片 URL 状态
   const [error, setError] = useState('');
+  const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [taskId, setTaskId] = useState('');
 
   // 轮询状态
@@ -379,6 +380,12 @@ export default function TryOnPage() {
           return { taskId: data.taskId };
         }
         
+        // 积分不足：直接返回特殊标记，不重试
+        if (data.error === 'insufficient_credits') {
+          console.warn('[TryOn] 积分不足，停止重试');
+          return { taskId: 'INSUFFICIENT_CREDITS' };
+        }
+        
         // 没有 taskId，记录错误
         if (!response.ok) {
           console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}失败:`, data.error);
@@ -396,6 +403,13 @@ export default function TryOnPage() {
 
     // 第一次尝试
     let result = await doCreateTask(false);
+    
+    // 积分不足：不重试，直接显示购买引导
+    if (result && result.taskId === 'INSUFFICIENT_CREDITS') {
+      setIsLoading(false);
+      setShowCreditsModal(true);
+      return;
+    }
     
     // 第一次失败，自动重试一次
     if (!result) {
@@ -752,6 +766,35 @@ export default function TryOnPage() {
           </button>
         </div>
       </main>
+
+      {/* 积分不足弹窗 */}
+      {showCreditsModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 max-w-sm mx-4 text-center">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-100 flex items-center justify-center">
+              <svg className="w-7 h-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">积分不足</h3>
+            <p className="text-sm text-slate-500 mb-6">当前积分余额为 0，请先购买积分包后再试衣。</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCreditsModal(false)}
+                className="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+              >
+                取消
+              </button>
+              <a
+                href="/pricing"
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors text-center"
+              >
+                去购买
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
