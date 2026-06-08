@@ -126,11 +126,11 @@ export default function HomePage() {
           {/* 底部链接 */}
           <div className="text-center space-x-4" style={{ paddingBottom: '20px' }}>
             <Link href="/terms" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-              用户协议
+              Terms of Service
             </Link>
             <span className="text-gray-300">|</span>
             <Link href="/privacy" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-              隐私声明
+              Privacy Policy
             </Link>
           </div>
         </div>

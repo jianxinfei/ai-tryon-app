@@ -22,7 +22,6 @@ export default function AccountPage() {
   const [password, setPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
-  const [showResendButton, setShowResendButton] = useState(false);
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   
   // 邮箱输入框 ref，用于自动聚焦
@@ -111,36 +110,6 @@ export default function AccountPage() {
       }, 2000);
     }
   }, [router]);
-
-  // 重新发送验证邮件
-  const resendVerificationEmail = async () => {
-    if (!email) {
-      setMessage({ type: 'error', text: '请先输入邮箱地址' });
-      return;
-    }
-    
-    try {
-      setLoginLoading(true);
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/profile/account`,
-        },
-      });
-      
-      if (error) throw error;
-      
-      setMessage({
-        type: 'success',
-        text: '验证邮件已重新发送，请检查邮箱',
-      });
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || '发送失败，请重试' });
-    } finally {
-      setLoginLoading(false);
-    }
-  };
 
   // 处理登录/注册
   const handleSubmit = async (e: React.FormEvent) => {
@@ -255,16 +224,6 @@ export default function AccountPage() {
                 : 'bg-green-50 border border-green-200 text-green-600'
             }`}>
               <div className="text-center">{message.text}</div>
-              {showResendButton && message.type === 'success' && (
-                <button
-                  onClick={resendVerificationEmail}
-                  disabled={loginLoading}
-                  className="mt-3 w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg
-                    transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  重新发送验证邮件
-                </button>
-              )}
             </div>
           )}
 
@@ -329,19 +288,6 @@ export default function AccountPage() {
               </button>
             </form>
 
-            {/* 没有收到验证邮件？ */}
-            {!isSignUp && (
-              <div className="mt-4 text-center">
-                <button
-                  onClick={resendVerificationEmail}
-                  disabled={loginLoading}
-                  className="text-sm text-indigo-600 hover:text-indigo-700 transition-colors"
-                >
-                  没有收到验证邮件？点击重新发送
-                </button>
-              </div>
-            )}
-
             {/* 切换登录/注册 */}
             <div className="mt-6 text-center">
               <button
@@ -359,11 +305,11 @@ export default function AccountPage() {
             {/* 用户协议和隐私声明链接 */}
             <div className="mt-3 text-center space-y-1">
               <Link href="/terms" className="text-xs text-slate-400 hover:text-indigo-600 transition-colors">
-                《用户协议与知识产权声明》
+                Terms of Service
               </Link>
               <span className="text-slate-300 mx-2">|</span>
               <Link href="/privacy" className="text-xs text-slate-400 hover:text-indigo-600 transition-colors">
-                《隐私声明》
+                Privacy Policy
               </Link>
             </div>
           </div>
