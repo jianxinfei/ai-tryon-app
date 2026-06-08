@@ -1,7 +1,7 @@
 {
   "name": "stripe-supabase-integration",
   "version": "1.0.0",
-  "description": "Stripe + Supabase payment integration for AI Try-On App",
+  "description": "Stripe + Supabase payment integration for What to Wear App",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

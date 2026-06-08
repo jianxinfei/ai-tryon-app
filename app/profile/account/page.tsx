@@ -202,7 +202,7 @@ export default function AccountPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900">AI Try-On</h1>
+            <h1 className="text-2xl font-extrabold text-slate-900">What to Wear</h1>
             <p className="mt-1 text-sm text-slate-500">
               {isSignUp ? '创建新账号开始体验' : '登录以继续使用'}
             </p>
@@ -371,7 +371,7 @@ export default function AccountPage() {
 
         {/* 版本号 */}
         <div className="text-center text-xs text-slate-400 mt-4">
-          AI Try-On v1.0.0
+          What to Wear v1.0.0
         </div>
       </div>
     </div>

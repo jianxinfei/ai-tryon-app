@@ -18,7 +18,7 @@ import SuccessContent from './SuccessContent';
 // ══════════════════════════════════════════════
 
 export const metadata: Metadata = {
-  title: '支付成功 - AI Try-On',
+  title: '支付成功 - What to Wear',
   // 防止搜索引擎索引此页面
   robots: {
     index: false,

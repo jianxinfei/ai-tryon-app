@@ -217,9 +217,18 @@ export default function ProfilePage() {
         </button>
       </div>
 
+      {/* 政策链接 */}
+      <div className="text-center text-xs text-slate-400 mt-3 space-x-2">
+        <a href="/terms" className="hover:text-indigo-600 transition-colors">Terms of Service</a>
+        <span>·</span>
+        <a href="/privacy" className="hover:text-indigo-600 transition-colors">Privacy Policy</a>
+        <span>·</span>
+        <a href="/refund" className="hover:text-indigo-600 transition-colors">Refund Policy</a>
+      </div>
+
       {/* 版本号 */}
-      <div className="text-center text-xs text-slate-400 mt-4">
-        AI Try-On v1.0.0
+      <div className="text-center text-xs text-slate-400 mt-3">
+        What to Wear v1.0.0
       </div>
 
       {/* 底部导航栏 - 与主页完全一致 */}

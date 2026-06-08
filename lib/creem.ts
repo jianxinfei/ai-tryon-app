@@ -95,7 +95,7 @@ export const PRODUCT_MAP: Record<string, ProductConfig> = {
     type: 'credit_pack',
     price: '$1.99',
     perCredit: '$0.20/次',
-    note: '10次 · 长期有效',
+    note: '10次 · 180天有效 (no rollover)',
   },
   'prod_6AhvY6wWtpdDAEkPjxm7mf': {
     credits: 100,
@@ -106,13 +106,13 @@ export const PRODUCT_MAP: Record<string, ProductConfig> = {
     perCredit: '$0.10/次',
     highlight: true,
     badge: '最划算',
-    note: '100次 · 长期有效',
+    note: '100次 · 180天有效 (no rollover)',
   },
 
   // ── 订阅制 ──
   'prod_xWnfRXy7SUJHzhj4FrmgZ': {
     credits: 110,
-    name: 'AI Try-On 订阅',
+    name: 'What to Wear 订阅',
     productId: 'prod_xWnfRXy7SUJHzhj4FrmgZ',
     type: 'subscription',
     billingPeriod: 'every-month',

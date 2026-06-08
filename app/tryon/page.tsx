@@ -530,7 +530,7 @@ export default function TryOnPage() {
         {!result && (
           <div className="grid gap-6 mb-8 grid-cols-1 sm:grid-cols-2">
             {/* 人物照片上传 */}
-            <div className="bg-white rounded-2xl border-2 border-dashed border-slate-300 p-6 hover:border-indigo-400 transition-colors">
+            <div className="group bg-white rounded-2xl border-2 border-dashed border-slate-200 p-6 hover:border-indigo-400 hover:shadow-lg hover:shadow-indigo-50 transition-all duration-300">
               <input 
                 ref={personInputRef} 
                 type="file" 
@@ -540,10 +540,10 @@ export default function TryOnPage() {
               />
               {personPreview ? (
                 <div className="relative">
-                  <img src={personPreview} alt="人物预览" className="w-full h-64 object-cover rounded-xl" />
+                  <img src={personPreview} alt="人物预览" className="w-full h-64 object-cover rounded-xl shadow-sm" />
                   <button 
                     onClick={() => { setPersonPreview(''); setPersonImage(''); }}
-                    className="absolute top-2 right-2 py-2 px-3 bg-red-500 text-white text-base font-medium rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
+                    className="absolute top-2 right-2 py-2 px-3 bg-red-500/90 backdrop-blur-sm text-white text-base font-medium rounded-full flex items-center justify-center hover:bg-red-600 transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                   >
                     ×
                   </button>
@@ -552,19 +552,22 @@ export default function TryOnPage() {
                 <button 
                   onClick={() => personInputRef.current?.click()} 
                   disabled={isUploading.person}
-                  className="w-full h-64 flex flex-col items-center justify-center text-slate-400 hover:text-indigo-600 transition-colors"
+                  className="w-full h-64 flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-slate-50 to-indigo-50/30 text-slate-400 hover:text-indigo-600 hover:from-indigo-50/40 hover:to-purple-50/30 transition-all duration-300 active:scale-[0.98]"
                 >
                   {isUploading.person ? (
                     <>
-                      <div className="animate-spin w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full mb-2" />
-                      <span className="text-sm text-indigo-600">图片处理中...</span>
+                      <div className="animate-spin w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full mb-3" />
+                      <span className="text-sm font-medium text-indigo-600">图片处理中...</span>
                     </>
                   ) : (
                     <>
-                      <svg className="w-12 h-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                      </svg>
-                      <span className="font-medium">上传人物照片</span>
+                      <div className="w-14 h-14 mb-3 rounded-2xl bg-indigo-100/60 flex items-center justify-center group-hover:bg-indigo-200/60 transition-colors duration-300">
+                        <svg className="w-8 h-8 text-indigo-400 group-hover:text-indigo-600 transition-colors duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                        </svg>
+                      </div>
+                      <span className="font-semibold text-sm">上传人物照片</span>
+                      <span className="text-xs mt-1 text-slate-300 group-hover:text-indigo-400 transition-colors duration-300">点击选择或拖拽文件</span>
                     </>
                   )}
                 </button>
@@ -573,7 +576,7 @@ export default function TryOnPage() {
             </div>
 
             {/* 服装照片上传 */}
-            <div className="bg-white rounded-2xl border-2 border-dashed border-slate-300 p-6 hover:border-indigo-400 transition-colors">
+            <div className="group bg-white rounded-2xl border-2 border-dashed border-slate-200 p-6 hover:border-indigo-400 hover:shadow-lg hover:shadow-indigo-50 transition-all duration-300">
               <input 
                 ref={clothingInputRef} 
                 type="file" 
@@ -583,10 +586,10 @@ export default function TryOnPage() {
               />
               {clothingPreview ? (
                 <div className="relative">
-                  <img src={clothingPreview} alt="服装预览" className="w-full h-64 object-cover rounded-xl" />
+                  <img src={clothingPreview} alt="服装预览" className="w-full h-64 object-cover rounded-xl shadow-sm" />
                   <button 
                     onClick={() => { setClothingPreview(''); setClothingImage(''); }}
-                    className="absolute top-2 right-2 py-2 px-3 bg-red-500 text-white text-base font-medium rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
+                    className="absolute top-2 right-2 py-2 px-3 bg-red-500/90 backdrop-blur-sm text-white text-base font-medium rounded-full flex items-center justify-center hover:bg-red-600 transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                   >
                     ×
                   </button>
@@ -595,19 +598,22 @@ export default function TryOnPage() {
                 <button 
                   onClick={() => clothingInputRef.current?.click()} 
                   disabled={isUploading.clothing}
-                  className="w-full h-64 flex flex-col items-center justify-center text-slate-400 hover:text-indigo-600 transition-colors"
+                  className="w-full h-64 flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-slate-50 to-indigo-50/30 text-slate-400 hover:text-indigo-600 hover:from-indigo-50/40 hover:to-purple-50/30 transition-all duration-300 active:scale-[0.98]"
                 >
                   {isUploading.clothing ? (
                     <>
-                      <div className="animate-spin w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full mb-2" />
-                      <span className="text-sm text-indigo-600">图片处理中...</span>
+                      <div className="animate-spin w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full mb-3" />
+                      <span className="text-sm font-medium text-indigo-600">图片处理中...</span>
                     </>
                   ) : (
                     <>
-                      <svg className="w-12 h-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33l3.558-2.207a2.25 2.25 0 00.993-1.898V8.25A2.25 2.25 0 0018 6h-4.568a2.25 2.25 0 01-1.658-.734l-1.08-1.233a2.25 2.25 0 00-1.658-.734zM7.5 9.75a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
-                      </svg>
-                      <span className="font-medium">上传服装照片</span>
+                      <div className="w-14 h-14 mb-3 rounded-2xl bg-indigo-100/60 flex items-center justify-center group-hover:bg-indigo-200/60 transition-colors duration-300">
+                        <svg className="w-8 h-8 text-indigo-400 group-hover:text-indigo-600 transition-colors duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33l3.558-2.207a2.25 2.25 0 00.993-1.898V8.25A2.25 2.25 0 0018 6h-4.568a2.25 2.25 0 01-1.658-.734l-1.08-1.233a2.25 2.25 0 00-1.658-.734zM7.5 9.75a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
+                        </svg>
+                      </div>
+                      <span className="font-semibold text-sm">上传服装照片</span>
+                      <span className="text-xs mt-1 text-slate-300 group-hover:text-indigo-400 transition-colors duration-300">点击选择或拖拽文件</span>
                     </>
                   )}
                 </button>
@@ -672,7 +678,7 @@ export default function TryOnPage() {
                   }}
                 />
                 <span className="absolute bottom-2 right-2 text-white bg-black/40 px-2 py-0.5 rounded-md text-[11px] z-10">
-                  AI TryOn · 生成
+                  What to Wear · AI生成
                 </span>
               </div>
               <div className="mt-4 flex justify-center">

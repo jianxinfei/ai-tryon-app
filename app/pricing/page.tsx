@@ -149,7 +149,7 @@ export default function PricingPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
-            <span className="font-bold text-sm sm:text-base">AI Try-On</span>
+            <span className="font-bold text-sm sm:text-base">What to Wear</span>
           </button>
 
           {currentUser && (
@@ -335,7 +335,10 @@ export default function PricingPage() {
             </button>
           </div>
           <p className="text-xs text-slate-400 pt-2">
-            本应用虚拟试衣功能由可灵AI（Kling AI）提供技术支持 · <a href="/terms" className="text-indigo-500 hover:text-indigo-600">用户协议</a>
+            本应用虚拟试衣功能由可灵AI（Kling AI）提供技术支持 ·{' '}
+            <a href="/terms" className="text-indigo-500 hover:text-indigo-600">Terms of Service</a> ·{' '}
+            <a href="/privacy" className="text-indigo-500 hover:text-indigo-600">Privacy Policy</a> ·{' '}
+            <a href="/refund" className="text-indigo-500 hover:text-indigo-600">Refund Policy</a>
           </p>
         </div>
       </main>
