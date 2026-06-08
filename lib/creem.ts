@@ -50,46 +50,88 @@ export interface ProductConfig {
   type: 'credit_pack' | 'subscription';
   billingPeriod?: 'every-month' | 'every-year';
   features?: string[];
+  price: string;
+  perCredit: string;
+  highlight?: boolean;
+  badge?: string;
+  note?: string; // 下方小字说明
 }
 
 /**
  * Product ID → 产品配置映射
  *
- * ⚠️ 需要在 Creem Dashboard 创建产品后，将 Product ID 填入此处
- * 当前已配置: prod_xWnfRXy7SUJHzhj4FrmgZ
+ * 新老用户产品分离：
+ * - 新用户产品：带额外赠送（prod_5W4nng7xUZjTeQIIzS3vXp / prod_6QtH4e65ALMlf21qKd9Kh）
+ * - 老用户产品：标准价格（prod_6MSm2Jfx384xKhS4YOe2zj / prod_6AhvY6wWtpdDAEkPjxm7mf）
  */
 export const PRODUCT_MAP: Record<string, ProductConfig> = {
-  // ── 积分包（一次性购买） ──
-  // 10次积分包 - $1.99
+  // ── 新用户专享（带赠送） ──
+  'prod_5W4nng7xUZjTeQIIzS3vXp': {
+    credits: 13,
+    name: '10次试穿积分包',
+    productId: 'prod_5W4nng7xUZjTeQIIzS3vXp',
+    type: 'credit_pack',
+    price: '$1.99',
+    perCredit: '$0.15/次',
+    note: '新用户专享 · 买10送3 · 共13次',
+  },
+  'prod_6QtH4e65ALMlf21qKd9Kh': {
+    credits: 110,
+    name: '100次试穿积分包',
+    productId: 'prod_6QtH4e65ALMlf21qKd9Kh',
+    type: 'credit_pack',
+    price: '$9.99',
+    perCredit: '$0.09/次',
+    highlight: true,
+    badge: '最划算',
+    note: '新用户专享 · 买100送10 · 共110次',
+  },
+
+  // ── 老用户标准（无赠送） ──
   'prod_6MSm2Jfx384xKhS4YOe2zj': {
     credits: 10,
     name: '10次试穿积分包',
     productId: 'prod_6MSm2Jfx384xKhS4YOe2zj',
     type: 'credit_pack',
+    price: '$1.99',
+    perCredit: '$0.20/次',
+    note: '10次 · 永久有效',
   },
-  // 100次积分包 - $9.99
   'prod_6AhvY6wWtpdDAEkPjxm7mf': {
     credits: 100,
     name: '100次试穿积分包',
     productId: 'prod_6AhvY6wWtpdDAEkPjxm7mf',
     type: 'credit_pack',
+    price: '$9.99',
+    perCredit: '$0.10/次',
+    highlight: true,
+    badge: '最划算',
+    note: '100次 · 永久有效',
   },
 
   // ── 订阅制 ──
-  // 月度订阅 - $9.90/月
   'prod_xWnfRXy7SUJHzhj4FrmgZ': {
-    credits: 100, // 每月赠送的积分
+    credits: 110,
     name: 'AI Try-On 订阅',
     productId: 'prod_xWnfRXy7SUJHzhj4FrmgZ',
     type: 'subscription',
     billingPeriod: 'every-month',
-    features: ['每月100次试穿', '高清无水印', '新品优先体验'],
+    price: '$9.99',
+    perCredit: '$0.09/次',
+    features: ['每月110次试穿', '高清无水印', '新品优先体验'],
+    note: '$9.99/月 · 110次 · 自动续费 · 当月有效',
   },
 };
 
-// 便捷导出：积分包 Product ID
-export const CREDIT_PACK_10_ID = 'prod_6MSm2Jfx384xKhS4YOe2zj';
-export const CREDIT_PACK_100_ID = 'prod_6AhvY6wWtpdDAEkPjxm7mf';
+// 便捷导出：新用户产品 ID
+export const NEW_USER_PACK_10_ID = 'prod_5W4nng7xUZjTeQIIzS3vXp';
+export const NEW_USER_PACK_100_ID = 'prod_6QtH4e65ALMlf21qKd9Kh';
+
+// 便捷导出：老用户产品 ID
+export const RETURNING_USER_PACK_10_ID = 'prod_6MSm2Jfx384xKhS4YOe2zj';
+export const RETURNING_USER_PACK_100_ID = 'prod_6AhvY6wWtpdDAEkPjxm7mf';
+
+// 便捷导出：订阅产品 ID
 export const SUBSCRIPTION_MONTHLY_ID = 'prod_xWnfRXy7SUJHzhj4FrmgZ';
 
 /**

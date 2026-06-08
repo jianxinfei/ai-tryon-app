@@ -185,16 +185,19 @@ async function handleCheckoutCompleted(event: any) {
   
   console.log(`[Creem Webhook] 产品类型: ${product.type}, 是否一次性: ${isOneTimePayment}`);
 
-  // 添加积分
-  console.log(`[Creem Webhook] 开始添加积分: userId=${userId}, amount=${product.credits}`);
+  // 根据 Product ID 直接发放对应积分（新老用户产品已在 Creem 端分离）
+  const creditsToAdd = product.credits;
+  const description = isOneTimePayment
+    ? `购买 ${product.name} (${creditsToAdd}次)`
+    : `订阅 ${product.name} - 首月积分 (${creditsToAdd}次)`;
+
+  console.log(`[Creem Webhook] 开始添加积分: userId=${userId}, productId=${productId}, amount=${creditsToAdd}`);
 
   const result = await addCreditsToUser({
     userId,
-    amount: product.credits,
+    amount: creditsToAdd,
     transactionType: 'purchase',
-    description: isOneTimePayment
-      ? `购买 ${product.name} (${product.credits}次)`
-      : `订阅 ${product.name} - 首月积分`,
+    description,
     paymentReference: data.order?.id,
     paymentAmountCents: orderAmount,
   });
@@ -221,12 +224,13 @@ async function handleSubscriptionPaid(event: any) {
   const product = getProductConfig(productId);
   if (!product) return;
 
-  // 续费添加积分
+  // 续费添加积分（订阅固定每月 110 次）
+  const subscriptionCredits = 110;
   const result = await addCreditsToUser({
     userId,
-    amount: product.credits,
+    amount: subscriptionCredits,
     transactionType: 'purchase',
-    description: `订阅 ${product.name} - 续费积分`,
+    description: `订阅 ${product.name} - 续费积分 (${subscriptionCredits}次)`,
     paymentReference: data.last_transaction_id,
   });
 

@@ -1,12 +1,8 @@
 /**
  * /pricing 页面
  *
- * 展示积分包 + 订阅方案，点击购买跳转 Creem Checkout
- *
- * 响应式设计：
- *   - 手机 (< 640px): 单列布局，紧凑卡片
- *   - 平板 (640px - 1024px): 双列布局
- *   - 电脑 (> 1024px): 宽松双列布局
+ * 展示积分包 + 订阅方案，根据新老用户展示不同产品
+ * 点击购买跳转 Creem Checkout
  */
 
 'use client';
@@ -14,71 +10,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
-
-// ══════════════════════════════════════════════
-// 产品数据
-// ══════════════════════════════════════════════
-//
-// ⚠️ 重要：确保这些 Product ID 与 Creem Dashboard 中的产品一致
-// 积分包需要先在 Creem 创建后才能使用
-//
-
-// 你的 Creem 真实 Product ID
-const CREEM_SUBSCRIPTION_PRODUCT_ID = 'prod_xWnfRXy7SUJHzhj4FrmgZ';
-
-// 积分包（已启用）
-const CREDIT_PACKS: Array<{
-  id: string;
-  name: string;
-  credits: number;
-  price: string;
-  perCredit: string;
-  highlight: boolean;
-  badge?: string;
-  disabled: boolean;
-}> = [
-  {
-    id: 'prod_6MSm2Jfx384xKhS4YOe2zj', // 10次积分包
-    name: '10次试穿积分包',
-    credits: 10,
-    price: '$1.99',
-    perCredit: '$0.20/次',
-    highlight: false,
-    disabled: false, // 已启用
-  },
-  {
-    id: 'prod_6AhvY6wWtpdDAEkPjxm7mf', // 100次积分包
-    name: '100次试穿积分包',
-    credits: 100,
-    price: '$9.99',
-    perCredit: '$0.10/次',
-    highlight: true,
-    badge: '最划算',
-    disabled: false, // 已启用
-  },
-];
-
-// 订阅方案（已配置真实 Product ID）
-const SUBSCRIPTIONS: Array<{
-  id: string;
-  name: string;
-  price: string;
-  period: string;
-  creditsPerMonth: number;
-  features: string[];
-  highlight: boolean;
-  badge?: string;
-}> = [
-  {
-    id: CREEM_SUBSCRIPTION_PRODUCT_ID,
-    name: '月度专业版',
-    price: '$9.90',
-    period: '/月',
-    creditsPerMonth: 100,
-    features: ['每月100次试穿', '新品优先体验'],
-    highlight: false,
-  },
-];
+import {
+  NEW_USER_PACK_10_ID,
+  NEW_USER_PACK_100_ID,
+  RETURNING_USER_PACK_10_ID,
+  RETURNING_USER_PACK_100_ID,
+  SUBSCRIPTION_MONTHLY_ID,
+  PRODUCT_MAP,
+  type ProductConfig,
+} from '@/lib/creem';
 
 // ══════════════════════════════════════════════
 // 页面
@@ -88,6 +28,9 @@ export default function PricingPage() {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<{ id: string; email?: string } | null>(null);
+  const [isReturningUser, setIsReturningUser] = useState<boolean | null>(null);
+  const [checkingUser, setCheckingUser] = useState(false);
+
   // 使用延迟初始化避免构建时环境变量未注入的问题
   const [supabase] = useState(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -95,11 +38,32 @@ export default function PricingPage() {
     return createBrowserClient(supabaseUrl, supabaseKey);
   });
 
-  // ── 获取当前用户状态 ──
+  // ── 获取当前用户状态 + 判断是否老用户 ──
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUser(user ? { id: user.id, email: user.email } : null);
+
+      if (user) {
+        // 查询用户是否有购买记录
+        setCheckingUser(true);
+        try {
+          const res = await fetch('/api/credits', {
+            credentials: 'include',
+          });
+          if (res.ok) {
+            const data = await res.json();
+            // 如果有积分余额 > 0 或已有积分记录，认为是老用户
+            setIsReturningUser(data.credits > 0 || data.hasCreditsRecord);
+          }
+        } catch (e) {
+          console.error('[Pricing] 查询用户购买记录失败:', e);
+        } finally {
+          setCheckingUser(false);
+        }
+      } else {
+        setIsReturningUser(null);
+      }
     };
     getUser();
 
@@ -110,28 +74,17 @@ export default function PricingPage() {
     return () => subscription.unsubscribe();
   }, [supabase]);
 
-  // ── 登出 ──
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setCurrentUser(null);
-    router.push('/');
-    router.refresh();
-  };
-
   const handlePurchase = async (productId: string) => {
     setLoadingId(productId);
     try {
-      // ── 检查用户是否登录 ──
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        // 未登录，提示用户并跳转到个人中心
         alert('请先登录后再购买方案');
         router.push('/profile');
         return;
       }
 
-      // 已登录，创建支付会话（服务端会自动获取 user.id）
       const res = await fetch('/api/creem/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -140,19 +93,16 @@ export default function PricingPage() {
 
       const data = await res.json();
 
-      // 未登录（服务端返回 401）
       if (res.status === 401 || data.needLogin) {
         router.push('/profile');
         return;
       }
 
-      // 其他错误
       if (!res.ok) {
         alert(data.error || '创建支付会话失败，请重试');
         return;
       }
 
-      // 使用 API 返回的 checkoutUrl 直接跳转
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
       } else {
@@ -166,12 +116,29 @@ export default function PricingPage() {
     }
   };
 
+  // 确定展示的产品
+  const showReturningProducts = isReturningUser === true;
+  const showNewUserProducts = isReturningUser === false || isReturningUser === null;
+
+  // 积分包产品
+  const newUserPacks: ProductConfig[] = [
+    PRODUCT_MAP[NEW_USER_PACK_10_ID],
+    PRODUCT_MAP[NEW_USER_PACK_100_ID],
+  ].filter(Boolean);
+
+  const returningUserPacks: ProductConfig[] = [
+    PRODUCT_MAP[RETURNING_USER_PACK_10_ID],
+    PRODUCT_MAP[RETURNING_USER_PACK_100_ID],
+  ].filter(Boolean);
+
+  // 订阅产品
+  const subscriptionProduct = PRODUCT_MAP[SUBSCRIPTION_MONTHLY_ID];
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* ── 导航栏 ── */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          {/* Logo */}
           <button
             onClick={() => router.push('/')}
             className="flex items-center gap-2 text-slate-900 hover:text-indigo-600 transition-colors"
@@ -183,6 +150,12 @@ export default function PricingPage() {
             </div>
             <span className="font-bold text-sm sm:text-base">AI Try-On</span>
           </button>
+
+          {currentUser && (
+            <span className="text-xs text-slate-500">
+              {currentUser.email}
+            </span>
+          )}
         </div>
       </nav>
 
@@ -192,9 +165,18 @@ export default function PricingPage() {
           选择你的方案
         </h1>
         <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-500 max-w-xs sm:max-w-md mx-auto">
-          新用户注册即赠 <span className="font-semibold text-slate-700">3次免费试穿</span>，
-          用完再选方案也不迟
+          {showReturningProducts
+            ? '欢迎回来，选择适合你的积分包继续试衣'
+            : '新用户首次购买积分包享额外赠送，用完再选方案也不迟'}
         </p>
+        {!currentUser && (
+          <p className="mt-2 text-xs text-amber-600">
+            未登录用户默认展示新用户专享价格，登录后将根据购买记录自动切换
+          </p>
+        )}
+        {checkingUser && (
+          <p className="mt-2 text-xs text-slate-400">正在查询用户状态...</p>
+        )}
       </header>
 
       <main className="max-w-5xl mx-auto px-4 pb-12 sm:pb-20 space-y-12 sm:space-y-16">
@@ -204,15 +186,17 @@ export default function PricingPage() {
         <section>
           <div className="text-center mb-6 sm:mb-8">
             <span className="inline-block text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full">
-              积分包
+              {showReturningProducts ? '积分包' : '新用户专享'}
             </span>
-            <h2 className="mt-3 sm:mt-4 text-xl sm:text-2xl font-bold text-slate-900">按需购买，永久有效</h2>
+            <h2 className="mt-3 sm:mt-4 text-xl sm:text-2xl font-bold text-slate-900">
+              {showReturningProducts ? '按需购买，永久有效' : '首次购买享额外赠送'}
+            </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
-            {CREDIT_PACKS.map((pack) => (
+            {(showReturningProducts ? returningUserPacks : newUserPacks).map((pack) => (
               <div
-                key={pack.id}
+                key={pack.productId}
                 className={`relative rounded-xl sm:rounded-2xl border-2 p-4 sm:p-6 transition-all hover:shadow-lg ${
                   pack.highlight
                     ? 'border-indigo-500 bg-indigo-50/40 shadow-md'
@@ -239,16 +223,21 @@ export default function PricingPage() {
                     {pack.credits}
                     <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1">次试穿</span>
                   </p>
+                  {pack.note && (
+                    <p className="text-center text-[10px] sm:text-xs text-amber-600 font-medium mt-1">
+                      {pack.note}
+                    </p>
+                  )}
                 </div>
 
                 <button
-                  onClick={() => handlePurchase(pack.id)}
-                  disabled={loadingId === pack.id}
+                  onClick={() => handlePurchase(pack.productId)}
+                  disabled={loadingId === pack.productId}
                   className="mt-3 sm:mt-4 w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all
                     bg-indigo-600 text-white hover:bg-indigo-700
                     disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loadingId === pack.id ? (
+                  {loadingId === pack.productId ? (
                     <span className="flex items-center justify-center gap-1.5 sm:gap-2">
                       <svg className="animate-spin h-3.5 w-3.5 sm:h-4 sm:w-4" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
@@ -268,39 +257,42 @@ export default function PricingPage() {
         {/* ══════════════════════════════════
             订阅方案
         ══════════════════════════════════ */}
-        <section>
-          <div className="text-center mb-6 sm:mb-8">
-            <span className="inline-block text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-amber-600 bg-amber-50 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full">
-              订阅会员
-            </span>
-            <h2 className="mt-3 sm:mt-4 text-xl sm:text-2xl font-bold text-slate-900">无限畅穿，超值之选</h2>
-          </div>
+        {subscriptionProduct && (
+          <section>
+            <div className="text-center mb-6 sm:mb-8">
+              <span className="inline-block text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-amber-600 bg-amber-50 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full">
+                订阅会员
+              </span>
+              <h2 className="mt-3 sm:mt-4 text-xl sm:text-2xl font-bold text-slate-900">无限畅穿，超值之选</h2>
+            </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
-            {SUBSCRIPTIONS.map((sub) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
               <div
-                key={sub.id}
-                className={`relative rounded-xl sm:rounded-2xl border-2 p-4 sm:p-6 transition-all hover:shadow-lg ${
-                  sub.highlight
-                    ? 'border-amber-400 bg-amber-50/30 shadow-md'
-                    : 'border-slate-200 bg-white'
-                }`}
+                className="relative rounded-xl sm:rounded-2xl border-2 border-slate-200 bg-white p-4 sm:p-6 transition-all hover:shadow-lg"
               >
-                {sub.badge && (
-                  <span className="absolute -top-2.5 sm:-top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full whitespace-nowrap">
-                    {sub.badge}
-                  </span>
-                )}
-
-                <h3 className="text-base sm:text-lg font-bold text-slate-900">{sub.name}</h3>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">{subscriptionProduct.name}</h3>
 
                 <div className="mt-3 sm:mt-4 flex items-baseline gap-1">
-                  <span className="text-2xl sm:text-4xl font-extrabold text-slate-900">{sub.price}</span>
-                  <span className="text-xs sm:text-sm text-slate-400">{sub.period}</span>
+                  <span className="text-2xl sm:text-4xl font-extrabold text-slate-900">{subscriptionProduct.price}</span>
+                  <span className="text-xs sm:text-sm text-slate-400">/月</span>
+                </div>
+
+                <p className="mt-1 text-xs sm:text-sm text-slate-500">{subscriptionProduct.perCredit}</p>
+
+                <div className="mt-3 sm:mt-4 py-2 sm:py-3 border-t border-slate-100">
+                  <p className="text-center text-xl sm:text-2xl font-bold text-amber-600">
+                    {subscriptionProduct.credits}
+                    <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1">次/月</span>
+                  </p>
+                  {subscriptionProduct.note && (
+                    <p className="text-center text-[10px] sm:text-xs text-amber-600 font-medium mt-1">
+                      {subscriptionProduct.note}
+                    </p>
+                  )}
                 </div>
 
                 <ul className="mt-4 sm:mt-5 space-y-2 sm:space-y-2.5">
-                  {sub.features.map((f) => (
+                  {subscriptionProduct.features?.map((f) => (
                     <li key={f} className="text-xs sm:text-sm text-slate-600 text-center">
                       {f}
                     </li>
@@ -308,13 +300,13 @@ export default function PricingPage() {
                 </ul>
 
                 <button
-                  onClick={() => handlePurchase(sub.id)}
-                  disabled={loadingId === sub.id}
+                  onClick={() => handlePurchase(subscriptionProduct.productId)}
+                  disabled={loadingId === subscriptionProduct.productId}
                   className="mt-5 sm:mt-6 w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all
                     bg-amber-500 text-white hover:bg-amber-600
                     disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loadingId === sub.id ? (
+                  {loadingId === subscriptionProduct.productId ? (
                     <span className="flex items-center justify-center gap-1.5 sm:gap-2">
                       <svg className="animate-spin h-3.5 w-3.5 sm:h-4 sm:w-4" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
@@ -327,9 +319,9 @@ export default function PricingPage() {
                   )}
                 </button>
               </div>
-            ))}
-          </div>
-        </section>
+            </div>
+          </section>
+        )}
 
         {/* ── 底部操作 ── */}
         <div className="text-center space-y-3">
