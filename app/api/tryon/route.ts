@@ -549,6 +549,37 @@ async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
       return NextResponse.json({ success: false, error: '服装图片 URL 格式无效' }, { status: 400 });
     }
 
+    // ── 3.5 积分校验（在调用可灵 API 之前） ──
+    console.log('[TryOn API] 开始积分校验，userId:', userId);
+
+    const { getSupabaseAdmin } = await import('@/lib/supabase-admin');
+    const supabaseAdmin = getSupabaseAdmin();
+
+    const { data: creditRow, error: creditError } = await supabaseAdmin
+      .from('user_credits')
+      .select('credits')
+      .eq('user_id', userId)
+      .single();
+
+    if (creditError) {
+      console.error('[TryOn API] 查询积分失败:', creditError.message);
+      return NextResponse.json(
+        { success: false, error: '积分查询失败，请稍后重试' },
+        { status: 500 }
+      );
+    }
+
+    const currentCredits = creditRow?.credits ?? 0;
+    console.log('[TryOn API] 积分校验结果:', { userId, currentCredits, required: 1, sufficient: currentCredits >= 1 });
+
+    if (currentCredits < 1) {
+      console.warn('[TryOn API] 积分不足，拒绝请求:', { userId, currentCredits });
+      return NextResponse.json(
+        { success: false, error: 'insufficient_credits', message: '积分不足，请先购买积分包' },
+        { status: 403 }
+      );
+    }
+
     // ── 4. 调用可灵 AI 创建试衣任务（异步模式，不扣积分） ──
     console.log('[TryOn API] 创建可灵 AI 试衣任务...');
     let taskId: string;

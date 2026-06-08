@@ -130,7 +130,22 @@ export default function AccountPage() {
 
         if (error) throw error;
 
-        // 注册成功，跳转到个人中心（/profile 会检测邮箱未验证并显示提示条）
+        // 注册成功，初始化积分记录（credits: 0，幂等操作）
+        try {
+          const { data: { user: newUser } } = await supabase.auth.getUser();
+          if (newUser) {
+            await fetch('/api/credits/init', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: newUser.id }),
+            });
+            console.log('[Account] 积分记录初始化完成');
+          }
+        } catch (initErr) {
+          console.warn('[Account] 积分初始化失败（不影响注册）:', initErr);
+        }
+
+        // 跳转到个人中心（/profile 会检测邮箱未验证并显示提示条）
         console.log('[Account] 注册成功，跳转到 /profile');
         router.push('/profile');
         return;
