@@ -111,10 +111,21 @@ export async function GET(req: NextRequest) {
 
     const check = await checkUserCanTryOn(user.id);
 
+    // 查询是否有成功购买记录（用于新老用户判断）
+    const { data: purchaseRecords } = await supabaseAdmin
+      .from('credit_transactions')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('transaction_type', 'purchase')
+      .limit(1);
+
+    const hasPurchaseRecord = !!(purchaseRecords && purchaseRecords.length > 0);
+
     return NextResponse.json({
       credits_balance: creditData?.credits ?? 0,
       can_try: check.can_try,
       use_type: check.use_type,
+      hasPurchaseRecord,
     });
   } catch (err: any) {
     console.error('[Credits API] GET 出错:', err);

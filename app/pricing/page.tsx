@@ -53,8 +53,9 @@ export default function PricingPage() {
           });
           if (res.ok) {
             const data = await res.json();
-            // 如果有积分余额 > 0 或已有积分记录，认为是老用户
-            setIsReturningUser(data.credits > 0 || data.hasCreditsRecord);
+            // 通过实际购买记录判断是否老用户
+            console.log('[Pricing] 用户购买记录查询结果:', { hasPurchaseRecord: data.hasPurchaseRecord, credits_balance: data.credits_balance });
+            setIsReturningUser(!!data.hasPurchaseRecord);
           }
         } catch (e) {
           console.error('[Pricing] 查询用户购买记录失败:', e);
