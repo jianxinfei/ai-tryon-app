@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
     console.log('[Creem Checkout] Base URL:', baseUrl);
 
     // ── 5. 构建回调 URL ──
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.aiwhattowear.com';
     const successUrl = `${appUrl}/success?checkout_id={CHECKOUT_ID}&product_id=${productId}`;
 
     console.log('[Creem Checkout] Success URL:', successUrl);

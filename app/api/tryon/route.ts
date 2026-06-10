@@ -559,7 +559,7 @@ async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
       .from('user_credits')
       .select('credits')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     if (creditError) {
       console.error('[TryOn API] 查询积分失败:', creditError.message);
