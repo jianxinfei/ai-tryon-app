@@ -105,9 +105,9 @@ export async function POST(req: NextRequest) {
     console.log('[Creem Checkout] 环境:', isTestMode ? 'TEST' : 'PRODUCTION');
     console.log('[Creem Checkout] Base URL:', baseUrl);
 
-    // ── 5. 构建回调 URL ──
+    // ── 5. 构建回调 URL（Creem 会自动附加 checkout_id, order_id, product_id 等参数） ──
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.aiwhattowear.com';
-    const successUrl = `${appUrl}/success?checkout_id={CHECKOUT_ID}&product_id=${productId}`;
+    const successUrl = `${appUrl}/success`;
 
     console.log('[Creem Checkout] Success URL:', successUrl);
     console.log('[Creem Checkout] 即将传递给 Creem API 的 product_id:', productId);

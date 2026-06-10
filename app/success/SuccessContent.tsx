@@ -19,9 +19,11 @@ export default function SuccessContent() {
   const [countdown, setCountdown] = useState(5);
   const [isValid, setIsValid] = useState<boolean | null>(null);
 
-  // 获取 URL 参数
-  const checkoutId = searchParams.get('checkout_id');
-  const productId = searchParams.get('product_id');
+  // 获取 URL 参数（过滤模板占位符）
+  const rawCheckoutId = searchParams.get('checkout_id');
+  const rawProductId = searchParams.get('product_id');
+  const checkoutId = rawCheckoutId && !rawCheckoutId.startsWith('{') ? rawCheckoutId : null;
+  const productId = rawProductId && !rawProductId.startsWith('{') ? rawProductId : null;
 
   useEffect(() => {
     // ══════════════════════════════════════════════
