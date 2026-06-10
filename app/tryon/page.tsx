@@ -853,7 +853,7 @@ export default function TryOnPage() {
         {/* 服务声明 */}
         <div className="mt-12 pt-6 border-t border-slate-200 space-y-1.5">
           <p className="text-xs text-slate-400 text-center">
-            上传图片即表示您同意 <a href="/terms" className="text-indigo-500 hover:text-indigo-600 underline">《用户协议与知识产权声明》</a>
+            By uploading images, you agree to the <a href="/terms" className="text-indigo-500 hover:text-indigo-600 underline">Terms of Service</a>
           </p>
           <p className="text-xs text-slate-400 text-center">
             虚拟试衣功能由可灵AI（Kling AI）提供技术支持

@@ -317,7 +317,7 @@ export default function AccountPage() {
               </button>
             </div>
 
-            {/* 用户协议和隐私声明链接 */}
+            {/* Terms and Privacy links */}
             <div className="mt-3 text-center space-y-1">
               <Link href="/terms" className="text-xs text-slate-400 hover:text-indigo-600 transition-colors">
                 Terms of Service

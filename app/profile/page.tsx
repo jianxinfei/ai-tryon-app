@@ -235,8 +235,6 @@ export default function ProfilePage() {
         <a href="/terms" className="hover:text-indigo-600 transition-colors">Terms of Service</a>
         <span>·</span>
         <a href="/privacy" className="hover:text-indigo-600 transition-colors">Privacy Policy</a>
-        <span>·</span>
-        <a href="/refund" className="hover:text-indigo-600 transition-colors">Refund Policy</a>
       </div>
 
       {/* 版本号 */}
