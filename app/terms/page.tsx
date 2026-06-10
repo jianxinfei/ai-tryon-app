@@ -87,6 +87,7 @@ export default function TermsPage() {
               <li><strong>The intellectual property rights (copyright) of the generated try-on images belong to you</strong>, the user, and you may use them freely for personal purposes.</li>
               <li>AI-generated results are provided <strong>&quot;as is&quot;</strong> and do not guarantee perfect matching with real-world wearing effects, colors, textures, or fit.</li>
               <li><strong>You should independently evaluate all output results</strong> and not rely on them for high-stakes purposes (e.g., professional product evaluation, medical or safety-related decisions).</li>
+              <li><strong>The generated image links are valid for 30 days only.</strong> Please download and save your results promptly. We are not responsible for the loss of images after the link expires.</li>
             </ul>
           </section>
 

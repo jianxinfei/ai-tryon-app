@@ -75,6 +75,10 @@ export default function TryOnPage() {
   const pollIntervalRef = useRef<number | null>(null);
   const pollCountRef = useRef<number>(0); // 使用 useRef 存储轮询次数，避免闭包问题
 
+  // 使用 ref 存储图片 URL，避免轮询闭包问题
+  const personImageRef = useRef<string>('');
+  const clothingImageRef = useRef<string>('');
+
   // 初始化 - 检查登录状态
   useEffect(() => {
     if (!supabase) return;
@@ -244,15 +248,18 @@ export default function TryOnPage() {
           throw new Error(data.error || '查询状态失败');
         }
 
-        // 优先检查是否已拿到 resultUrl（即使状态不是 completed）
-        if (data.resultUrl) {
-          console.log('[TryOn] 已获取到 resultUrl，立即展示图片:', data.resultUrl);
+        // 统一处理试衣成功（resultUrl 或 status === 'completed'）
+        const isSuccess = data.resultUrl || data.status === 'completed';
+        const finalResultUrl = data.resultUrl || data.resultUrl || '';
+
+        if (isSuccess && finalResultUrl) {
+          console.log('[TryOn] 试衣成功，resultUrl:', finalResultUrl);
           if (pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;
           }
           
-          // 试衣成功，扣减积分
+          // 试衣成功，扣减积分并记录历史
           try {
             const deductRes = await fetch('/api/tryon/deduct', {
               method: 'POST',
@@ -261,6 +268,11 @@ export default function TryOnPage() {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
               },
+              body: JSON.stringify({
+                personImageUrl: personImageRef.current,
+                clothingImageUrl: clothingImageRef.current,
+                resultImageUrl: finalResultUrl,
+              }),
             });
             const deductData = await deductRes.json();
             if (deductData.success) {
@@ -273,11 +285,11 @@ export default function TryOnPage() {
             console.error('[TryOn] 积分扣减请求失败:', deductErr.message);
           }
           
-          setResultUrl(data.resultUrl);
+          setResultUrl(finalResultUrl);
           setResult({
             success: true,
-            resultImageUrl: data.resultUrl,
-            resultUrl: data.resultUrl,
+            resultImageUrl: finalResultUrl,
+            resultUrl: finalResultUrl,
             useType: data.useType || '',
             creditsBalance: data.creditsBalance || 0,
             message: data.message || '试衣成功',
@@ -287,29 +299,7 @@ export default function TryOnPage() {
           return;
         }
 
-        // 检查任务状态
-        if (data.status === 'completed') {
-          if (pollIntervalRef.current) {
-            clearInterval(pollIntervalRef.current);
-            pollIntervalRef.current = null;
-          }
-
-          console.log('[TryOn] 任务完成，设置 resultUrl:', data.resultUrl);
-          
-          // 同时更新独立状态和 result 对象
-          setResultUrl(data.resultUrl || '');
-          setResult({
-            success: true,
-            resultImageUrl: data.resultUrl,
-            resultUrl: data.resultUrl,
-            useType: data.useType,
-            creditsBalance: data.creditsBalance,
-            message: data.message,
-            creditsConsumed: 1
-          });
-          setCredits(data.creditsBalance);
-          setIsLoading(false);
-        } else if (data.status === 'failed') {
+        if (data.status === 'failed') {
           if (pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;
@@ -347,6 +337,10 @@ export default function TryOnPage() {
       setError('请先验证邮箱再试衣');
       return;
     }
+
+    // 将图片 URL 存入 ref，供轮询成功后使用
+    personImageRef.current = personImage;
+    clothingImageRef.current = clothingImage;
 
     setError('');
     setIsLoading(true);
@@ -721,6 +715,9 @@ export default function TryOnPage() {
                   What to Wear · AI生成
                 </span>
               </div>
+              <p className="mt-2 text-xs text-amber-600 text-center">
+                生成图片链接有效期30天，请及时下载保存
+              </p>
               <div className="mt-4 flex justify-center">
                 <button
                   onClick={handleChangeClothing}

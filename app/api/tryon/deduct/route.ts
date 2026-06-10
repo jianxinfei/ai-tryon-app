@@ -4,7 +4,7 @@
  * 路径: app/api/tryon/deduct/route.ts
  * 方法: POST
  *
- * 用于在试衣任务成功后扣减积分
+ * 用于在试衣任务成功后扣减积分，并记录试衣历史
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -71,6 +71,19 @@ export async function POST(req: NextRequest) {
 
     console.log('[TryOn Deduct] 用户ID:', userId);
 
+    // 解析请求体（获取图片 URL，用于记录历史）
+    let personImageUrl = '';
+    let clothingImageUrl = '';
+    let resultImageUrl = '';
+    try {
+      const body = await req.json();
+      personImageUrl = body.personImageUrl || '';
+      clothingImageUrl = body.clothingImageUrl || '';
+      resultImageUrl = body.resultImageUrl || '';
+    } catch {
+      // 兼容旧版本前端（不传 body）
+    }
+
     // 扣减 1 积分
     const deductResult = await consumeCredits(userId, 1, '虚拟试衣');
 
@@ -80,6 +93,28 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('[TryOn Deduct] 积分扣减成功，剩余:', deductResult.credits_balance);
+
+    // 记录试衣历史（如果有图片 URL）
+    if (personImageUrl && clothingImageUrl && resultImageUrl) {
+      try {
+        const { error: insertError } = await supabase
+          .from('tryon_history')
+          .insert({
+            user_id: userId,
+            person_image_url: personImageUrl,
+            clothing_image_url: clothingImageUrl,
+            result_image_url: resultImageUrl,
+          });
+
+        if (insertError) {
+          console.error('[TryOn Deduct] 记录试衣历史失败:', insertError.message);
+        } else {
+          console.log('[TryOn Deduct] 试衣历史记录成功');
+        }
+      } catch (historyErr: any) {
+        console.error('[TryOn Deduct] 记录试衣历史异常:', historyErr.message);
+      }
+    }
 
     return NextResponse.json({
       success: true,
