@@ -139,7 +139,7 @@ export default function PricingPage() {
   const subscriptionProduct = PRODUCT_MAP[SUBSCRIPTION_MONTHLY_ID];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-[#FFF7FA]">
       {/* ── 导航栏 ── */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">

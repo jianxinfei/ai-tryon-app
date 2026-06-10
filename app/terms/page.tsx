@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-slate-50 pb-16">
+    <div className="min-h-screen bg-[#FFF7FA] pb-16">
       {/* 顶栏 */}
       <div className="bg-white border-b border-slate-200 px-4 py-6">
         <div className="max-w-3xl mx-auto">

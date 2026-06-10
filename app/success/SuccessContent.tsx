@@ -71,7 +71,7 @@ export default function SuccessContent() {
   // ══════════════════════════════════════════════
   if (isValid === null) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-[#FFF7FA] flex flex-col items-center justify-center px-4">
         <div className="animate-spin h-8 w-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full" />
         <p className="mt-4 text-sm text-slate-500">验证支付信息...</p>
       </div>
@@ -83,7 +83,7 @@ export default function SuccessContent() {
   // ══════════════════════════════════════════════
   if (isValid === false) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-[#FFF7FA] flex flex-col items-center justify-center px-4">
         {/* 警告图标 */}
         <div className="w-20 h-20 sm:w-24 sm:h-24 bg-orange-100 rounded-full flex items-center justify-center mb-6 sm:mb-8 shadow-lg shadow-orange-100">
           <svg className="w-10 h-10 sm:w-12 sm:h-12 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -118,7 +118,7 @@ export default function SuccessContent() {
   // 验证成功状态
   // ══════════════════════════════════════════════
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-[#FFF7FA] flex flex-col items-center justify-center px-4">
       {/* 成功图标 */}
       <div className="w-20 h-20 sm:w-24 sm:h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 sm:mb-8 shadow-lg shadow-green-100">
         <svg className="w-10 h-10 sm:w-12 sm:h-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
