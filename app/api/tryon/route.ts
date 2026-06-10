@@ -36,8 +36,8 @@ const POLL_INTERVAL = 3000;
 // 单个 API 调用超时（毫秒）
 const API_CALL_TIMEOUT = 15000;
 
-// 整个 POST 接口超时（毫秒）— 认证 + 下载图片 + 创建任务
-const POST_TIMEOUT = 15000;
+// 整个 POST 接口超时（毫秒）— 认证 + 下载图片 + 创建任务（含重试）
+const POST_TIMEOUT = 60000;
 
 // ══════════════════════════════════════════════
 // 可灵 AI 错误码定义
@@ -132,6 +132,23 @@ function getKlingAuthHeaders(): Record<string, string> {
 // ══════════════════════════════════════════════
 
 /**
+ * 自定义错误：携带 noRetry 标记和详细错误信息
+ */
+class KlingApiError extends Error {
+  noRetry: boolean;
+  klingCode?: number;
+  httpStatus?: number;
+
+  constructor(message: string, noRetry: boolean, klingCode?: number, httpStatus?: number) {
+    super(message);
+    this.name = 'KlingApiError';
+    this.noRetry = noRetry;
+    this.klingCode = klingCode;
+    this.httpStatus = httpStatus;
+  }
+}
+
+/**
  * 解析可灵 AI 响应中的错误
  */
 function parseKlingError(data: any): KlingError | null {
@@ -147,14 +164,10 @@ function parseKlingError(data: any): KlingError | null {
 
 /**
  * 根据业务码判断错误类型并采取对应策略
- *
- * 返回值:
- * - { action: 'retry_auth' }  → Token 过期，刷新后重试
- * - { action: 'retry_wait', delay: number }  → 速率限制/服务器错误，等待后重试
- * - { action: 'throw', message: string }  → 不可重试，抛出友好错误
  */
 function classifyKlingError(httpStatus: number, klingError: KlingError | null): {
   action: 'retry_auth' | 'retry_wait' | 'throw';
+  noRetry: boolean;
   delay?: number;
   message?: string;
 } {
@@ -162,13 +175,13 @@ function classifyKlingError(httpStatus: number, klingError: KlingError | null): 
   if (!klingError) {
     // 服务器错误（500/503/504）→ 等待 1 秒重试
     if (httpStatus >= 500) {
-      return { action: 'retry_wait', delay: 1000, message: '服务维护中，请稍后重试' };
+      return { action: 'retry_wait', noRetry: false, delay: 1000, message: '服务维护中，请稍后重试' };
     }
     // 速率限制（429）→ 等待 2 秒重试
     if (httpStatus === 429) {
-      return { action: 'retry_wait', delay: 2000, message: '当前使用人数较多，请稍后重试' };
+      return { action: 'retry_wait', noRetry: false, delay: 2000, message: '当前使用人数较多，请稍后重试' };
     }
-    return { action: 'throw', message: `服务请求失败 (${httpStatus})` };
+    return { action: 'throw', noRetry: true, message: `服务请求失败 (${httpStatus})` };
   }
 
   const { code, message } = klingError;
@@ -176,54 +189,54 @@ function classifyKlingError(httpStatus: number, klingError: KlingError | null): 
   // ── 身份验证失败 ──
   if (code === KLING_ERROR.AUTH_EXPIRED) {
     console.warn(`[TryOn API] Token 已失效 (code: ${code})，将刷新 Token 重试`);
-    return { action: 'retry_auth' };
+    return { action: 'retry_auth', noRetry: false };
   }
   if (code === KLING_ERROR.AUTH_EMPTY || code === KLING_ERROR.AUTH_INVALID || code === KLING_ERROR.AUTH_NOT_YET) {
     console.error(`[TryOn API] 认证错误 (code: ${code}): ${message}`);
-    return { action: 'throw', message: '服务认证异常，请稍后重试' };
+    return { action: 'throw', noRetry: true, message: '服务认证异常，请稍后重试' };
   }
 
   // ── 账户异常 ──
   if (code === KLING_ERROR.ACCOUNT_ABNORMAL || code === KLING_ERROR.ACCOUNT_ARREARS || code === KLING_ERROR.ACCOUNT_EXHAUSTED) {
     console.error(`[TryOn API] 账户异常 (code: ${code}): ${message}`);
-    return { action: 'throw', message: '服务繁忙，请稍后重试' }; // 不暴露账户状态
+    return { action: 'throw', noRetry: true, message: '服务繁忙，请稍后重试' };
   }
   if (code === KLING_ERROR.ACCOUNT_NO_PERMISSION) {
     console.error(`[TryOn API] 权限不足 (code: ${code}): ${message}`);
-    return { action: 'throw', message: '服务暂不可用，请联系客服' };
+    return { action: 'throw', noRetry: true, message: '服务暂不可用，请联系客服' };
   }
 
   // ── 请求参数非法 ──
   if (code >= 1200 && code <= 1299) {
     console.error(`[TryOn API] 参数错误 (code: ${code}): ${message}`);
-    return { action: 'throw', message: '请求参数异常，请检查图片后重试' };
+    return { action: 'throw', noRetry: true, message: '请求参数异常，请检查图片后重试' };
   }
 
   // ── 速率限制 ──
   if (code === KLING_ERROR.RATE_LIMIT || code === KLING_ERROR.QPS_LIMIT || code === KLING_ERROR.IP_WHITELIST) {
     console.warn(`[TryOn API] 速率限制 (code: ${code}): ${message}`);
-    return { action: 'retry_wait', delay: 2000, message: '当前使用人数较多，请稍后重试' };
+    return { action: 'retry_wait', noRetry: false, delay: 2000, message: '当前使用人数较多，请稍后重试' };
   }
 
   // ── 内容安全策略 ──
   if (code === KLING_ERROR.CONTENT_SAFE) {
     console.error(`[TryOn API] 内容安全拦截 (code: ${code}): ${message}`);
-    return { action: 'throw', message: '图片内容不符合规范，请更换图片后重试' };
+    return { action: 'throw', noRetry: true, message: '图片内容不符合规范，请更换图片后重试' };
   }
   if (code === KLING_ERROR.POLICY_TRIGGERED) {
     console.error(`[TryOn API] 触发平台策略 (code: ${code}): ${message}`);
-    return { action: 'throw', message: '操作受限，请稍后重试' };
+    return { action: 'throw', noRetry: true, message: '操作受限，请稍后重试' };
   }
 
   // ── 服务器内部错误 ──
   if (code === KLING_ERROR.INTERNAL_ERROR || code === KLING_ERROR.SERVICE_UNAVAILABLE || code === KLING_ERROR.TIMEOUT) {
     console.warn(`[TryOn API] 服务器错误 (code: ${code}): ${message}`);
-    return { action: 'retry_wait', delay: 1000, message: '服务维护中，请稍后重试' };
+    return { action: 'retry_wait', noRetry: false, delay: 1000, message: '服务维护中，请稍后重试' };
   }
 
   // ── 未知错误码 ──
   console.error(`[TryOn API] 未知错误码 (code: ${code}): ${message}`);
-  return { action: 'throw', message: '操作失败，请稍后重试' };
+  return { action: 'throw', noRetry: true, message: '操作失败，请稍后重试' };
 }
 
 /**
@@ -297,8 +310,13 @@ async function fetchWithSmartRetry(
         continue;
       }
 
-      // 不可重试或已重试过，抛出友好错误
-      throw new Error(strategy.message || '操作失败，请稍后重试');
+      // 不可重试或已重试过，抛出 KlingApiError（携带 noRetry 标记）
+      throw new KlingApiError(
+        strategy.message || '操作失败，请稍后重试',
+        strategy.noRetry,
+        klingError?.code,
+        response.status,
+      );
 
     } catch (err: any) {
       const elapsed = Date.now() - startTime;
@@ -588,9 +606,19 @@ async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
       taskId = await createKlingTryOnTask(personImage, clothingImage, signal);
       console.log('[TryOn API] 任务创建成功，task_id:', taskId);
     } catch (err: any) {
-      console.error('[TryOn API] 创建试衣任务失败:', err.message);
+      const isNoRetry = err instanceof KlingApiError ? err.noRetry : false;
+      const klingCode = err instanceof KlingApiError ? err.klingCode : undefined;
+      const httpStatus = err instanceof KlingApiError ? err.httpStatus : undefined;
+      const detail = klingCode ? ` (可灵错误码: ${klingCode}, HTTP: ${httpStatus})` : '';
+
+      console.error(`[TryOn API] 创建试衣任务失败${detail}:`, err.message);
       return NextResponse.json(
-        { success: false, error: '创建试衣任务失败', message: err.message || '请重试或更换图片' },
+        {
+          success: false,
+          error: '创建试衣任务失败',
+          message: err.message || '请重试或更换图片',
+          noRetry: isNoRetry,
+        },
         { status: 500 }
       );
     }

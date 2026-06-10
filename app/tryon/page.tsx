@@ -353,10 +353,10 @@ export default function TryOnPage() {
     setResult(null);
     setPollProgress({ count: 0, estimatedTime: 40 });
 
-    // 创建任务请求（带 8 秒超时 + 自动重试）
-    const doCreateTask = async (isRetry: boolean): Promise<{ taskId: string } | null> => {
+    // 创建任务请求（带 30 秒超时 + 自动重试）
+    const doCreateTask = async (isRetry: boolean): Promise<{ taskId: string } | { noRetry: true; error: string } | null> => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       
       try {
         const response = await fetch('/api/tryon', {
@@ -386,12 +386,20 @@ export default function TryOnPage() {
           return { taskId: 'INSUFFICIENT_CREDITS' };
         }
         
-        // 没有 taskId，记录错误
+        // 服务端明确标记不可重试（内容安全、参数错误等确定性错误）
+        if (data.noRetry) {
+          console.error(`[TryOn] 创建任务失败（不可重试）:`, data.error, data.message);
+          return { noRetry: true, error: data.message || data.error || '操作失败，请稍后重试' };
+        }
+        
+        // 没有 taskId，记录错误（可重试）
         if (!response.ok) {
-          console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}失败:`, data.error);
+          console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}失败:`, response.status, data.error, data.message);
           return null;
         }
         
+        // 200 OK 但没有 taskId（不应发生）
+        console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}返回 200 但无 taskId:`, data);
         return null;
       } catch (err: any) {
         console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}异常:`, err.name === 'AbortError' ? '超时' : err.message);
@@ -405,9 +413,16 @@ export default function TryOnPage() {
     let result = await doCreateTask(false);
     
     // 积分不足：不重试，直接显示购买引导
-    if (result && result.taskId === 'INSUFFICIENT_CREDITS') {
+    if (result && 'taskId' in result && result.taskId === 'INSUFFICIENT_CREDITS') {
       setIsLoading(false);
       setShowCreditsModal(true);
+      return;
+    }
+    
+    // 服务端明确标记不可重试：直接展示错误，不重试
+    if (result && 'noRetry' in result && result.noRetry) {
+      setError(result.error);
+      setIsLoading(false);
       return;
     }
     
@@ -418,8 +433,15 @@ export default function TryOnPage() {
       result = await doCreateTask(true);
     }
     
+    // 重试后服务端返回不可重试错误
+    if (result && 'noRetry' in result && result.noRetry) {
+      setError(result.error);
+      setIsLoading(false);
+      return;
+    }
+    
     // 拿到 taskId，立即启动轮询
-    if (result) {
+    if (result && 'taskId' in result) {
       setTaskId(result.taskId);
       startPolling(result.taskId);
     } else {
