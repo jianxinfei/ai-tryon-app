@@ -75,6 +75,9 @@ export default function PricingPage() {
     return () => subscription.unsubscribe();
   }, [supabase]);
 
+  // ── 全局购买锁定：任一按钮点击后禁用所有购买按钮 ──
+  const isAnyLoading = loadingId !== null;
+
   const handlePurchase = async (productId: string) => {
     setLoadingId(productId);
     try {
@@ -233,10 +236,10 @@ export default function PricingPage() {
 
                 <button
                   onClick={() => handlePurchase(pack.productId)}
-                  disabled={loadingId === pack.productId}
+                  disabled={isAnyLoading}
                   className="mt-3 sm:mt-4 w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all
                     bg-indigo-600 text-white hover:bg-indigo-700
-                    disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-400"
                 >
                   {loadingId === pack.productId ? (
                     <span className="flex items-center justify-center gap-1.5 sm:gap-2">
@@ -246,6 +249,8 @@ export default function PricingPage() {
                       </svg>
                       <span className="truncate">跳转支付中...</span>
                     </span>
+                  ) : isAnyLoading ? (
+                    '请稍候...'
                   ) : (
                     '立即购买'
                   )}
@@ -302,10 +307,10 @@ export default function PricingPage() {
 
                 <button
                   onClick={() => handlePurchase(subscriptionProduct.productId)}
-                  disabled={loadingId === subscriptionProduct.productId}
+                  disabled={isAnyLoading}
                   className="mt-5 sm:mt-6 w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all
                     bg-amber-500 text-white hover:bg-amber-600
-                    disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-400"
                 >
                   {loadingId === subscriptionProduct.productId ? (
                     <span className="flex items-center justify-center gap-1.5 sm:gap-2">
@@ -315,6 +320,8 @@ export default function PricingPage() {
                       </svg>
                       <span className="truncate">跳转支付中...</span>
                     </span>
+                  ) : isAnyLoading ? (
+                    '请稍候...'
                   ) : (
                     '开始订阅'
                   )}

@@ -15,7 +15,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { getProductConfig } from '@/lib/creem';
+import { getProductConfig, NEW_USER_PACK_10_ID, NEW_USER_PACK_100_ID } from '@/lib/creem';
+
+// 新用户专享产品 ID 集合
+const NEW_USER_PRODUCT_IDS = new Set([NEW_USER_PACK_10_ID, NEW_USER_PACK_100_ID]);
 
 // ══════════════════════════════════════════════
 // Supabase 客户端（延迟初始化）
@@ -185,13 +188,55 @@ async function handleCheckoutCompleted(event: any) {
   
   console.log(`[Creem Webhook] 产品类型: ${product.type}, 是否一次性: ${isOneTimePayment}`);
 
-  // 根据 Product ID 直接发放对应积分（新老用户产品已在 Creem 端分离）
-  const creditsToAdd = product.credits;
-  const description = isOneTimePayment
-    ? `购买 ${product.name} (${creditsToAdd}次)`
-    : `订阅 ${product.name} - 首月积分 (${creditsToAdd}次)`;
+  // ══════════════════════════════════════════════
+  // 最终防线：检查老用户是否购买了新用户专享产品
+  // ══════════════════════════════════════════════
+  let creditsToAdd = product.credits;
+  let isAbuse = false;
 
-  console.log(`[Creem Webhook] 开始添加积分: userId=${userId}, productId=${productId}, amount=${creditsToAdd}`);
+  if (NEW_USER_PRODUCT_IDS.has(productId)) {
+    console.log('[Creem Webhook] 最终防线：检测到新用户专享产品，检查用户购买记录...');
+
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: purchaseRecord, error: purchaseError } = await supabaseAdmin
+      .from('credit_transactions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('transaction_type', 'purchase')
+      .limit(1)
+      .maybeSingle();
+
+    if (purchaseError) {
+      console.error('[Creem Webhook] 最终防线查询失败:', purchaseError.message);
+    } else if (purchaseRecord) {
+      // 老用户购买了新用户专享产品！触发告警并按老用户标准发放积分
+      isAbuse = true;
+      console.warn(`[Creem Webhook] 🚨 ALERT: 老用户购买新用户专享产品！userId=${userId}, productId=${productId}`);
+      console.warn(`[Creem Webhook] 按老用户标准发放积分，原 ${creditsToAdd} 次 → 调整为老用户标准`);
+
+      // 获取对应的老用户产品积分（10次包→10次，100次包→100次，无赠送）
+      const { RETURNING_USER_PACK_10_ID, RETURNING_USER_PACK_100_ID } = await import('@/lib/creem');
+      if (productId === NEW_USER_PACK_10_ID) {
+        const returningProduct = getProductConfig(RETURNING_USER_PACK_10_ID);
+        creditsToAdd = returningProduct?.credits ?? 10;
+      } else if (productId === NEW_USER_PACK_100_ID) {
+        const returningProduct = getProductConfig(RETURNING_USER_PACK_100_ID);
+        creditsToAdd = returningProduct?.credits ?? 100;
+      }
+
+      console.warn(`[Creem Webhook] 调整后发放积分: ${creditsToAdd} 次（无赠送）`);
+    } else {
+      console.log('[Creem Webhook] 最终防线通过：确认为首次购买');
+    }
+  }
+
+  const description = isAbuse
+    ? `购买 ${product.name} (老用户修正: ${creditsToAdd}次)`
+    : isOneTimePayment
+      ? `购买 ${product.name} (${creditsToAdd}次)`
+      : `订阅 ${product.name} - 首月积分 (${creditsToAdd}次)`;
+
+  console.log(`[Creem Webhook] 开始添加积分: userId=${userId}, productId=${productId}, amount=${creditsToAdd}, isAbuse=${isAbuse}`);
 
   const result = await addCreditsToUser({
     userId,

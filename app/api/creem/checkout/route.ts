@@ -19,7 +19,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { getProductConfig } from '@/lib/creem';
+import { getProductConfig, NEW_USER_PACK_10_ID, NEW_USER_PACK_100_ID } from '@/lib/creem';
+
+// 新用户专享产品 ID 集合
+const NEW_USER_PRODUCT_IDS = new Set([NEW_USER_PACK_10_ID, NEW_USER_PACK_100_ID]);
 
 export async function POST(req: NextRequest) {
   console.log('[Creem Checkout] === 开始处理请求 ===');
@@ -73,7 +76,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '无效的 JSON 请求体' }, { status: 400 });
     }
 
-    const { productId, productType } = body;
+    const { productId } = body;
 
     // ── 3. 验证必填参数 ──
     if (!productId) {
@@ -86,9 +89,40 @@ export async function POST(req: NextRequest) {
 
     // ── 3.5. 获取产品配置，确定产品类型 ──
     const productConfig = getProductConfig(productId);
-    const actualProductType = productType || productConfig?.type || 'unknown';
+    const actualProductType = productConfig?.type || 'unknown';
 
     console.log('[Creem Checkout] 产品配置:', productConfig ? '已找到' : '未找到', '| 类型:', actualProductType);
+
+    // ── 3.6. 服务端强校验：新用户专享产品必须由服务端判定身份 ──
+    if (NEW_USER_PRODUCT_IDS.has(productId)) {
+      console.log('[Creem Checkout] 检测到新用户专享产品，进行服务端身份校验...');
+
+      const { data: purchaseRecord, error: purchaseError } = await supabase
+        .from('credit_transactions')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('transaction_type', 'purchase')
+        .limit(1)
+        .maybeSingle();
+
+      if (purchaseError) {
+        console.error('[Creem Checkout] 查询购买记录失败:', purchaseError.message);
+        return NextResponse.json(
+          { error: '身份校验失败，请稍后重试' },
+          { status: 500 }
+        );
+      }
+
+      if (purchaseRecord) {
+        console.warn('[Creem Checkout] 老用户试图购买新用户专享产品，已拦截:', { userId, productId });
+        return NextResponse.json(
+          { error: '您已是老用户，请刷新页面后购买标准产品' },
+          { status: 403 }
+        );
+      }
+
+      console.log('[Creem Checkout] 新用户身份校验通过');
+    }
 
     // ── 4. 检查环境变量 ──
     const apiKey = process.env.CREEM_API_KEY;
