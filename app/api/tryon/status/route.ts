@@ -85,6 +85,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     taskId = body.taskId;
     const userId = body.userId; // 用于积分回滚
+    const isExternalTaskId = body.isExternalTaskId || false; // 是否为自定义任务 ID
 
     if (!taskId) {
       console.log('[TryOn Status] 参数错误：缺少 taskId');
@@ -94,10 +95,16 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log('[TryOn Status] 查询任务状态:', taskId);
+    const idType = isExternalTaskId ? 'external_task_id' : 'task_id';
+    console.log('[TryOn Status] 查询任务状态:', taskId, '(类型:', idType + ')');
 
-    // 构建查询 URL
-    const url = `${KLING_API_BASE}/v1/images/kolors-virtual-try-on/${taskId}`;
+    // 构建查询 URL（支持通过 external_task_id 查询）
+    let url: string;
+    if (isExternalTaskId) {
+      url = `${KLING_API_BASE}/v1/images/kolors-virtual-try-on/${encodeURIComponent(taskId)}?external_task_id=true`;
+    } else {
+      url = `${KLING_API_BASE}/v1/images/kolors-virtual-try-on/${encodeURIComponent(taskId)}`;
+    }
     const headers = getKlingAuthHeaders();
 
     // 调用可灵 API，增加超时和错误处理

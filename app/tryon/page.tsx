@@ -197,30 +197,35 @@ export default function TryOnPage() {
   // 开始轮询（定义在 createTryOnTask 之前，确保闭包引用正确）
   const startPolling = useCallback((taskId: string) => {
     console.log('[TryOn] 即将启动轮询，taskId:', taskId);
-    
+
     // 清除之前的定时器
     if (pollIntervalRef.current) {
       clearInterval(pollIntervalRef.current);
     }
-    
+
     // 重置轮询计数
     pollCountRef.current = 0;
+
+    // 阶段1: 轮询回调结果表（15次 x 2秒 = 30秒）
+    // 阶段2: 兜底轮询可灵 API（5次 x 2秒 = 10秒）
+    // 总上限: 20次（40秒）
+    const CALLBACK_POLL_MAX = 15;
+    const FALLBACK_POLL_MAX = 20;
 
     // 轮询函数（使用传入的 taskId，避免闭包问题）
     const pollOnce = async (currentTaskId: string) => {
       console.log('[TryOn] 轮询中..., taskId:', currentTaskId);
-      
-      // 先增加计数并更新 UI，确保即使 fetch 卡住也能看到进度变化
+
+      // 先增加计数并更新 UI
       pollCountRef.current += 1;
       const currentCount = pollCountRef.current;
       const elapsed = currentCount * 2;
-      const estimated = Math.max(0, 40 - elapsed);
-      
-      console.log(`[TryOn] 轮询第 ${currentCount} 次, 已等待 ${elapsed} 秒, 预计还需 ${estimated} 秒, taskId: ${currentTaskId}`);
-      setPollProgress({ count: currentCount, estimatedTime: estimated });
 
-      // 检查超时（40秒 = 20次 * 2秒）
-      if (currentCount >= 20) {
+      console.log(`[TryOn] 轮询第 ${currentCount} 次, 已等待 ${elapsed} 秒, taskId: ${currentTaskId}`);
+      setPollProgress({ count: currentCount, estimatedTime: Math.max(0, 40 - elapsed) });
+
+      // 检查超时（20次 = 40秒）
+      if (currentCount >= FALLBACK_POLL_MAX) {
         console.log('[TryOn] 轮询达到上限 20 次，超时');
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current);
@@ -232,8 +237,85 @@ export default function TryOnPage() {
       }
 
       try {
+        // 阶段1: 轮询回调结果表（前15次）
+        if (currentCount <= CALLBACK_POLL_MAX) {
+          console.log(`[TryOn] 发起请求: POST /api/tryon/callback-result, taskId: ${currentTaskId}`);
+
+          const response = await fetch('/api/tryon/callback-result', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ taskId: currentTaskId })
+          });
+
+          const data = await response.json();
+          console.log(`[TryOn] 回调结果轮询第 ${currentCount} 次响应:`, data);
+
+          if (data.status === 'succeed' && data.resultUrl) {
+            console.log('[TryOn] 回调结果表命中 succeed，resultUrl:', data.resultUrl);
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+            }
+
+            // 试衣成功，扣减积分并记录历史
+            try {
+              const deductRes = await fetch('/api/tryon/deduct', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({
+                  personImageUrl: personImageRef.current,
+                  clothingImageUrl: clothingImageRef.current,
+                  resultImageUrl: data.resultUrl,
+                }),
+              });
+              const deductData = await deductRes.json();
+              if (deductData.success) {
+                console.log('[TryOn] 积分扣减成功，剩余:', deductData.creditsBalance);
+                setCredits(deductData.creditsBalance);
+              } else {
+                console.error('[TryOn] 积分扣减失败:', deductData.error);
+              }
+            } catch (deductErr: any) {
+              console.error('[TryOn] 积分扣减请求失败:', deductErr.message);
+            }
+
+            setResultUrl(data.resultUrl);
+            setResult({
+              success: true,
+              resultImageUrl: data.resultUrl,
+              resultUrl: data.resultUrl,
+              useType: '',
+              creditsBalance: 0,
+              message: '试衣成功',
+              creditsConsumed: 1
+            });
+            setIsLoading(false);
+            return;
+          }
+
+          if (data.status === 'failed') {
+            console.log('[TryOn] 回调结果表命中 failed:', data.error);
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+            }
+            setError(data.error || '试衣失败');
+            setIsLoading(false);
+            return;
+          }
+
+          // status === 'processing'，继续轮询
+          return;
+        }
+
+        // 阶段2: 兜底轮询可灵 API（第16-20次）
         console.log(`[TryOn] 发起请求: POST /api/tryon/status, taskId: ${currentTaskId}`);
-        
+
         const response = await fetch('/api/tryon/status', {
           method: 'POST',
           credentials: 'include',
@@ -242,7 +324,7 @@ export default function TryOnPage() {
         });
 
         const data = await response.json();
-        console.log(`[TryOn] 轮询第 ${currentCount} 次响应:`, data);
+        console.log(`[TryOn] 兜底轮询第 ${currentCount} 次响应:`, data);
 
         if (!response.ok) {
           throw new Error(data.error || '查询状态失败');
@@ -253,12 +335,12 @@ export default function TryOnPage() {
         const finalResultUrl = data.resultUrl || data.resultUrl || '';
 
         if (isSuccess && finalResultUrl) {
-          console.log('[TryOn] 试衣成功，resultUrl:', finalResultUrl);
+          console.log('[TryOn] 兜底轮询试衣成功，resultUrl:', finalResultUrl);
           if (pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;
           }
-          
+
           // 试衣成功，扣减积分并记录历史
           try {
             const deductRes = await fetch('/api/tryon/deduct', {
@@ -284,7 +366,7 @@ export default function TryOnPage() {
           } catch (deductErr: any) {
             console.error('[TryOn] 积分扣减请求失败:', deductErr.message);
           }
-          
+
           setResultUrl(finalResultUrl);
           setResult({
             success: true,
@@ -318,11 +400,14 @@ export default function TryOnPage() {
       }
     };
 
-    // 立即执行第一次轮询（不等待 2 秒）
-    pollOnce(taskId);
+    // 先等3秒（给回调时间），然后开始轮询
+    setTimeout(() => {
+      // 立即执行第一次轮询
+      pollOnce(taskId);
 
-    // 之后每 2 秒轮询一次
-    pollIntervalRef.current = window.setInterval(() => pollOnce(taskId), 2000);
+      // 之后每 2 秒轮询一次
+      pollIntervalRef.current = window.setInterval(() => pollOnce(taskId), 2000);
+    }, 3000);
   }, []);
 
   // 创建试衣任务
@@ -533,7 +618,7 @@ export default function TryOnPage() {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">AI 虚拟试衣</h1>
           <p className="mt-2 text-sm text-slate-500">上传人物照和服装照，AI 为您生成试穿效果</p>
           <p className="mt-1.5 text-xs text-slate-400">
-            每次消耗 1 积分 | 支持 JPG / PNG | 积分长期有效，放心囤！
+            每次消耗 1 积分 | 支持 JPG / PNG | 积分自购买之日起180天有效
           </p>
         </div>
 
@@ -681,9 +766,6 @@ export default function TryOnPage() {
             <p className="text-sm font-medium text-slate-600">AI 正在为您精心试穿...</p>
             <p className="text-xs text-slate-400">
               已等待 {pollProgress.count * 2} 秒
-              {pollProgress.estimatedTime > 0 && (
-                <span className="ml-2">· 预计还需 {pollProgress.estimatedTime} 秒</span>
-              )}
             </p>
           </div>
         )}

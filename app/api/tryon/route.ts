@@ -412,13 +412,16 @@ async function downloadImageAsBase64(imageUrl: string, signal?: AbortSignal): Pr
 async function createKlingTryOnTask(
   personImage: string,
   clothingImage: string,
+  userId: string,
   signal?: AbortSignal,
-): Promise<string> {
+): Promise<{ taskId: string; externalTaskId: string }> {
   // 正确路径：/v1/images/kolors-virtual-try-on
   const path = '/v1/images/kolors-virtual-try-on';
   const url = `${KLING_API_BASE}${path}`;
 
-  console.log('[TryOn API] 创建可灵 AI 试衣任务...');
+  // 生成自定义任务 ID：whattowear_{userId}_{timestamp}
+  const externalTaskId = `whattowear_${userId}_${Math.floor(Date.now() / 1000)}`;
+  console.log('[TryOn API] 创建可灵 AI 试衣任务, external_task_id:', externalTaskId);
   console.log('[TryOn API] 请求 URL:', url);
 
   // 下载图片并转为 Base64
@@ -427,15 +430,19 @@ async function createKlingTryOnTask(
     downloadImageAsBase64(clothingImage, signal),
   ]);
 
-  // 正确参数名：model_name, human_image, cloth_image
+  // 正确参数名：model_name, human_image, cloth_image, external_task_id, callback_url
   const requestBody = {
     model_name: KLING_MODEL,
     human_image: humanImageBase64,
     cloth_image: clothImageBase64,
+    external_task_id: externalTaskId,
+    callback_url: 'https://www.aiwhattowear.com/api/kling/callback',
   };
 
-  console.log('[TryOn API] 请求体: model_name=%s, human_image=[Base64 %s], cloth_image=[Base64 %s]',
+  console.log('[TryOn API] 请求体: model_name=%s, external_task_id=%s, callback_url=%s, human_image=[Base64 %s], cloth_image=[Base64 %s]',
     KLING_MODEL,
+    externalTaskId,
+    'https://www.aiwhattowear.com/api/kling/callback',
     (humanImageBase64.length / 1024).toFixed(1) + 'KB',
     (clothImageBase64.length / 1024).toFixed(1) + 'KB',
   );
@@ -464,8 +471,8 @@ async function createKlingTryOnTask(
     throw new Error('服务返回数据异常，请稍后重试');
   }
 
-  console.log(`[TryOn API] 任务创建成功，task_id: ${taskId}`);
-  return taskId;
+  console.log(`[TryOn API] 任务创建成功，task_id: ${taskId}, external_task_id: ${externalTaskId}`);
+  return { taskId, externalTaskId };
 }
 
 // ══════════════════════════════════════════════
@@ -622,10 +629,13 @@ async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
     // ── 4. 调用可灵 AI 创建试衣任务（异步模式，不扣积分） ──
     console.log('[TryOn API] 创建可灵 AI 试衣任务...');
     let taskId: string;
+    let externalTaskId: string;
 
     try {
-      taskId = await createKlingTryOnTask(personImage, clothingImage, signal);
-      console.log('[TryOn API] 任务创建成功，task_id:', taskId);
+      const result = await createKlingTryOnTask(personImage, clothingImage, userId, signal);
+      taskId = result.taskId;
+      externalTaskId = result.externalTaskId;
+      console.log('[TryOn API] 任务创建成功，task_id:', taskId, ', external_task_id:', externalTaskId);
     } catch (err: any) {
       const isNoRetry = err instanceof KlingApiError ? err.noRetry : false;
       const klingCode = err instanceof KlingApiError ? err.klingCode : undefined;
@@ -645,11 +655,12 @@ async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
     }
 
     // ── 5. 返回结果（立即返回 task_id，不等待图片生成，不扣积分） ──
-    console.log('[TryOn API] 任务创建完成，返回 taskId:', taskId);
+    console.log('[TryOn API] 任务创建完成，返回 taskId:', taskId, ', externalTaskId:', externalTaskId);
 
     return NextResponse.json({
       success: true,
       taskId,
+      externalTaskId,
       message: '任务已创建',
     });
 
