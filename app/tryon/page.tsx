@@ -353,10 +353,10 @@ export default function TryOnPage() {
     setResult(null);
     setPollProgress({ count: 0, estimatedTime: 40 });
 
-    // 创建任务请求（带 30 秒超时 + 自动重试）
+    // 创建任务请求（带 15 秒超时 + 自动重试）
     const doCreateTask = async (isRetry: boolean): Promise<{ taskId: string } | { noRetry: true; error: string } | null> => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       
       try {
         const response = await fetch('/api/tryon', {
@@ -386,7 +386,7 @@ export default function TryOnPage() {
           return { taskId: 'INSUFFICIENT_CREDITS' };
         }
         
-        // 服务端明确标记不可重试（内容安全、参数错误等确定性错误）
+        // 服务端明确标记不可重试（内容安全、参数错误、超时等确定性错误）
         if (data.noRetry) {
           console.error(`[TryOn] 创建任务失败（不可重试）:`, data.error, data.message);
           return { noRetry: true, error: data.message || data.error || '操作失败，请稍后重试' };
@@ -402,7 +402,11 @@ export default function TryOnPage() {
         console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}返回 200 但无 taskId:`, data);
         return null;
       } catch (err: any) {
-        console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}异常:`, err.name === 'AbortError' ? '超时' : err.message);
+        if (err.name === 'AbortError') {
+          console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}超时（15秒）`);
+          return { noRetry: true, error: '服务响应较慢，请稍后重试' };
+        }
+        console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}异常:`, err.message);
         return null;
       } finally {
         clearTimeout(timeoutId);

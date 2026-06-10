@@ -37,7 +37,7 @@ const POLL_INTERVAL = 3000;
 const API_CALL_TIMEOUT = 15000;
 
 // 整个 POST 接口超时（毫秒）— 认证 + 下载图片 + 创建任务（含重试）
-const POST_TIMEOUT = 60000;
+const POST_TIMEOUT = 45000;
 
 // ══════════════════════════════════════════════
 // 可灵 AI 错误码定义
@@ -454,7 +454,7 @@ async function createKlingTryOnTask(
 export async function POST(req: NextRequest) {
   console.log('[TryOn API] === 收到试衣请求 ===');
 
-  // 整体超时控制（15 秒）
+  // 整体超时控制
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), POST_TIMEOUT);
 
@@ -462,9 +462,9 @@ export async function POST(req: NextRequest) {
     return await handleTryOnRequest(req, controller.signal);
   } catch (err: any) {
     if (err.name === 'AbortError') {
-      console.error('[TryOn API] 整体超时（15秒），已中止');
+      console.error(`[TryOn API] 整体超时（${POST_TIMEOUT}ms），已中止`);
       return NextResponse.json(
-        { success: false, error: '请求超时，请稍后重试', message: '服务器处理超时，请重试' },
+        { success: false, error: '请求超时，请稍后重试', message: '服务响应较慢，请稍后重试', noRetry: true },
         { status: 504 }
       );
     }
