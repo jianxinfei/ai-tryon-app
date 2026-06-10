@@ -36,8 +36,8 @@ const POLL_INTERVAL = 3000;
 // 单个 API 调用超时（毫秒）
 const API_CALL_TIMEOUT = 15000;
 
-// 整个 POST 接口超时（毫秒）— 认证 + 下载图片 + 创建任务（含重试）
-const POST_TIMEOUT = 45000;
+// 整个 POST 接口超时（毫秒）— 认证 + 下载图片 + 创建任务（含最多 3 次指数退避重试：1+2+4=7s）
+const POST_TIMEOUT = 60000;
 
 // ══════════════════════════════════════════════
 // 可灵 AI 错误码定义
@@ -69,8 +69,9 @@ const KLING_ERROR = {
   // 触发策略 (400/429)
   POLICY_TRIGGERED: 1300,     // 平台策略
   CONTENT_SAFE: 1301,         // 内容安全策略
-  RATE_LIMIT: 1302,           // 速率限制 → 等待重试
-  QPS_LIMIT: 1303,            // QPS 超限 → 等待重试
+  RATE_LIMIT: 1302,           // 速率限制 → 指数退避重试
+  QPS_LIMIT: 1303,            // QPS 超限 / 并发超限 → 指数退避重试
+  CONCURRENT_LIMIT: 1303,     // 并发超限（与 QPS_LIMIT 共用码）
   IP_WHITELIST: 1304,         // IP 白名单
   // 内部错误 (500/503/504)
   INTERNAL_ERROR: 5000,        // 服务器内部错误 → 重试
@@ -166,7 +167,7 @@ function parseKlingError(data: any): KlingError | null {
  * 根据业务码判断错误类型并采取对应策略
  */
 function classifyKlingError(httpStatus: number, klingError: KlingError | null): {
-  action: 'retry_auth' | 'retry_wait' | 'throw';
+  action: 'retry_auth' | 'retry_wait' | 'retry_backoff' | 'throw';
   noRetry: boolean;
   delay?: number;
   message?: string;
@@ -212,10 +213,10 @@ function classifyKlingError(httpStatus: number, klingError: KlingError | null): 
     return { action: 'throw', noRetry: true, message: '请求参数异常，请检查图片后重试' };
   }
 
-  // ── 速率限制 ──
+  // ── 速率限制 / QPS 超限 / 并发超限 → 指数退避重试 ──
   if (code === KLING_ERROR.RATE_LIMIT || code === KLING_ERROR.QPS_LIMIT || code === KLING_ERROR.IP_WHITELIST) {
-    console.warn(`[TryOn API] 速率限制 (code: ${code}): ${message}`);
-    return { action: 'retry_wait', noRetry: false, delay: 2000, message: '当前使用人数较多，请稍后重试' };
+    console.warn(`[TryOn API] 可灵API并发/QPS超限 (code: ${code}): ${message}`);
+    return { action: 'retry_backoff', noRetry: false, message: '当前使用人数较多，请稍后重试' };
   }
 
   // ── 内容安全策略 ──
@@ -244,7 +245,7 @@ function classifyKlingError(httpStatus: number, klingError: KlingError | null): 
  *
  * 策略：
  * - Token 过期 → 自动刷新重试 1 次
- * - 速率限制 → 等待 2 秒重试 1 次
+ * - 并发/QPS 超限 (1302/1303) → 指数退避重试：1s / 2s / 4s（最多3次）
  * - 服务器错误 → 等待 1 秒重试 1 次
  * - 超时 15 秒
  */
@@ -256,8 +257,9 @@ async function fetchWithSmartRetry(
   let lastError: Error | null = null;
   let hasRetriedAuth = false;
   let hasRetriedWait = false;
+  let backoffAttempt = 0; // 指数退避重试计数
 
-  for (let attempt = 0; attempt <= 2; attempt++) {
+  for (let attempt = 0; attempt <= 3; attempt++) {
     const attemptLabel = attempt === 0 ? '' : ` (第${attempt}次重试)`;
     const startTime = Date.now();
 
@@ -302,6 +304,25 @@ async function fetchWithSmartRetry(
         continue; // 立即重试（不等待）
       }
 
+      // 指数退避重试：并发/QPS 超限 (1302/1303)
+      if (strategy.action === 'retry_backoff') {
+        if (backoffAttempt < 3) {
+          backoffAttempt++;
+          const delay = 1000 * Math.pow(2, backoffAttempt - 1); // 1s, 2s, 4s
+          console.warn(`[TryOn API] 可灵API并发超限，正在重试... 第${backoffAttempt}次退避，等待 ${delay}ms`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        // 退避重试用尽
+        console.error(`[TryOn API] 可灵API并发超限，退避重试3次后仍失败`);
+        throw new KlingApiError(
+          '当前使用人数较多，请稍后重试',
+          true,
+          klingError?.code,
+          response.status,
+        );
+      }
+
       if (strategy.action === 'retry_wait' && !hasRetriedWait) {
         hasRetriedWait = true;
         const delay = strategy.delay || 2000;
@@ -341,7 +362,7 @@ async function fetchWithSmartRetry(
         console.warn(`[TryOn API] ${label}${attemptLabel} 网络错误 (${elapsed}ms): ${err.message}`);
       }
 
-      if (attempt < 2) {
+      if (attempt < 3) {
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
     }

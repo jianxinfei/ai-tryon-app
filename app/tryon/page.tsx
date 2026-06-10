@@ -353,10 +353,10 @@ export default function TryOnPage() {
     setResult(null);
     setPollProgress({ count: 0, estimatedTime: 40 });
 
-    // 创建任务请求（带 15 秒超时 + 自动重试）
+    // 创建任务请求（带 30 秒超时 + 自动重试）
     const doCreateTask = async (isRetry: boolean): Promise<{ taskId: string } | { noRetry: true; error: string } | null> => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       
       try {
         const response = await fetch('/api/tryon', {
@@ -403,7 +403,7 @@ export default function TryOnPage() {
         return null;
       } catch (err: any) {
         if (err.name === 'AbortError') {
-          console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}超时（15秒）`);
+          console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}超时（30秒）`);
           return { noRetry: true, error: '服务响应较慢，请稍后重试' };
         }
         console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}异常:`, err.message);
