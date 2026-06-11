@@ -18,30 +18,68 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<TryOnRecord | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<TryOnRecord | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          router.push('/profile?login=true');
-          return;
+  const fetchHistory = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/profile?login=true');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('tryon_history')
+        .select('id, person_image_url, clothing_image_url, result_image_url, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[History] 查询试衣历史失败:', error.message);
+        setError('加载试衣记录失败，请稍后重试');
+        return;
+      }
+
+      setRecords(data || []);
+    } catch (err: any) {
+      console.error('[History] 获取试衣历史异常:', err.message);
+      setError('加载试衣记录失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/tryon/history/${deleteTarget.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRecords(prev => prev.filter(r => r.id !== deleteTarget.id));
+        if (selectedRecord?.id === deleteTarget.id) {
+          setSelectedRecord(null);
         }
-
-        const { data, error } = await supabase
-          .from('tryon_history')
-          .select('id, person_image_url, clothing_image_url, result_image_url, created_at')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('[History] 查询试衣历史失败:', error.message);
-          setError('加载试衣记录失败，请稍后重试');
-          return;
+      } else {
+        alert(data.error || '删除失败');
+      }
+    } catch (err: any) {
+      console.error('[History] 删除失败:', err.message);
+      alert('删除失败，请重试');
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
         }
 
         setRecords(data || []);

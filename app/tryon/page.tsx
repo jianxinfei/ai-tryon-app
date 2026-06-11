@@ -78,6 +78,8 @@ export default function TryOnPage() {
   // 使用 ref 存储图片 URL，避免轮询闭包问题
   const personImageRef = useRef<string>('');
   const clothingImageRef = useRef<string>('');
+  // 防止重复扣减积分（幂等性保护）
+  const deductedRef = useRef<boolean>(false);
 
   // 初始化 - 检查登录状态
   useEffect(() => {
@@ -205,6 +207,8 @@ export default function TryOnPage() {
 
     // 重置轮询计数
     pollCountRef.current = 0;
+    // 重置扣减标记
+    deductedRef.current = false;
 
     // 阶段1: 轮询回调结果表（15次 x 2秒 = 30秒）
     // 阶段2: 兜底轮询可灵 API（5次 x 2秒 = 10秒）
@@ -258,30 +262,35 @@ export default function TryOnPage() {
               pollIntervalRef.current = null;
             }
 
-            // 试衣成功，扣减积分并记录历史
-            try {
-              const deductRes = await fetch('/api/tryon/deduct', {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-Requested-With': 'XMLHttpRequest',
-                },
-                body: JSON.stringify({
-                  personImageUrl: personImageRef.current,
-                  clothingImageUrl: clothingImageRef.current,
-                  resultImageUrl: data.resultUrl,
-                }),
-              });
-              const deductData = await deductRes.json();
-              if (deductData.success) {
-                console.log('[TryOn] 积分扣减成功，剩余:', deductData.creditsBalance);
-                setCredits(deductData.creditsBalance);
-              } else {
-                console.error('[TryOn] 积分扣减失败:', deductData.error);
+            // 试衣成功，扣减积分并记录历史（幂等性保护：只扣一次）
+            if (!deductedRef.current) {
+              deductedRef.current = true;
+              try {
+                const deductRes = await fetch('/api/tryon/deduct', {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                  },
+                  body: JSON.stringify({
+                    personImageUrl: personImageRef.current,
+                    clothingImageUrl: clothingImageRef.current,
+                    resultImageUrl: data.resultUrl,
+                  }),
+                });
+                const deductData = await deductRes.json();
+                if (deductData.success) {
+                  console.log('[TryOn] 积分扣减成功，剩余:', deductData.creditsBalance);
+                  setCredits(deductData.creditsBalance);
+                } else {
+                  console.error('[TryOn] 积分扣减失败:', deductData.error);
+                }
+              } catch (deductErr: any) {
+                console.error('[TryOn] 积分扣减请求失败:', deductErr.message);
               }
-            } catch (deductErr: any) {
-              console.error('[TryOn] 积分扣减请求失败:', deductErr.message);
+            } else {
+              console.log('[TryOn] 已扣减过积分，跳过重复扣减');
             }
 
             setResultUrl(data.resultUrl);
@@ -341,30 +350,35 @@ export default function TryOnPage() {
             pollIntervalRef.current = null;
           }
 
-          // 试衣成功，扣减积分并记录历史
-          try {
-            const deductRes = await fetch('/api/tryon/deduct', {
-              method: 'POST',
-              credentials: 'include',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-              },
-              body: JSON.stringify({
-                personImageUrl: personImageRef.current,
-                clothingImageUrl: clothingImageRef.current,
-                resultImageUrl: finalResultUrl,
-              }),
-            });
-            const deductData = await deductRes.json();
-            if (deductData.success) {
-              console.log('[TryOn] 积分扣减成功，剩余:', deductData.creditsBalance);
-              setCredits(deductData.creditsBalance);
-            } else {
-              console.error('[TryOn] 积分扣减失败:', deductData.error);
+          // 试衣成功，扣减积分并记录历史（幂等性保护：只扣一次）
+          if (!deductedRef.current) {
+            deductedRef.current = true;
+            try {
+              const deductRes = await fetch('/api/tryon/deduct', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({
+                  personImageUrl: personImageRef.current,
+                  clothingImageUrl: clothingImageRef.current,
+                  resultImageUrl: finalResultUrl,
+                }),
+              });
+              const deductData = await deductRes.json();
+              if (deductData.success) {
+                console.log('[TryOn] 积分扣减成功，剩余:', deductData.creditsBalance);
+                setCredits(deductData.creditsBalance);
+              } else {
+                console.error('[TryOn] 积分扣减失败:', deductData.error);
+              }
+            } catch (deductErr: any) {
+              console.error('[TryOn] 积分扣减请求失败:', deductErr.message);
             }
-          } catch (deductErr: any) {
-            console.error('[TryOn] 积分扣减请求失败:', deductErr.message);
+          } else {
+            console.log('[TryOn] 已扣减过积分，跳过重复扣减');
           }
 
           setResultUrl(finalResultUrl);

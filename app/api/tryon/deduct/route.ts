@@ -84,6 +84,33 @@ export async function POST(req: NextRequest) {
       // 兼容旧版本前端（不传 body）
     }
 
+    // 幂等性检查：如果该结果已存在历史记录，说明已扣减过，直接返回
+    if (resultImageUrl) {
+      try {
+        const { data: existingRecord, error: queryError } = await supabase
+          .from('tryon_history')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('result_image_url', resultImageUrl)
+          .maybeSingle();
+
+        if (queryError) {
+          console.error('[TryOn Deduct] 幂等性查询失败:', queryError.message);
+        } else if (existingRecord) {
+          console.log('[TryOn Deduct] 该结果已存在历史记录，跳过重复扣减, recordId:', existingRecord.id);
+          const currentCredits = await getUserCredits(userId);
+          return NextResponse.json({
+            success: true,
+            creditsBalance: currentCredits?.credits || 0,
+            creditsConsumed: 0,
+            alreadyDeducted: true,
+          });
+        }
+      } catch (idempotencyErr: any) {
+        console.error('[TryOn Deduct] 幂等性检查异常:', idempotencyErr.message);
+      }
+    }
+
     // 扣减 1 积分
     const deductResult = await consumeCredits(userId, 1, '虚拟试衣');
 
