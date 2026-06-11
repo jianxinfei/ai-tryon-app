@@ -167,7 +167,7 @@ export default function PricingPage() {
         <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-500 max-w-xs sm:max-w-md mx-auto">
           {showReturningProducts
             ? 'Welcome back! Choose a credit pack to continue trying on outfits'
-            : 'First-time buyers get bonus credits. Take your time picking the right plan.'
+            : 'First-time buyers get bonus credits. Take your time picking the right plan.'}
         </p>
         {!currentUser && (
           <p className="mt-2 text-xs text-amber-600">
