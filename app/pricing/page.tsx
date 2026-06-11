@@ -181,7 +181,7 @@ export default function PricingPage() {
 
       <main className="max-w-5xl mx-auto px-4 pb-12 sm:pb-20 space-y-12 sm:space-y-16">
         {/* ══════════════════════════════════
-            积分包
+            Credit Packs
         ══════════════════════════════════ */}
         <section>
           <div className="text-center mb-6 sm:mb-8">
@@ -257,7 +257,7 @@ export default function PricingPage() {
         </section>
 
         {/* ══════════════════════════════════
-            订阅方案
+            Subscription
         ══════════════════════════════════ */}
         {subscriptionProduct && (
           <section>
