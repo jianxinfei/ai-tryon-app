@@ -65,61 +65,61 @@ export interface ProductConfig {
  * - 老用户产品：标准价格（prod_6MSm2Jfx384xKhS4YOe2zj / prod_6AhvY6wWtpdDAEkPjxm7mf）
  */
 export const PRODUCT_MAP: Record<string, ProductConfig> = {
-  // ── 新用户专享（带赠送） ──
+  // ── New User Exclusive (with bonus) ──
   'prod_5W4nng7xUZjTeQIIzS3vXp': {
     credits: 13,
-    name: '10次试穿积分包',
+    name: '10 Try-On Credits',
     productId: 'prod_5W4nng7xUZjTeQIIzS3vXp',
     type: 'credit_pack',
     price: '$1.99',
-    perCredit: '$0.15/次',
-    note: '新用户专享 · 买10送3 · 共13次',
+    perCredit: '$0.15/use',
+    note: 'New User Exclusive · Buy 10 Get 3 Free · 13 Total',
   },
   'prod_6QtH4e65ALMlf21qKd9Kh': {
     credits: 110,
-    name: '100次试穿积分包',
+    name: '100 Try-On Credits',
     productId: 'prod_6QtH4e65ALMlf21qKd9Kh',
     type: 'credit_pack',
     price: '$9.90',
-    perCredit: '$0.09/次',
+    perCredit: '$0.09/use',
     highlight: true,
-    badge: '最划算',
-    note: '新用户专享 · 买100送10 · 共110次',
+    badge: 'Best Value',
+    note: 'New User Exclusive · Buy 100 Get 10 Free · 110 Total',
   },
 
-  // ── 老用户标准（无赠送） ──
+  // ── Returning User Standard (no bonus) ──
   'prod_6MSm2Jfx384xKhS4YOe2zj': {
     credits: 10,
-    name: '10次试穿积分包',
+    name: '10 Try-On Credits',
     productId: 'prod_6MSm2Jfx384xKhS4YOe2zj',
     type: 'credit_pack',
     price: '$1.99',
-    perCredit: '$0.20/次',
-    note: '10次 · 180天有效 (no rollover)',
+    perCredit: '$0.20/use',
+    note: '10 try-ons · Valid for 180 days (no rollover)',
   },
   'prod_6AhvY6wWtpdDAEkPjxm7mf': {
     credits: 100,
-    name: '100次试穿积分包',
+    name: '100 Try-On Credits',
     productId: 'prod_6AhvY6wWtpdDAEkPjxm7mf',
     type: 'credit_pack',
     price: '$9.90',
-    perCredit: '$0.10/次',
+    perCredit: '$0.10/use',
     highlight: true,
-    badge: '最划算',
-    note: '100次 · 180天有效 (no rollover)',
+    badge: 'Best Value',
+    note: '100 try-ons · Valid for 180 days (no rollover)',
   },
 
-  // ── 订阅制 ──
+  // ── Subscription ──
   'prod_xWnfRXy7SUJHzhj4FrmgZ': {
     credits: 110,
-    name: 'What to Wear 订阅',
+    name: 'What to Wear Subscription',
     productId: 'prod_xWnfRXy7SUJHzhj4FrmgZ',
     type: 'subscription',
     billingPeriod: 'every-month',
     price: '$9.90',
-    perCredit: '$0.09/次',
-    features: ['每月110次试穿', '新品优先体验'],
-    note: '$9.90/月 · 110次 · 自动续费 · 当月有效',
+    perCredit: '$0.09/use',
+    features: ['110 try-ons/month', 'Early access to new features'],
+    note: '$9.90/month · 110 try-ons · Auto-renew · Monthly',
   },
 };
 
