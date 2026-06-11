@@ -46,8 +46,8 @@ export default function HistoryPage() {
       }
 
       setRecords(data || []);
-    } catch (err: any) {
-      console.error('[History] 获取试衣历史异常:', err.message);
+    } catch (err: unknown) {
+      console.error('[History] 获取试衣历史异常:', err instanceof Error ? err.message : String(err));
       setError('加载试衣记录失败');
     } finally {
       setLoading(false);
@@ -72,8 +72,8 @@ export default function HistoryPage() {
       } else {
         alert(data.error || '删除失败');
       }
-    } catch (err: any) {
-      console.error('[History] 删除失败:', err.message);
+    } catch (err: unknown) {
+      console.error('[History] 删除失败:', err instanceof Error ? err.message : String(err));
       alert('删除失败，请重试');
     } finally {
       setDeleting(false);
