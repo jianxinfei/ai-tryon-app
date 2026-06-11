@@ -424,27 +424,21 @@ async function createKlingTryOnTask(
   console.log('[TryOn API] 创建可灵 AI 试衣任务, external_task_id:', externalTaskId);
   console.log('[TryOn API] 请求 URL:', url);
 
-  // 下载图片并转为 Base64
-  const [humanImageBase64, clothImageBase64] = await Promise.all([
-    downloadImageAsBase64(personImage, signal),
-    downloadImageAsBase64(clothingImage, signal),
-  ]);
-
-  // 正确参数名：model_name, human_image, cloth_image, external_task_id, callback_url
+  // 直接传 Supabase Storage 公开 URL（可灵官方推荐方式）
   const requestBody = {
     model_name: KLING_MODEL,
-    human_image: humanImageBase64,
-    cloth_image: clothImageBase64,
+    human_image: personImage,
+    cloth_image: clothingImage,
     external_task_id: externalTaskId,
     callback_url: 'https://www.aiwhattowear.com/api/kling/callback',
   };
 
-  console.log('[TryOn API] 请求体: model_name=%s, external_task_id=%s, callback_url=%s, human_image=[Base64 %s], cloth_image=[Base64 %s]',
+  console.log('[TryOn API] 请求体: model_name=%s, external_task_id=%s, callback_url=%s, human_image=[URL %s], cloth_image=[URL %s]',
     KLING_MODEL,
     externalTaskId,
     'https://www.aiwhattowear.com/api/kling/callback',
-    (humanImageBase64.length / 1024).toFixed(1) + 'KB',
-    (clothImageBase64.length / 1024).toFixed(1) + 'KB',
+    personImage,
+    clothingImage,
   );
 
   const bodyStr = JSON.stringify(requestBody);
