@@ -27,7 +27,7 @@ import { createHmac } from 'crypto';
 // ══════════════════════════════════════════════
 
 const KLING_API_BASE = 'https://api-beijing.klingai.com';
-const KLING_MODEL = 'kolors-virtual-try-on-v1-5';
+const KLING_MODEL = 'kolors-virtual-try-on-v1';
 
 // 轮询超时（秒）
 const POLL_TIMEOUT = 120;
