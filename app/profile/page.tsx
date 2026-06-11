@@ -107,7 +107,7 @@ export default function ProfilePage() {
 
   // 获取昵称
   const getNickname = () => {
-    if (!user?.email) return '未登录';
+    if (!user?.email) return 'Guest';
     const prefix = user.email.split('@')[0];
     return prefix.length > 12 ? prefix.substring(0, 12) + '...' : prefix;
   };
@@ -121,14 +121,14 @@ export default function ProfilePage() {
             onClick={() => router.push('/profile/account')}
             className="text-[15px] font-semibold text-[#1e2a3a] bg-[#eef3fc] px-4 py-1.5 rounded-[30px]"
           >
-            已登录
+            Signed In
           </button>
         ) : (
           <button
             onClick={() => router.push('/profile/account')}
             className="text-[15px] font-semibold text-[#1e2a3a] bg-[#eef3fc] px-4 py-1.5 rounded-[30px]"
           >
-            登录
+            Sign In
           </button>
         )}
       </div>
@@ -149,7 +149,7 @@ export default function ProfilePage() {
         </div>
         <div className="flex-1 min-w-0">
           <h1 className="text-[22px] font-bold text-[#1e2a3a] truncate">
-            {loading ? '加载中...' : (user?.email || 'user@example.com')}
+            {loading ? 'Loading...' : (user?.email || 'user@example.com')}
           </h1>
         </div>
       </div>
@@ -171,13 +171,13 @@ export default function ProfilePage() {
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
             </svg>
             <div className="flex flex-col gap-0.5">
-              <span className="text-[15px] font-semibold text-[#b85c00]">邮箱未验证，部分功能可能受限</span>
-              <span className="text-[11px] text-[#9CA3AF]">未验证用户无法享受试衣服务</span>
+              <span className="text-[15px] font-semibold text-[#b85c00]">Email not verified. Some features may be limited.</span>
+              <span className="text-[11px] text-[#9CA3AF]">Unverified users cannot use the try-on service.</span>
             </div>
           </div>
           {emailSent ? (
             <div className="text-[13px] text-green-600 bg-green-50 px-3 py-2 rounded-lg text-center">
-              验证邮件已发送，请前往邮箱查看
+              Verification email sent. Please check your inbox.
             </div>
           ) : (
             <button
@@ -189,18 +189,18 @@ export default function ProfilePage() {
                   });
                   if (error) {
                     console.error('发送验证邮件失败:', error);
-                    alert('发送失败: ' + error.message);
+                    alert('Failed to send: ' + error.message);
                   } else {
                     setEmailSent(true);
                   }
                 } catch (err: any) {
                   console.error('发送验证邮件异常:', err);
-                  alert('发送失败，请重试');
+                  alert('Failed to send, please try again');
                 }
               }}
               className="w-full py-2 bg-[#b85c00] text-white text-[14px] font-medium rounded-[12px] hover:bg-[#a05000] transition-colors"
             >
-              去验证
+              Verify
             </button>
           )}
         </div>
@@ -212,8 +212,8 @@ export default function ProfilePage() {
           onClick={() => router.push('/pricing')}
           className="w-full py-4 bg-gradient-to-br from-[#3b82f6] to-[#1e40af] text-white text-[18px] font-bold rounded-[60px] shadow-lg flex items-center justify-center gap-1 active:scale-[0.97] active:opacity-90 transition-all"
         >
-          <span>$</span>
-          <span>9.9 订阅月度专业版</span>
+          <span>$9.9</span>
+          <span>Subscribe to Monthly Pro</span>
         </button>
       </div>
 
@@ -226,7 +226,7 @@ export default function ProfilePage() {
           <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
           </svg>
-          试衣记录
+          Try-On History
         </button>
       </div>
 

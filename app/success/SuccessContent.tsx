@@ -73,7 +73,7 @@ export default function SuccessContent() {
     return (
       <div className="min-h-screen bg-[#FFF7FA] flex flex-col items-center justify-center px-4">
         <div className="animate-spin h-8 w-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full" />
-        <p className="mt-4 text-sm text-slate-500">验证支付信息...</p>
+        <p className="mt-4 text-sm text-slate-500">Verifying payment...</p>
       </div>
     );
   }
@@ -92,13 +92,13 @@ export default function SuccessContent() {
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 text-center">
-          访问无效
+          Invalid Access
         </h1>
 
         <p className="mt-3 sm:mt-4 text-sm sm:text-base text-slate-500 text-center max-w-sm">
-          此页面需要在完成支付后访问。
+          This page can only be accessed after completing a payment.
           <br />
-          如果你没有完成支付，请返回首页。
+          If you haven't completed a payment, please go back to the home page.
         </p>
 
         <button
@@ -108,7 +108,7 @@ export default function SuccessContent() {
             shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-200
             transition-all active:scale-[0.98]"
         >
-          返回首页
+          Back to Home
         </button>
       </div>
     );
@@ -128,27 +128,27 @@ export default function SuccessContent() {
 
       {/* 标题 */}
       <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 text-center">
-        支付成功！
+        Payment Successful!
       </h1>
 
       {/* 说明 */}
       <p className="mt-3 sm:mt-4 text-sm sm:text-base text-slate-500 text-center max-w-sm">
-        感谢你的购买！积分将在几秒内到账。
+        Thank you for your purchase! Credits will be added to your account within seconds.
         <br />
-        你可以开始使用 AI 虚拟试衣功能了。
+        You can now start using the AI virtual try-on feature.
       </p>
 
       {/* 订单信息卡片 */}
       <div className="mt-6 sm:mt-8 bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 w-full max-w-xs sm:max-w-sm">
         <div className="space-y-2">
           <div className="flex justify-between text-xs sm:text-sm">
-            <span className="text-slate-500">订单号</span>
+            <span className="text-slate-500">Order</span>
             <span className="font-mono text-slate-700 truncate max-w-[120px]" title={checkoutId || ''}>
               {checkoutId}
             </span>
           </div>
           <div className="flex justify-between text-xs sm:text-sm">
-            <span className="text-slate-500">产品</span>
+            <span className="text-slate-500">Product</span>
             <span className="font-mono text-slate-700 truncate max-w-[120px]" title={productId || ''}>
               {productId}
             </span>
@@ -163,9 +163,9 @@ export default function SuccessContent() {
               </svg>
             </div>
             <div>
-              <p className="text-xs sm:text-sm font-medium text-slate-700">温馨提示</p>
+              <p className="text-xs sm:text-sm font-medium text-slate-700">Friendly Reminder</p>
               <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                积分由服务器异步处理，如果几秒后仍未到账，请刷新页面查看。
+                Credits are processed asynchronously. If they don't appear within a few seconds, please refresh the page.
               </p>
             </div>
           </div>
@@ -181,7 +181,7 @@ export default function SuccessContent() {
             shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-200
             transition-all active:scale-[0.98]"
         >
-          开始试衣
+          Start Try-On
         </button>
         <button
           onClick={() => router.push('/pricing')}
@@ -189,13 +189,13 @@ export default function SuccessContent() {
             bg-white border border-slate-200 hover:bg-slate-50
             transition-all active:scale-[0.98]"
         >
-          查看方案
+          View Plans
         </button>
       </div>
 
       {/* 自动跳转提示 */}
       <p className="mt-6 text-xs text-slate-400">
-        {countdown > 0 ? `${countdown}秒后自动跳转到首页...` : '正在跳转...'}
+        {countdown > 0 ? `Redirecting to home in ${countdown}s...` : 'Redirecting...'}
       </p>
     </div>
   );

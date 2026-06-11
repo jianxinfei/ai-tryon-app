@@ -159,11 +159,11 @@ export default function AccountPage() {
         if (error) throw error;
 
         if (!data.session) {
-          throw new Error('登录成功但未获取到 session，请重试');
+          throw new Error('Signed in but no session received, please try again');
         }
       }
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || '操作失败，请重试' });
+      setMessage({ type: 'error', text: err.message || 'Operation failed, please try again' });
     } finally {
       setLoginLoading(false);
     }
@@ -171,7 +171,7 @@ export default function AccountPage() {
 
   // 处理登出
   const handleLogout = async () => {
-    if (!confirm('确定要退出登录吗？')) return;
+    if (!confirm('Are you sure you want to sign out?')) return;
 
     setIsLoggingOut(true);
     try {
@@ -187,7 +187,7 @@ export default function AccountPage() {
 
   // 获取昵称
   const getNickname = () => {
-    if (!user?.email) return '未登录用户';
+    if (!user?.email) return 'Guest';
     const prefix = user.email.split('@')[0];
     return prefix.length > 12 ? prefix.substring(0, 12) + '...' : prefix;
   };
@@ -207,7 +207,7 @@ export default function AccountPage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
-            返回个人中心
+            Back to Profile
           </button>
 
           {/* Logo / 标题 */}
@@ -217,15 +217,15 @@ export default function AccountPage() {
             </div>
             <h1 className="text-2xl font-extrabold text-slate-900">What to Wear</h1>
             <p className="mt-1 text-sm text-slate-500">
-              {isSignUp ? '创建新账号开始体验' : '登录以继续使用'}
+              {isSignUp ? 'Create a new account to get started' : 'Sign in to continue'}
             </p>
           </div>
 
           {/* 验证成功提示 */}
           {verificationSuccess && (
             <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-center animate-pulse">
-              <div className="text-green-600 font-medium">✓ 验证成功，欢迎回来！</div>
-              <div className="text-xs text-green-500 mt-1">即将为您刷新...</div>
+              <div className="text-green-600 font-medium">✓ Verification successful, welcome back!</div>
+              <div className="text-xs text-green-500 mt-1">Refreshing shortly...</div>
             </div>
           )}
 
@@ -246,7 +246,7 @@ export default function AccountPage() {
               {/* 邮箱输入 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  邮箱地址
+                  Email Address
                 </label>
                 <input
                   ref={emailInputRef}
@@ -264,13 +264,13 @@ export default function AccountPage() {
               {/* 密码输入 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  密码
+                  Password
                 </label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={isSignUp ? '至少6位字符' : '输入密码'}
+                  placeholder={isSignUp ? 'At least 6 characters' : 'Enter password'}
                   required
                   minLength={6}
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400
@@ -293,10 +293,10 @@ export default function AccountPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
-                    处理中...
+                    Processing...
                   </span>
                 ) : (
-                  isSignUp ? '注册账号' : '登录'
+                  isSignUp ? 'Sign Up' : 'Sign In'
                 )}
               </button>
             </form>
@@ -311,7 +311,7 @@ export default function AccountPage() {
                 }}
                 className="text-sm text-slate-500 hover:text-indigo-600 transition-colors"
               >
-                {isSignUp ? '已有账号？点击登录' : '还没有账号？点击注册'}
+                {isSignUp ? 'Already have an account? Sign In' : 'Don\'t have an account? Sign Up'}
               </button>
             </div>
 
@@ -348,7 +348,7 @@ export default function AccountPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-lg font-bold text-white">账号与安全</h1>
+          <h1 className="text-lg font-bold text-white">Account & Security</h1>
         </div>
       </div>
 
@@ -368,7 +368,7 @@ export default function AccountPage() {
           </div>
 
           <div className="border-t border-slate-100 pt-3">
-            <p className="text-xs text-slate-400">用户 ID</p>
+            <p className="text-xs text-slate-400">User ID</p>
             <p className="text-xs text-slate-500 font-mono mt-0.5 truncate">{user?.id}</p>
           </div>
         </div>
@@ -379,7 +379,7 @@ export default function AccountPage() {
           disabled={isLoggingOut}
           className="w-full py-4 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl shadow-lg shadow-red-200 hover:from-red-600 hover:to-red-700 transition-all disabled:opacity-50 mb-4"
         >
-          {isLoggingOut ? '退出中...' : '退出登录'}
+          {isLoggingOut ? 'Signing out...' : 'Sign Out'}
         </button>
 
         {/* 版本号 */}

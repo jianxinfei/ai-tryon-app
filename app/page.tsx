@@ -68,7 +68,7 @@ export default function HomePage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        alert('请先登录后再购买');
+        alert('Please sign in before purchasing');
         router.push('/profile');
         return;
       }
@@ -87,18 +87,18 @@ export default function HomePage() {
       }
 
       if (!res.ok) {
-        alert(data.error || '创建支付会话失败，请重试');
+        alert(data.error || 'Failed to create payment session, please try again');
         return;
       }
 
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
       } else {
-        alert('未能获取支付链接，请重试');
+        alert('Failed to get payment link, please try again');
       }
     } catch (err) {
       console.error('购买失败:', err);
-      alert('网络错误，请重试');
+      alert('Network error, please try again');
     }
   };
 
@@ -184,8 +184,8 @@ export default function HomePage() {
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-bold text-slate-900">试衣次数已用完</h2>
-                <p className="mt-1 text-sm text-slate-500">购买积分包或订阅会员，继续体验</p>
+                <h2 className="text-xl font-bold text-slate-900">No try-ons remaining</h2>
+                <p className="mt-1 text-sm text-slate-500">Purchase a credit pack or subscribe to continue</p>
               </div>
               <div className="space-y-3">
                 <button
@@ -193,17 +193,17 @@ export default function HomePage() {
                   className="w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-amber-300 hover:bg-amber-50/50 transition-all"
                 >
                   <div className="text-left">
-                    <p className="font-semibold text-base text-slate-900">月度专业版</p>
-                    <p className="text-xs text-slate-400">100次/月 · 无水印</p>
+                    <p className="font-semibold text-base text-slate-900">Monthly Pro</p>
+                    <p className="text-xs text-slate-400">100/month · No watermark</p>
                   </div>
                   <div className="text-right">
                     <span className="text-lg font-bold text-slate-900">$9.90</span>
-                    <span className="text-xs font-normal text-slate-400">/月</span>
+                    <span className="text-xs font-normal text-slate-400">/month</span>
                   </div>
                 </button>
               </div>
               <button onClick={goToPricing} className="mt-4 w-full text-center text-sm text-indigo-600 hover:text-indigo-700 font-medium py-2">
-                查看完整方案对比 →
+                View all plans &rarr;
               </button>
             </div>
           </div>

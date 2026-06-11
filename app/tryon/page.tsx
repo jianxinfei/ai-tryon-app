@@ -125,7 +125,7 @@ export default function TryOnPage() {
 
   // 上传图片到 Supabase Storage
   const uploadImage = async (file: File): Promise<string> => {
-    if (!supabase) throw new Error('Supabase 客户端未初始化');
+    if (!supabase) throw new Error('Supabase client not initialized');
     
     // 生成纯英文数字文件名（避免中文导致上传失败）
     const ext = file.name.split('.').pop() || 'jpg';
@@ -140,7 +140,7 @@ export default function TryOnPage() {
       });
 
     if (error) {
-      throw new Error(`上传失败: ${error.message}`);
+      throw new Error(`Upload failed: ${error.message}`);
     }
 
     // 获取公开 URL
@@ -154,7 +154,7 @@ export default function TryOnPage() {
   // 处理图片上传
   const handleImageUpload = async (file: File, type: 'person' | 'clothing') => {
     if (!file || !file.type.startsWith('image/')) {
-      setError('请上传有效的图片文件（JPG、PNG）');
+      setError('Please upload a valid image (JPG, PNG)');
       return;
     }
 
@@ -186,7 +186,7 @@ export default function TryOnPage() {
         setClothingImage(imageUrl);
       }
     } catch (err: any) {
-      setError(err.message || '图片上传失败');
+      setError(err.message || 'Image upload failed');
     } finally {
       if (type === 'person') {
         setIsUploading(prev => ({ ...prev, person: false }));
@@ -235,7 +235,7 @@ export default function TryOnPage() {
           clearInterval(pollIntervalRef.current);
           pollIntervalRef.current = null;
         }
-        setError('生成超时，请稍后重试');
+        setError('Generation timed out, please try again later');
         setIsLoading(false);
         return;
       }
@@ -300,8 +300,7 @@ export default function TryOnPage() {
               resultUrl: data.resultUrl,
               useType: '',
               creditsBalance: 0,
-              message: '试衣成功',
-              creditsConsumed: 1
+              message: 'Try-on successful',              creditsConsumed: 1
             });
             setIsLoading(false);
             return;
@@ -313,7 +312,7 @@ export default function TryOnPage() {
               clearInterval(pollIntervalRef.current);
               pollIntervalRef.current = null;
             }
-            setError(data.error || '试衣失败');
+            setError(data.error || 'Try-on failed');
             setIsLoading(false);
             return;
           }
@@ -336,7 +335,7 @@ export default function TryOnPage() {
         console.log(`[TryOn] 兜底轮询第 ${currentCount} 次响应:`, data);
 
         if (!response.ok) {
-          throw new Error(data.error || '查询状态失败');
+          throw new Error(data.error || 'Failed to check status');
         }
 
         // 统一处理试衣成功（resultUrl 或 status === 'completed'）
@@ -388,7 +387,7 @@ export default function TryOnPage() {
             resultUrl: finalResultUrl,
             useType: data.useType || '',
             creditsBalance: data.creditsBalance || 0,
-            message: data.message || '试衣成功',
+            message: 'Try-on successful',
             creditsConsumed: 1
           });
           setIsLoading(false);
@@ -400,7 +399,7 @@ export default function TryOnPage() {
             clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;
           }
-          setError(data.error || '试衣失败');
+          setError(data.error || 'Try-on failed');
           setIsLoading(false);
         }
       } catch (err: any) {
@@ -409,7 +408,7 @@ export default function TryOnPage() {
           clearInterval(pollIntervalRef.current);
           pollIntervalRef.current = null;
         }
-        setError('查询状态失败，请重试');
+        setError('Failed to check status, please try again');
         setIsLoading(false);
       }
     };
@@ -425,13 +424,13 @@ export default function TryOnPage() {
   // 创建试衣任务
   const createTryOnTask = useCallback(async () => {
     if (!personImage || !clothingImage) {
-      setError('请先上传人物照片和服装照片');
+      setError('Please upload both a person photo and a clothing photo first');
       return;
     }
 
     // 检查邮箱验证状态
     if (!emailVerified) {
-      setError('请先验证邮箱再试衣');
+      setError('Please verify your email before trying on');
       return;
     }
 
@@ -480,7 +479,7 @@ export default function TryOnPage() {
         // 服务端明确标记不可重试（内容安全、参数错误、超时等确定性错误）
         if (data.noRetry) {
           console.error(`[TryOn] 创建任务失败（不可重试）:`, data.error, data.message);
-          return { noRetry: true, error: data.message || data.error || '操作失败，请稍后重试' };
+          return { noRetry: true, error: data.message || data.error || 'Operation failed, please try again later' };
         }
         
         // 没有 taskId，记录错误（可重试）
@@ -495,7 +494,7 @@ export default function TryOnPage() {
       } catch (err: any) {
         if (err.name === 'AbortError') {
           console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}超时（30秒）`);
-          return { noRetry: true, error: '服务响应较慢，请稍后重试' };
+          return { noRetry: true, error: 'Server response slow, please try again later' };
         }
         console.error(`[TryOn] 创建任务${isRetry ? '重试' : ''}异常:`, err.message);
         return null;
@@ -541,7 +540,7 @@ export default function TryOnPage() {
       startPolling(result.taskId);
     } else {
       // 两次都失败，提示用户
-      setError('创建任务失败，请稍后重试');
+      setError('Failed to create task, please try again later');
       setIsLoading(false);
     }
   }, [personImage, clothingImage, startPolling]);
@@ -580,8 +579,8 @@ export default function TryOnPage() {
         <main className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
           {/* 标题 */}
           <div className="text-center mb-8 sm:mb-10">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">AI 虚拟试衣</h1>
-            <p className="mt-2 text-sm text-slate-500">上传人物照和服装照，AI 为您生成试穿效果</p>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">AI Virtual Try-On</h1>
+            <p className="mt-2 text-sm text-slate-500">Upload a person photo and a clothing photo, and AI will generate the try-on result for you</p>
           </div>
 
           {/* 未登录提示 */}
@@ -591,8 +590,8 @@ export default function TryOnPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
               </svg>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">请先登录后再试穿</h2>
-            <p className="text-sm text-slate-500 mb-6">登录后即可体验 AI 虚拟试衣功能</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Please log in first</h2>
+            <p className="text-sm text-slate-500 mb-6">Log in to experience the AI virtual try-on feature</p>
             <button
               onClick={() => router.push('/profile?login=true')}
               className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
@@ -600,7 +599,7 @@ export default function TryOnPage() {
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-1m3 4h10" />
               </svg>
-              去登录
+              Log In
             </button>
           </div>
         </main>
@@ -618,7 +617,7 @@ export default function TryOnPage() {
             onClick={() => router.push('/')}
             className="px-3 py-1.5 text-sm text-slate-600 border border-slate-200 rounded-lg bg-white/80 backdrop-blur hover:bg-slate-50 transition-colors"
           >
-            ← 首页
+            ← Home
           </button>
         </div>
       </nav>
@@ -627,10 +626,10 @@ export default function TryOnPage() {
       <main className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
         {/* 标题 */}
         <div className="text-center mb-8 sm:mb-10">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">AI 虚拟试衣</h1>
-          <p className="mt-2 text-sm text-slate-500">上传人物照和服装照，AI 为您生成试穿效果</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">AI Virtual Try-On</h1>
+          <p className="mt-2 text-sm text-slate-500">Upload a person photo and a clothing photo, and AI will generate the try-on result for you</p>
           <p className="mt-1.5 text-xs text-slate-400">
-            每次消耗 1 积分 | 支持 JPG / PNG | 积分自购买之日起180天有效
+            1 credit per use | JPG / PNG supported | Credits valid for 180 days from purchase
           </p>
         </div>
 
@@ -641,13 +640,13 @@ export default function TryOnPage() {
               <svg className="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
               </svg>
-              <span className="text-sm font-medium text-amber-800">请先验证邮箱再试衣</span>
+              <span className="text-sm font-medium text-amber-800">Please verify your email before trying on</span>
             </div>
             <button
               onClick={() => router.push('/profile?login=true')}
               className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
             >
-              去验证
+              Verify Email
             </button>
           </div>
         )}
@@ -671,7 +670,7 @@ export default function TryOnPage() {
               />
               {personPreview ? (
                 <div className="relative">
-                  <img src={personPreview} alt="人物预览" className="w-full h-64 object-cover rounded-xl shadow-sm" />
+                  <img src={personPreview} alt="Person preview" className="w-full h-64 object-cover rounded-xl shadow-sm" />
                   <button 
                     onClick={() => { setPersonPreview(''); setPersonImage(''); }}
                     className="absolute top-2 right-2 py-2 px-3 bg-red-500/90 backdrop-blur-sm text-white text-base font-medium rounded-full flex items-center justify-center hover:bg-red-600 transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
@@ -688,7 +687,7 @@ export default function TryOnPage() {
                   {isUploading.person ? (
                     <>
                       <div className="animate-spin w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full mb-3" />
-                      <span className="text-sm font-medium text-indigo-600">图片处理中...</span>
+                      <span className="text-sm font-medium text-indigo-600">Processing image...</span>
                     </>
                   ) : (
                     <>
@@ -697,13 +696,13 @@ export default function TryOnPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                         </svg>
                       </div>
-                      <span className="font-semibold text-sm">上传人物照片</span>
-                      <span className="text-xs mt-1 text-slate-300 group-hover:text-indigo-400 transition-colors duration-300">点击选择或拖拽文件</span>
+                      <span className="font-semibold text-sm">Upload person photo</span>
+                      <span className="text-xs mt-1 text-slate-300 group-hover:text-indigo-400 transition-colors duration-300">Click to select or drag a file</span>
                     </>
                   )}
                 </button>
               )}
-              <p className="mt-3 text-xs text-center text-slate-400">支持 JPG、PNG，自动压缩优化</p>
+              <p className="mt-3 text-xs text-center text-slate-400">Supports JPG, PNG with auto compression</p>
             </div>
 
             {/* 服装照片上传 */}
@@ -717,7 +716,7 @@ export default function TryOnPage() {
               />
               {clothingPreview ? (
                 <div className="relative">
-                  <img src={clothingPreview} alt="服装预览" className="w-full h-64 object-cover rounded-xl shadow-sm" />
+                  <img src={clothingPreview} alt="Clothing preview" className="w-full h-64 object-cover rounded-xl shadow-sm" />
                   <button 
                     onClick={() => { setClothingPreview(''); setClothingImage(''); }}
                     className="absolute top-2 right-2 py-2 px-3 bg-red-500/90 backdrop-blur-sm text-white text-base font-medium rounded-full flex items-center justify-center hover:bg-red-600 transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
@@ -734,7 +733,7 @@ export default function TryOnPage() {
                   {isUploading.clothing ? (
                     <>
                       <div className="animate-spin w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full mb-3" />
-                      <span className="text-sm font-medium text-indigo-600">图片处理中...</span>
+                      <span className="text-sm font-medium text-indigo-600">Processing image...</span>
                     </>
                   ) : (
                     <>
@@ -743,13 +742,13 @@ export default function TryOnPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33l3.558-2.207a2.25 2.25 0 00.993-1.898V8.25A2.25 2.25 0 0018 6h-4.568a2.25 2.25 0 01-1.658-.734l-1.08-1.233a2.25 2.25 0 00-1.658-.734zM7.5 9.75a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
                         </svg>
                       </div>
-                      <span className="font-semibold text-sm">上传服装照片</span>
-                      <span className="text-xs mt-1 text-slate-300 group-hover:text-indigo-400 transition-colors duration-300">点击选择或拖拽文件</span>
+                      <span className="font-semibold text-sm">Upload clothing photo</span>
+                      <span className="text-xs mt-1 text-slate-300 group-hover:text-indigo-400 transition-colors duration-300">Click to select or drag a file</span>
                     </>
                   )}
                 </button>
               )}
-              <p className="mt-3 text-xs text-center text-slate-400">支持 JPG、PNG，自动压缩优化</p>
+              <p className="mt-3 text-xs text-center text-slate-400">Supports JPG, PNG with auto compression</p>
             </div>
           </div>
         )}
@@ -761,7 +760,7 @@ export default function TryOnPage() {
             disabled={isLoading || !personImage || !clothingImage}
             className="w-full py-4 bg-indigo-600 text-white font-bold text-lg rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-indigo-200"
           >
-            {isLoading ? '试衣中...' : '开始试衣（消耗 1 积分）'}
+            {isLoading ? 'Trying on...' : 'Start Try-On (1 credit)'}
           </button>
         )}
 
@@ -775,9 +774,9 @@ export default function TryOnPage() {
                 <circle cx="50" cy="50" r="45" fill="none" stroke="#6366f1" strokeWidth="8" strokeLinecap="round" strokeDasharray="283" strokeDashoffset="70" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-slate-600">AI 正在为您精心试穿...</p>
+            <p className="text-sm font-medium text-slate-600">AI is generating your try-on...</p>
             <p className="text-xs text-slate-400">
-              已等待 {pollProgress.count * 2} 秒
+              Elapsed: {pollProgress.count * 2}s
             </p>
           </div>
         )}
@@ -788,15 +787,15 @@ export default function TryOnPage() {
           {resultUrl && (
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-lg text-slate-900">试衣结果</h3>
+                <h3 className="font-bold text-lg text-slate-900">Try-On Result</h3>
                 <span className="text-xs px-2 py-1 rounded-full text-green-600 bg-green-50">
-                  试衣成功
+                  Try-on successful
                 </span>
               </div>
               <div className="relative rounded-xl overflow-hidden bg-slate-100">
                 <img
                   src={resultUrl}
-                  alt="试衣结果"
+                  alt="Try-on result"
                   className="w-full max-h-[600px] object-contain"
                   onLoad={() => console.log('[TryOn] 图片加载成功:', resultUrl)}
                   onError={(e) => {
@@ -806,18 +805,18 @@ export default function TryOnPage() {
                   }}
                 />
                 <span className="absolute bottom-2 right-2 text-white bg-black/40 px-2 py-0.5 rounded-md text-[11px] z-10">
-                  What to Wear · AI生成
+                  What to Wear · AI Generated
                 </span>
               </div>
               <p className="mt-2 text-xs text-amber-600 text-center">
-                生成图片链接有效期30天，请及时下载保存
+                Generated image link is valid for 30 days, please download and save it in time
               </p>
               <div className="mt-4 flex justify-center">
                 <button
                   onClick={handleChangeClothing}
                   className="py-2.5 px-6 border border-indigo-200 text-indigo-600 text-base font-medium rounded-lg hover:bg-indigo-50 transition-colors"
                 >
-                  更换服装
+                  Change Clothing
                 </button>
               </div>
               <div className="mt-3 flex justify-center">
@@ -840,7 +839,7 @@ export default function TryOnPage() {
                   }}
                   className="px-4 py-2 text-sm text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                 >
-                  重新试衣
+                  Try Again
                 </button>
               </div>
             </div>
@@ -850,13 +849,13 @@ export default function TryOnPage() {
           {result && !result.success && (
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-lg text-slate-900">试衣结果</h3>
+                <h3 className="font-bold text-lg text-slate-900">Try-On Result</h3>
                 <span className="text-xs px-2 py-1 rounded-full text-red-600 bg-red-50">
-                  试衣失败
+                  Try-on failed
                 </span>
               </div>
               <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-                {result.error || result.message || '试衣失败，请重试'}
+                {result.error || result.message || 'Try-on failed, please try again'}
               </div>
             </div>
           )}
@@ -868,18 +867,18 @@ export default function TryOnPage() {
             By uploading images, you agree to the <a href="/terms" className="text-indigo-500 hover:text-indigo-600 underline">Terms of Service</a>
           </p>
           <p className="text-xs text-slate-400 text-center">
-            虚拟试衣功能由可灵AI（Kling AI）提供技术支持
+            Virtual try-on powered by Kling AI
           </p>
         </div>
 
         {/* 配饰按钮（敬请期待） */}
         <div className="mt-6 py-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
           <button
-            onClick={() => alert('即将上线，敬请期待！')}
+            onClick={() => alert('Coming soon!')}
             disabled={isLoading}
             className="text-amber-600 font-medium hover:text-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            配饰（敬请期待）
+            Accessories (Coming Soon)
           </button>
         </div>
       </main>
@@ -893,20 +892,20 @@ export default function TryOnPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">积分不足</h3>
-            <p className="text-sm text-slate-500 mb-6">当前积分余额为 0，请先购买积分包后再试衣。</p>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Insufficient Credits</h3>
+            <p className="text-sm text-slate-500 mb-6">Your current credit balance is 0. Please purchase a credit pack before trying on.</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowCreditsModal(false)}
                 className="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
               >
-                取消
+                Cancel
               </button>
               <a
                 href="/pricing"
                 className="flex-1 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors text-center"
               >
-                去购买
+                Purchase Credits
               </a>
             </div>
           </div>

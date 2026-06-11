@@ -84,7 +84,7 @@ export default function PricingPage() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        alert('请先登录后再购买方案');
+        alert('Please sign in before purchasing a plan');
         router.push('/profile');
         return;
       }
@@ -103,18 +103,18 @@ export default function PricingPage() {
       }
 
       if (!res.ok) {
-        alert(data.error || '创建支付会话失败，请重试');
+        alert(data.error || 'Failed to create payment session, please try again');
         return;
       }
 
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
       } else {
-        alert('未能获取支付链接，请重试');
+        alert('Failed to get payment link, please try again');
       }
     } catch (err) {
       console.error('购买失败:', err);
-      alert('网络错误，请重试');
+      alert('Network error, please try again');
     } finally {
       setLoadingId(null);
     }
@@ -162,20 +162,20 @@ export default function PricingPage() {
       {/* ── 顶部 ── */}
       <header className="pt-8 sm:pt-12 pb-6 sm:pb-8 text-center px-4">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-          选择你的方案
+          Choose Your Plan
         </h1>
         <p className="mt-2 sm:mt-3 text-sm sm:text-base text-slate-500 max-w-xs sm:max-w-md mx-auto">
           {showReturningProducts
-            ? '欢迎回来，选择适合你的积分包继续试衣'
-            : '新用户首次购买积分包享额外赠送，用完再选方案也不迟'}
+            ? 'Welcome back! Choose a credit pack to continue trying on outfits'
+            : 'First-time buyers get bonus credits. Take your time picking the right plan.'
         </p>
         {!currentUser && (
           <p className="mt-2 text-xs text-amber-600">
-            未登录用户默认展示新用户专享价格，登录后将根据购买记录自动切换
+            Signed-out users see new-user pricing by default. Sign in to auto-switch based on your purchase history.
           </p>
         )}
         {checkingUser && (
-          <p className="mt-2 text-xs text-slate-400">正在查询用户状态...</p>
+          <p className="mt-2 text-xs text-slate-400">Checking user status...</p>
         )}
       </header>
 
@@ -186,10 +186,10 @@ export default function PricingPage() {
         <section>
           <div className="text-center mb-6 sm:mb-8">
             <span className="inline-block text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full">
-              {showReturningProducts ? '积分包' : '新用户专享'}
+              {showReturningProducts ? 'Credit Packs' : 'New User Exclusive'}
             </span>
             <h2 className="mt-3 sm:mt-4 text-xl sm:text-2xl font-bold text-slate-900">
-              {showReturningProducts ? '按需购买，永久有效' : '首次购买享额外赠送'}
+              {showReturningProducts ? 'Pay as you go, credits never expire' : 'Bonus credits on your first purchase'}
             </h2>
           </div>
 
@@ -213,7 +213,7 @@ export default function PricingPage() {
 
                 <div className="mt-3 sm:mt-4 flex items-baseline gap-1">
                   <span className="text-2xl sm:text-4xl font-extrabold text-slate-900">{pack.price}</span>
-                  <span className="text-xs sm:text-sm text-slate-400">一次性</span>
+                  <span className="text-xs sm:text-sm text-slate-400">one-time</span>
                 </div>
 
                 <p className="mt-1 text-xs sm:text-sm text-slate-500">{pack.perCredit}</p>
@@ -221,7 +221,7 @@ export default function PricingPage() {
                 <div className="mt-3 sm:mt-4 py-2 sm:py-3 border-t border-slate-100">
                   <p className="text-center text-xl sm:text-2xl font-bold text-indigo-600">
                     {pack.credits}
-                    <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1">次试穿</span>
+                    <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1">try-ons</span>
                   </p>
                   {pack.note && (
                     <p className="text-center text-[10px] sm:text-xs text-amber-600 font-medium mt-1">
@@ -243,12 +243,12 @@ export default function PricingPage() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
-                      <span className="truncate">跳转支付中...</span>
+                      <span className="truncate">Redirecting to payment...</span>
                     </span>
                   ) : isAnyLoading ? (
-                    '请稍候...'
+                    'Please wait...'
                   ) : (
-                    '立即购买'
+                    'Buy Now'
                   )}
                 </button>
               </div>
@@ -263,9 +263,9 @@ export default function PricingPage() {
           <section>
             <div className="text-center mb-6 sm:mb-8">
               <span className="inline-block text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-amber-600 bg-amber-50 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full">
-                订阅会员
+                Subscription
               </span>
-              <h2 className="mt-3 sm:mt-4 text-xl sm:text-2xl font-bold text-slate-900">无限畅穿，超值之选</h2>
+              <h2 className="mt-3 sm:mt-4 text-xl sm:text-2xl font-bold text-slate-900">Unlimited try-ons, best value</h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
@@ -276,7 +276,7 @@ export default function PricingPage() {
 
                 <div className="mt-3 sm:mt-4 flex items-baseline gap-1">
                   <span className="text-2xl sm:text-4xl font-extrabold text-slate-900">{subscriptionProduct.price}</span>
-                  <span className="text-xs sm:text-sm text-slate-400">/月</span>
+                  <span className="text-xs sm:text-sm text-slate-400">/month</span>
                 </div>
 
                 <p className="mt-1 text-xs sm:text-sm text-slate-500">{subscriptionProduct.perCredit}</p>
@@ -284,7 +284,7 @@ export default function PricingPage() {
                 <div className="mt-3 sm:mt-4 py-2 sm:py-3 border-t border-slate-100">
                   <p className="text-center text-xl sm:text-2xl font-bold text-amber-600">
                     {subscriptionProduct.credits}
-                    <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1">次/月</span>
+                    <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1">/month</span>
                   </p>
                   {subscriptionProduct.note && (
                     <p className="text-center text-[10px] sm:text-xs text-amber-600 font-medium mt-1">
@@ -314,12 +314,12 @@ export default function PricingPage() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
-                      <span className="truncate">跳转支付中...</span>
+                      <span className="truncate">Redirecting to payment...</span>
                     </span>
                   ) : isAnyLoading ? (
-                    '请稍候...'
+                    'Please wait...'
                   ) : (
-                    '开始订阅'
+                    'Subscribe Now'
                   )}
                 </button>
               </div>
@@ -334,11 +334,11 @@ export default function PricingPage() {
               onClick={() => router.push('/')}
               className="text-xs sm:text-sm text-slate-400 hover:text-slate-600 transition-colors"
             >
-              ← 返回首页
+              ← Back to Home
             </button>
           </div>
           <p className="text-xs text-slate-400 pt-2">
-            本应用虚拟试衣功能由可灵AI（Kling AI）提供技术支持 ·{' '}
+            Virtual try-on powered by Kling AI ·{' '}
             <a href="/terms" className="text-indigo-500 hover:text-indigo-600">Terms of Service</a> ·{' '}
             <a href="/privacy" className="text-indigo-500 hover:text-indigo-600">Privacy Policy</a>
           </p>
