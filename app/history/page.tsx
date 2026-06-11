@@ -203,7 +203,7 @@ export default function HistoryPage() {
           onClick={() => setSelectedRecord(null)}
         >
           <div
-            className="relative max-w-2xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl"
+            className="relative max-w-2xl w-full max-h-[90vh] bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 关闭按钮 */}
@@ -217,7 +217,7 @@ export default function HistoryPage() {
             </button>
 
             {/* 结果大图 */}
-            <div className="aspect-[3/4] bg-slate-100">
+            <div className="flex-shrink-0 bg-slate-100 max-h-[50vh] overflow-hidden">
               <img
                 src={selectedRecord.result_image_url}
                 alt="试衣结果"
@@ -226,7 +226,7 @@ export default function HistoryPage() {
             </div>
 
             {/* 详情 */}
-            <div className="p-4 space-y-3">
+            <div className="p-4 space-y-3 overflow-y-auto">
               <p className="text-sm text-slate-500">
                 生成时间：{formatDate(selectedRecord.created_at)}
               </p>

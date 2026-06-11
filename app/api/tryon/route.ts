@@ -394,18 +394,18 @@ async function createKlingTryOnTask(
   console.log('[TryOn API] 请求 URL:', url);
 
   // 直接传 Supabase Storage 公开 URL（可灵官方推荐方式）
+  // 注：callback_url 在国内网络环境下可能无法被可灵回调到，暂时注释掉，主用轮询
   const requestBody = {
     model_name: KLING_MODEL,
     human_image: personImage,
     cloth_image: clothingImage,
     external_task_id: externalTaskId,
-    callback_url: 'https://www.aiwhattowear.com/api/kling/callback',
+    // callback_url: 'https://www.aiwhattowear.com/api/kling/callback',
   };
 
-  console.log('[TryOn API] 请求体: model_name=%s, external_task_id=%s, callback_url=%s, human_image=[URL %s], cloth_image=[URL %s]',
+  console.log('[TryOn API] 请求体: model_name=%s, external_task_id=%s, human_image=[URL %s], cloth_image=[URL %s]',
     KLING_MODEL,
     externalTaskId,
-    'https://www.aiwhattowear.com/api/kling/callback',
     personImage,
     clothingImage,
   );

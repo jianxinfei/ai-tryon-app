@@ -210,10 +210,10 @@ export default function TryOnPage() {
     // 重置扣减标记
     deductedRef.current = false;
 
-    // 阶段1: 轮询回调结果表（15次 x 2秒 = 30秒）
-    // 阶段2: 兜底轮询可灵 API（5次 x 2秒 = 10秒）
-    // 总上限: 20次（40秒）
-    const CALLBACK_POLL_MAX = 15;
+    // 阶段1: 轮询回调结果表（13次 x 1.5秒 ≈ 20秒）
+    // 阶段2: 兜底轮询可灵 API（7次 x 1.5秒 ≈ 10秒）
+    // 总上限: 20次（30秒）
+    const CALLBACK_POLL_MAX = 13;
     const FALLBACK_POLL_MAX = 20;
 
     // 轮询函数（使用传入的 taskId，避免闭包问题）
@@ -223,12 +223,12 @@ export default function TryOnPage() {
       // 先增加计数并更新 UI
       pollCountRef.current += 1;
       const currentCount = pollCountRef.current;
-      const elapsed = currentCount * 2;
+      const elapsed = Math.round(currentCount * 1.5);
 
       console.log(`[TryOn] 轮询第 ${currentCount} 次, 已等待 ${elapsed} 秒, taskId: ${currentTaskId}`);
-      setPollProgress({ count: currentCount, estimatedTime: Math.max(0, 40 - elapsed) });
+      setPollProgress({ count: currentCount, estimatedTime: Math.max(0, 30 - elapsed) });
 
-      // 检查超时（20次 = 40秒）
+      // 检查超时（20次 x 1.5秒 = 30秒）
       if (currentCount >= FALLBACK_POLL_MAX) {
         console.log('[TryOn] 轮询达到上限 20 次，超时');
         if (pollIntervalRef.current) {
@@ -414,14 +414,12 @@ export default function TryOnPage() {
       }
     };
 
-    // 先等3秒（给回调时间），然后开始轮询
-    setTimeout(() => {
-      // 立即执行第一次轮询
-      pollOnce(taskId);
+    // 立即开始轮询（不再等回调，主用轮询）
+    // 立即执行第一次轮询
+    pollOnce(taskId);
 
-      // 之后每 2 秒轮询一次
-      pollIntervalRef.current = window.setInterval(() => pollOnce(taskId), 2000);
-    }, 3000);
+    // 之后每 1.5 秒轮询一次
+    pollIntervalRef.current = window.setInterval(() => pollOnce(taskId), 1500);
   }, []);
 
   // 创建试衣任务
