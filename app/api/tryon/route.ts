@@ -376,37 +376,6 @@ async function fetchWithSmartRetry(
 // ══════════════════════════════════════════════
 
 /**
- * 将图片 URL 下载并转为 Base64（无前缀）
- * 可灵 API 要求纯 Base64 字符串，不能带 data:image/png;base64, 前缀
- */
-async function downloadImageAsBase64(imageUrl: string, signal?: AbortSignal): Promise<string> {
-  console.log('[TryOn API] 下载图片:', imageUrl.substring(0, 80));
-
-  try {
-    const response = await fetch(imageUrl, {
-      signal: signal || AbortSignal.timeout(15000),
-    });
-
-    if (!response.ok) {
-      console.error(`[TryOn API] 图片下载失败 HTTP ${response.status}: ${imageUrl}`);
-      throw new Error(`图片下载失败 (HTTP ${response.status}): ${imageUrl}`);
-    }
-
-    const contentType = response.headers.get('content-type');
-    console.log('[TryOn API] 图片 Content-Type:', contentType);
-
-    const buffer = await response.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString('base64');
-
-    console.log('[TryOn API] 图片已转为 Base64，大小:', (buffer.byteLength / 1024).toFixed(1), 'KB');
-    return base64;
-  } catch (err: any) {
-    console.error('[TryOn API] 下载图片异常:', err.message);
-    throw err;
-  }
-}
-
-/**
  * 创建可灵 AI 虚拟试衣任务
  */
 async function createKlingTryOnTask(
