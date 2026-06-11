@@ -76,8 +76,11 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: '无效的记录ID' }, { status: 400 });
     }
 
-    // 安全策略：先查询记录，确认属于当前用户
-    const { data: record, error: queryError } = await supabase
+    // 安全策略：先查询记录，确认属于当前用户（用 admin 绕过 RLS）
+    const { getSupabaseAdmin } = await import('@/lib/supabase-admin');
+    const supabaseAdmin = getSupabaseAdmin();
+
+    const { data: record, error: queryError } = await supabaseAdmin
       .from('tryon_history')
       .select('id, user_id')
       .eq('id', recordId)
@@ -89,6 +92,7 @@ export async function DELETE(
     }
 
     if (!record) {
+      console.log('[TryOn History Delete] 记录不存在, recordId:', recordId);
       return NextResponse.json({ success: false, error: '记录不存在' }, { status: 404 });
     }
 
@@ -97,8 +101,8 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: '无权删除此记录' }, { status: 403 });
     }
 
-    // 执行删除
-    const { error: deleteError } = await supabase
+    // 执行删除（用 admin 绕过 RLS，确保删除成功）
+    const { error: deleteError } = await supabaseAdmin
       .from('tryon_history')
       .delete()
       .eq('id', recordId);
@@ -108,7 +112,7 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: '删除失败' }, { status: 500 });
     }
 
-    console.log('[TryOn History Delete] 删除成功, recordId:', recordId);
+    console.log('[TryOn History Delete] 删除成功, recordId:', recordId, ', userId:', userId);
     return NextResponse.json({ success: true, message: '删除成功' });
 
   } catch (err: any) {

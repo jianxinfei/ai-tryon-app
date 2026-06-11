@@ -57,23 +57,32 @@ export default function HistoryPage() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
+    const targetId = deleteTarget.id;
+    console.log('[History] 开始删除记录, recordId:', targetId);
     try {
-      const res = await fetch(`/api/tryon/history/${deleteTarget.id}`, {
+      const res = await fetch(`/api/tryon/history/${targetId}`, {
         method: 'DELETE',
         credentials: 'include',
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
       });
       const data = await res.json();
+      console.log('[History] 删除接口返回:', JSON.stringify(data), ', status:', res.status);
+
       if (data.success) {
-        setRecords(prev => prev.filter(r => r.id !== deleteTarget.id));
-        if (selectedRecord?.id === deleteTarget.id) {
+        // 先从本地状态移除
+        setRecords(prev => prev.filter(r => r.id !== targetId));
+        if (selectedRecord?.id === targetId) {
           setSelectedRecord(null);
         }
+        // 强制重新从后端拉取最新数据，确保与数据库一致
+        console.log('[History] 删除成功，重新从后端拉取数据...');
+        await fetchHistory();
       } else {
+        console.error('[History] 删除失败:', data.error);
         alert(data.error || '删除失败');
       }
     } catch (err: unknown) {
-      console.error('[History] 删除失败:', err instanceof Error ? err.message : String(err));
+      console.error('[History] 删除请求异常:', err instanceof Error ? err.message : String(err));
       alert('删除失败，请重试');
     } finally {
       setDeleting(false);
