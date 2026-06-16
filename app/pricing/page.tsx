@@ -85,7 +85,7 @@ export default function PricingPage() {
 
       if (!user) {
         alert('Please sign in before purchasing a plan');
-        router.push('/profile');
+        router.push('/history');
         return;
       }
 
@@ -98,7 +98,7 @@ export default function PricingPage() {
       const data = await res.json();
 
       if (res.status === 401 || data.needLogin) {
-        router.push('/profile');
+        router.push('/history');
         return;
       }
 

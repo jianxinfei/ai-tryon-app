@@ -69,7 +69,7 @@ export default function HomePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         alert('Please sign in before purchasing');
-        router.push('/profile');
+        router.push('/history');
         return;
       }
 
@@ -82,7 +82,7 @@ export default function HomePage() {
       const data = await res.json();
 
       if (res.status === 401 || data.needLogin) {
-        router.push('/profile');
+        router.push('/history');
         return;
       }
 
@@ -112,7 +112,7 @@ export default function HomePage() {
       {/* LOGO区域 - 垂直居中 */}
       <div className="w-full max-w-md flex-1 flex flex-col justify-center items-center">
         {/* 标题 */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight" style={{ fontFamily: 'Inter', lineHeight: '1.1' }}>
+        <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-slate-900 tracking-tight" style={{ fontFamily: 'Inter', lineHeight: '1.1' }}>
           What to wear?
         </h1>
 
@@ -136,7 +136,7 @@ export default function HomePage() {
 
             {/* 我们的方式 - 右下 */}
             <div className="flex-1 flex items-end justify-end md:justify-start p-4">
-              <p className="text-right md:text-left text-lg sm:text-xl font-bold leading-relaxed max-w-[280px]" style={{ fontFamily: 'Inter', color: '#E01C47' }}>
+              <p className="text-right md:text-left text-lg sm:text-xl font-bold leading-relaxed max-w-[280px] text-slate-900" style={{ fontFamily: 'Inter' }}>
                 Us:<br />
                 Tap &rarr; Upload &rarr; AI slay &rarr; Share &rarr; Drown in likes &rarr; Buy the real thing.
               </p>
@@ -190,6 +190,12 @@ export default function HomePage() {
           </div>
         </div>
       )}
+      {/* 底部链接 */}
+      <div className="w-full flex items-center justify-center gap-2 pb-6">
+        <a href="#" className="text-xs text-slate-400 hover:text-slate-500 transition-colors">Terms of Service</a>
+        <span className="text-xs text-slate-400">|</span>
+        <a href="#" className="text-xs text-slate-400 hover:text-slate-500 transition-colors">Privacy Policy</a>
+      </div>
     </div>
   );
 }

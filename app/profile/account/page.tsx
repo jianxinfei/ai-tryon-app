@@ -74,10 +74,10 @@ export default function AccountPage() {
         });
         fetchUserData();
         
-        // 登录成功后，如果从 ?login=true 过来，返回 /profile 并清除参数
+        // 登录成功后，如果从 ?login=true 过来，返回 /history 并清除参数
         if (fromLoginParam) {
-          console.log('[Account] 登录成功，从 login=true 返回 /profile');
-          router.push('/profile');
+          console.log('[Account] 登录成功，从 login=true 返回 /history');
+          router.push('/history');
         }
       } else {
         setUser(null);
@@ -119,7 +119,7 @@ export default function AccountPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/profile`,
+          redirectTo: `${window.location.origin}/history`,
         },
       });
       if (error) throw error;
@@ -163,9 +163,9 @@ export default function AccountPage() {
           console.warn('[Account] 积分初始化失败（不影响注册）:', initErr);
         }
 
-        // 跳转到个人中心（/profile 会检测邮箱未验证并显示提示条）
-        console.log('[Account] 注册成功，跳转到 /profile');
-        router.push('/profile');
+        // 跳转到历史记录页面
+        console.log('[Account] 注册成功，跳转到 /history');
+        router.push('/history');
         return;
       } else {
         // 登录
@@ -195,7 +195,7 @@ export default function AccountPage() {
     try {
       await supabase.auth.signOut();
       setUser(null);
-      router.push('/profile');
+      router.push('/history');
     } catch (error) {
       console.error('退出登录失败:', error);
     } finally {
@@ -219,7 +219,7 @@ export default function AccountPage() {
         <div className="w-full max-w-md">
           {/* 返回按钮 */}
           <button
-            onClick={() => router.push('/profile')}
+            onClick={() => router.push('/history')}
             className="mb-6 flex items-center gap-1 text-sm text-slate-500 hover:text-indigo-600 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -258,83 +258,21 @@ export default function AccountPage() {
             </div>
           )}
 
-          {/* 表单卡片 */}
+          {/* OAuth 登录卡片 - 放在最上方，更醒目 */}
           <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 p-6 sm:p-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* 邮箱输入 */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Email Address
-                </label>
-                <input
-                  ref={emailInputRef}
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  required
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400
-                    focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500
-                    transition-all"
-                />
-              </div>
+            <p className="text-center text-sm font-medium text-slate-700 mb-5">
+              {isSignUp ? 'Create an account with' : 'Continue with'}
+            </p>
 
-              {/* 密码输入 */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={isSignUp ? 'At least 6 characters' : 'Enter password'}
-                  required
-                  minLength={6}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400
-                    focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500
-                    transition-all"
-                />
-              </div>
-
-              {/* 提交按钮 */}
-              <button
-                type="submit"
-                disabled={loginLoading}
-                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl
-                  shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-200
-                  transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loginLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Processing...
-                  </span>
-                ) : (
-                  isSignUp ? 'Sign Up' : 'Sign In'
-                )}
-              </button>
-            </form>
-
-            {/* 分隔线 */}
-            <div className="mt-6 flex items-center gap-3">
-              <div className="flex-1 h-px bg-slate-200" />
-              <span className="text-xs text-slate-400">or</span>
-              <div className="flex-1 h-px bg-slate-200" />
-            </div>
-
-            {/* OAuth 登录按钮 */}
-            <div className="mt-5 grid grid-cols-2 gap-3">
+            {/* OAuth 登录按钮 - 更大更醒目 */}
+            <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => handleOAuthSignIn('facebook')}
                 disabled={loginLoading}
-                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-[#1877F2] hover:bg-[#166fe5] text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 py-3 px-4 bg-[#1877F2] hover:bg-[#166fe5] text-white text-sm font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                 </svg>
                 Facebook
@@ -343,17 +281,77 @@ export default function AccountPage() {
                 type="button"
                 onClick={() => handleOAuthSignIn('github')}
                 disabled={loginLoading}
-                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                 </svg>
                 GitHub
               </button>
             </div>
 
+            {/* 分隔线 */}
+            <div className="mt-6 flex items-center gap-3">
+              <div className="flex-1 h-px bg-slate-200" />
+              <span className="text-xs text-slate-400">or use email</span>
+              <div className="flex-1 h-px bg-slate-200" />
+            </div>
+
+            {/* 邮箱登录表单 - 放在下方作为备选 */}
+            <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+              {/* 邮箱输入 */}
+              <div>
+                <input
+                  ref={emailInputRef}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email address"
+                  required
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400
+                    focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500
+                    transition-all text-sm"
+                />
+              </div>
+
+              {/* 密码输入 */}
+              <div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={isSignUp ? 'Create password (min 6 chars)' : 'Password'}
+                  required
+                  minLength={6}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400
+                    focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500
+                    transition-all text-sm"
+                />
+              </div>
+
+              {/* 提交按钮 */}
+              <button
+                type="submit"
+                disabled={loginLoading}
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl
+                  transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                {loginLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  isSignUp ? 'Sign Up with Email' : 'Sign In with Email'
+                )}
+              </button>
+            </form>
+
             {/* 切换登录/注册 */}
-            <div className="mt-6 text-center">
+            <div className="mt-5 text-center">
               <button
                 type="button"
                 onClick={() => {
@@ -392,7 +390,7 @@ export default function AccountPage() {
         <div className="flex items-center gap-4">
           {/* 返回按钮 */}
           <button
-            onClick={() => router.push('/profile')}
+            onClick={() => router.push('/history')}
             className="w-8 h-8 rounded-full bg-white/25 flex items-center justify-center flex-shrink-0"
           >
             <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

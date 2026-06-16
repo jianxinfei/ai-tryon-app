@@ -29,7 +29,7 @@ export default function HistoryPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/profile?login=true');
+        // 登录用模态框，不再跳转到 /profile?login=true
         return;
       }
 
@@ -111,6 +111,7 @@ export default function HistoryPage() {
 
 
       <main className="max-w-5xl mx-auto px-4 py-6">
+        <h1 className="text-2xl font-extrabold text-slate-900 text-center mb-6">Try-On History</h1>
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="animate-spin h-8 w-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full" />
