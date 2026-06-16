@@ -118,8 +118,36 @@ export default function HomePage() {
           </div>
 
           {/* 标题 */}
-          <h1 style={{ color: '#1A1A1A', fontFamily: 'Inter', fontSize: '30px', fontWeight: 700, lineHeight: '1.2', margin: 0, padding: 0 }}>AIWHATTOWEAR</h1>
+          <h1 style={{ color: '#1A1A1A', fontFamily: 'Inter', fontSize: '30px', fontWeight: 700, lineHeight: '1.2', margin: 0, padding: 0 }}>What to wear?</h1>
           <p style={{ color: '#9CA3AF', fontFamily: 'Inter', fontSize: '13px', fontWeight: 500, lineHeight: '1', margin: 0, padding: 0 }}>By AI</p>
+        </div>
+
+        {/* 对比文案 */}
+        <div className="w-full mt-8">
+          <div className="flex flex-col md:flex-row items-stretch gap-0">
+            {/* 旧方式 - 左上 */}
+            <div className="flex-1 flex items-start justify-start md:justify-end p-4">
+              <p className="text-left text-xs text-slate-400 leading-relaxed max-w-[200px]" style={{ fontFamily: 'Inter' }}>
+                The old way:<br />
+                Hunt &rarr; Wait &rarr; Unbox &rarr; Squeeze in &rarr; Strike a pose &rarr; Ask &quot;does this look ok?&quot;
+              </p>
+            </div>
+
+            {/* VS 分割线 */}
+            <div className="flex md:flex-col items-center justify-center gap-2 py-2 md:py-0 md:px-4">
+              <div className="w-8 md:w-px h-px md:h-12 bg-slate-300" />
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">vs</span>
+              <div className="w-8 md:w-px h-px md:h-12 bg-slate-300" />
+            </div>
+
+            {/* 我们的方式 - 右下 */}
+            <div className="flex-1 flex items-end justify-end md:justify-start p-4">
+              <p className="text-right md:text-left text-base font-bold leading-relaxed max-w-[220px]" style={{ fontFamily: 'Inter', color: '#E01C47' }}>
+                Us:<br />
+                Tap &rarr; Upload &rarr; AI slay &rarr; Share &rarr; Drown in likes &rarr; Buy the real thing.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
