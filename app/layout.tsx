@@ -1,4 +1,5 @@
 import './globals.css'
+import NavbarWrapper from '@/components/NavbarWrapper'
 
 export const metadata = {
   title: 'What to Wear',
@@ -14,12 +15,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-CN">
+    <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body>
-        {children}
+        <NavbarWrapper>{children}</NavbarWrapper>
       </body>
     </html>
   )
