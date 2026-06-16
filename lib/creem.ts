@@ -61,24 +61,24 @@ export interface ProductConfig {
  * Product ID → 产品配置映射
  *
  * 新老用户产品分离：
- * - 新用户产品：带额外赠送（prod_5W4nng7xUZjTeQIIzS3vXp / prod_6QtH4e65ALMlf21qKd9Kh）
- * - 老用户产品：标准价格（prod_6MSm2Jfx384xKhS4YOe2zj / prod_6AhvY6wWtpdDAEkPjxm7mf）
+ * - 新用户产品：带额外赠送（prod_4cZ6QYcEJfRj06nfqKJZYF / prod_28QNwJ5kcWeyW8zCU3rACM）
+ * - 老用户产品：标准价格（prod_4ygOUMfKYdJDv3sUy7MKfg / prod_2XUoUffbTLXQWnI09IzOtk）
  */
 export const PRODUCT_MAP: Record<string, ProductConfig> = {
   // ── New User Exclusive (with bonus) ──
-  'prod_5W4nng7xUZjTeQIIzS3vXp': {
+  'prod_4cZ6QYcEJfRj06nfqKJZYF': {
     credits: 13,
     name: '10 Try-On Credits',
-    productId: 'prod_5W4nng7xUZjTeQIIzS3vXp',
+    productId: 'prod_4cZ6QYcEJfRj06nfqKJZYF',
     type: 'credit_pack',
     price: '$1.99',
     perCredit: '$0.15/use',
     note: 'New User Exclusive · Buy 10 Get 3 Free · 13 Total',
   },
-  'prod_6QtH4e65ALMlf21qKd9Kh': {
+  'prod_28QNwJ5kcWeyW8zCU3rACM': {
     credits: 110,
     name: '100 Try-On Credits',
-    productId: 'prod_6QtH4e65ALMlf21qKd9Kh',
+    productId: 'prod_28QNwJ5kcWeyW8zCU3rACM',
     type: 'credit_pack',
     price: '$9.90',
     perCredit: '$0.09/use',
@@ -88,19 +88,19 @@ export const PRODUCT_MAP: Record<string, ProductConfig> = {
   },
 
   // ── Returning User Standard (no bonus) ──
-  'prod_6MSm2Jfx384xKhS4YOe2zj': {
+  'prod_4ygOUMfKYdJDv3sUy7MKfg': {
     credits: 10,
     name: '10 Try-On Credits',
-    productId: 'prod_6MSm2Jfx384xKhS4YOe2zj',
+    productId: 'prod_4ygOUMfKYdJDv3sUy7MKfg',
     type: 'credit_pack',
     price: '$1.99',
     perCredit: '$0.20/use',
     note: '10 try-ons · Valid for 180 days (no rollover)',
   },
-  'prod_6AhvY6wWtpdDAEkPjxm7mf': {
+  'prod_2XUoUffbTLXQWnI09IzOtk': {
     credits: 100,
     name: '100 Try-On Credits',
-    productId: 'prod_6AhvY6wWtpdDAEkPjxm7mf',
+    productId: 'prod_2XUoUffbTLXQWnI09IzOtk',
     type: 'credit_pack',
     price: '$9.90',
     perCredit: '$0.10/use',
@@ -110,10 +110,10 @@ export const PRODUCT_MAP: Record<string, ProductConfig> = {
   },
 
   // ── Subscription ──
-  'prod_xWnfRXy7SUJHzhj4FrmgZ': {
+  'prod_D1h0f02qj276xZWmSg8BC': {
     credits: 110,
     name: 'What to Wear Subscription',
-    productId: 'prod_xWnfRXy7SUJHzhj4FrmgZ',
+    productId: 'prod_D1h0f02qj276xZWmSg8BC',
     type: 'subscription',
     billingPeriod: 'every-month',
     price: '$9.90',
@@ -124,15 +124,15 @@ export const PRODUCT_MAP: Record<string, ProductConfig> = {
 };
 
 // 便捷导出：新用户产品 ID
-export const NEW_USER_PACK_10_ID = 'prod_5W4nng7xUZjTeQIIzS3vXp';
-export const NEW_USER_PACK_100_ID = 'prod_6QtH4e65ALMlf21qKd9Kh';
+export const NEW_USER_PACK_10_ID = 'prod_4cZ6QYcEJfRj06nfqKJZYF';
+export const NEW_USER_PACK_100_ID = 'prod_28QNwJ5kcWeyW8zCU3rACM';
 
 // 便捷导出：老用户产品 ID
-export const RETURNING_USER_PACK_10_ID = 'prod_6MSm2Jfx384xKhS4YOe2zj';
-export const RETURNING_USER_PACK_100_ID = 'prod_6AhvY6wWtpdDAEkPjxm7mf';
+export const RETURNING_USER_PACK_10_ID = 'prod_4ygOUMfKYdJDv3sUy7MKfg';
+export const RETURNING_USER_PACK_100_ID = 'prod_2XUoUffbTLXQWnI09IzOtk';
 
 // 便捷导出：订阅产品 ID
-export const SUBSCRIPTION_MONTHLY_ID = 'prod_xWnfRXy7SUJHzhj4FrmgZ';
+export const SUBSCRIPTION_MONTHLY_ID = 'prod_D1h0f02qj276xZWmSg8BC';
 
 /**
  * 根据 Product ID 获取产品配置

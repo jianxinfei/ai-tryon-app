@@ -108,59 +108,57 @@ export default function HomePage() {
   };
 
   return (
-    <>
-      <div className="" style={{ width: '390px', height: '844px', margin: '0 auto', background: '#FFF7FA', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* LOGO区域 - W390 H749 */}
-        <div className="" style={{ width: '390px', height: '749px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-          {/* Logo */}
-          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '8px', height: '300px' }}>
-            <div className="flex items-center justify-center" style={{ width: '129px', height: '100px', background: '#FD7700', borderRadius: '28px', boxShadow: '0px 4px 4px 0px rgba(0, 0, 0, 0.25)' }}>
-              <span style={{ color: '#FFFFFF', fontFamily: '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif', fontSize: '64px', fontWeight: 500, lineHeight: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>美</span>
-            </div>
-
-            {/* 标题 */}
-            <h1 style={{ color: '#1A1A1A', fontFamily: 'Inter', fontSize: '30px', fontWeight: 700, lineHeight: '1.2', margin: 0, padding: 0 }}>what to wear</h1>
-            <p style={{ color: '#9CA3AF', fontFamily: 'Inter', fontSize: '13px', fontWeight: 500, lineHeight: '1', margin: 0, padding: 0 }}>By AI</p>
+    <div className="min-h-screen bg-[#FFF7FA] flex flex-col items-center justify-center px-4">
+      {/* LOGO区域 */}
+      <div className="w-full max-w-md flex flex-col justify-center items-center" style={{ minHeight: '70vh' }}>
+        {/* Logo */}
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+          <div className="flex items-center justify-center" style={{ width: '129px', height: '100px', background: '#FD7700', borderRadius: '28px', boxShadow: '0px 4px 4px 0px rgba(0, 0, 0, 0.25)' }}>
+            <span style={{ color: '#FFFFFF', fontFamily: '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif', fontSize: '64px', fontWeight: 500, lineHeight: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>美</span>
           </div>
 
-          {/* 底部链接 */}
-          <div className="text-center space-x-4" style={{ paddingBottom: '20px' }}>
-            <Link href="/terms" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-              Terms of Service
-            </Link>
-            <span className="text-gray-300">|</span>
-            <Link href="/privacy" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-              Privacy Policy
-            </Link>
-          </div>
+          {/* 标题 */}
+          <h1 style={{ color: '#1A1A1A', fontFamily: 'Inter', fontSize: '30px', fontWeight: 700, lineHeight: '1.2', margin: 0, padding: 0 }}>what to wear</h1>
+          <p style={{ color: '#9CA3AF', fontFamily: 'Inter', fontSize: '13px', fontWeight: 500, lineHeight: '1', margin: 0, padding: 0 }}>By AI</p>
         </div>
 
-        {/* 导航栏区域 - W390 H95 */}
-        <div className="" style={{ width: '390px', height: '95px', display: 'flex', padding: '4px', alignItems: 'center', justifyContent: 'center', background: '#FFF7FA', borderRadius: '36px' }}>
-          {/* 按钮容器 - W348 H62 */}
-          <div className="" style={{ width: '348px', height: '62px', display: 'flex', padding: '0px', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF', borderRadius: '36px' }}>
-            <button
-              onClick={() => router.push('/tryon')}
-              className="hover:bg-red-700 transition-all active:scale-98"
-              style={{ width: '174px', height: '62px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '4px', background: '#E01C47', borderRadius: '26px' }}
-            >
-              <span style={{ color: '#FFF', fontFamily: 'Inter', fontSize: '18px', fontWeight: 600, fontStyle: 'normal', textDecorationLine: 'none', lineHeight: 'normal' }}>Glow Up</span>
-              <svg style={{ width: '18px', height: '18px', position: 'relative' }} viewBox="0 0 24 24" fill="#FFF">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                <path d="M12 6.38l1.45 3.56L18 11.15l-3.55 3.38 1.45 5.56L12 17.07l-4.9 2.43 1.45-5.56L6 11.15l4.55-1.21L12 6.38z"/>
-              </svg>
-            </button>
-            <button
-              onClick={() => router.push('/profile')}
-              className="hover:bg-gray-100 transition-all active:scale-98"
-              style={{ width: '174px', height: '62px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '4px', background: '#FFF', borderRadius: '26px' }}
-            >
-              <span style={{ display: '-webkit-box', position: 'relative', color: '#9CA3AF', fontFamily: 'Inter', fontSize: '18px', fontWeight: 600, fontStyle: 'normal', textDecorationLine: 'none', lineHeight: 'normal' }}>Profile</span>
-              <svg style={{ width: '18px', height: '18px', position: 'relative' }} fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-              </svg>
-            </button>
-          </div>
+        {/* 底部链接 */}
+        <div className="text-center space-x-4 mt-auto" style={{ paddingBottom: '20px' }}>
+          <Link href="/terms" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+            Terms of Service
+          </Link>
+          <span className="text-gray-300">|</span>
+          <Link href="/privacy" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+            Privacy Policy
+          </Link>
+        </div>
+      </div>
+
+      {/* 导航栏区域 */}
+      <div className="w-full max-w-md flex justify-center" style={{ padding: '4px', marginBottom: '20px' }}>
+        {/* 按钮容器 */}
+        <div className="w-full max-w-[348px] flex" style={{ height: '62px', padding: '0px', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF', borderRadius: '36px' }}>
+          <button
+            onClick={() => router.push('/tryon')}
+            className="hover:bg-red-700 transition-all active:scale-98 flex-1 h-full flex flex-col justify-center items-center gap-1"
+            style={{ background: '#E01C47', borderRadius: '26px' }}
+          >
+            <span style={{ color: '#FFF', fontFamily: 'Inter', fontSize: '18px', fontWeight: 600 }}>Glow Up</span>
+            <svg style={{ width: '18px', height: '18px' }} viewBox="0 0 24 24" fill="#FFF">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              <path d="M12 6.38l1.45 3.56L18 11.15l-3.55 3.38 1.45 5.56L12 17.07l-4.9 2.43 1.45-5.56L6 11.15l4.55-1.21L12 6.38z"/>
+            </svg>
+          </button>
+          <button
+            onClick={() => router.push('/profile')}
+            className="hover:bg-gray-100 transition-all active:scale-98 flex-1 h-full flex flex-col justify-center items-center gap-1"
+            style={{ background: '#FFF', borderRadius: '26px' }}
+          >
+            <span style={{ color: '#9CA3AF', fontFamily: 'Inter', fontSize: '18px', fontWeight: 600 }}>Profile</span>
+            <svg style={{ width: '18px', height: '18px' }} fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -209,6 +207,6 @@ export default function HomePage() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
