@@ -111,16 +111,8 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#FFF7FA] flex flex-col items-center px-4">
       {/* LOGO区域 - 垂直居中 */}
       <div className="w-full max-w-md flex-1 flex flex-col justify-center items-center">
-        {/* Logo */}
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-          <div className="flex items-center justify-center" style={{ width: '129px', height: '100px', background: '#FD7700', borderRadius: '28px', boxShadow: '0px 4px 4px 0px rgba(0, 0, 0, 0.25)' }}>
-            <span style={{ color: '#FFFFFF', fontFamily: '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif', fontSize: '64px', fontWeight: 500, lineHeight: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>美</span>
-          </div>
-
-          {/* 标题 */}
-          <h1 style={{ color: '#1A1A1A', fontFamily: 'Inter', fontSize: '30px', fontWeight: 700, lineHeight: '1.2', margin: 0, padding: 0 }}>What to wear?</h1>
-          <p style={{ color: '#9CA3AF', fontFamily: 'Inter', fontSize: '13px', fontWeight: 500, lineHeight: '1', margin: 0, padding: 0 }}>By AI</p>
-        </div>
+        {/* 标题 */}
+        <h1 style={{ color: '#1A1A1A', fontFamily: 'Inter', fontSize: '30px', fontWeight: 700, lineHeight: '1.2', margin: 0, padding: 0 }}>What to wear?</h1>
 
         {/* 对比文案 */}
         <div className="w-full mt-8">
@@ -136,7 +128,7 @@ export default function HomePage() {
             {/* VS 分割线 */}
             <div className="flex md:flex-col items-center justify-center gap-2 py-2 md:py-0 md:px-4">
               <div className="w-8 md:w-px h-px md:h-12 bg-slate-300" />
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">vs</span>
+              <span className="text-sm font-extrabold text-slate-500 uppercase tracking-widest">vs</span>
               <div className="w-8 md:w-px h-px md:h-12 bg-slate-300" />
             </div>
 
@@ -151,19 +143,8 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 底部区域：链接 + 导航 */}
+      {/* 底部区域：导航 */}
       <div className="w-full max-w-md flex flex-col items-center" style={{ paddingBottom: '20px' }}>
-        {/* 底部链接 */}
-        <div className="text-center space-x-4" style={{ paddingBottom: '16px' }}>
-          <Link href="/terms" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-            Terms of Service
-          </Link>
-          <span className="text-gray-300">|</span>
-          <Link href="/privacy" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-            Privacy Policy
-          </Link>
-        </div>
-
         {/* 导航栏 */}
         <div className="w-full max-w-[348px] flex" style={{ height: '62px', padding: '0px', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF', borderRadius: '36px' }}>
           <button
