@@ -5,7 +5,7 @@ export const metadata = {
   title: 'What to Wear',
   description: 'AI 虚拟试衣 - 上传照片和服装，AI 帮你一键试穿',
   icons: {
-    icon: '/favicon.ico',
+    icon: '/favicon.jpg',
   },
 }
 

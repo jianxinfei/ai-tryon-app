@@ -112,62 +112,36 @@ export default function HomePage() {
       {/* LOGO区域 - 垂直居中 */}
       <div className="w-full max-w-md flex-1 flex flex-col justify-center items-center">
         {/* 标题 */}
-        <h1 style={{ color: '#1A1A1A', fontFamily: 'Inter', fontSize: '30px', fontWeight: 700, lineHeight: '1.2', margin: 0, padding: 0 }}>What to wear?</h1>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight" style={{ fontFamily: 'Inter', lineHeight: '1.1' }}>
+          What to wear?
+        </h1>
 
         {/* 对比文案 */}
-        <div className="w-full mt-8">
+        <div className="w-full mt-10 sm:mt-14">
           <div className="flex flex-col md:flex-row items-stretch gap-0">
             {/* 旧方式 - 左上 */}
             <div className="flex-1 flex items-start justify-start md:justify-end p-4">
-              <p className="text-left text-xs text-slate-400 leading-relaxed max-w-[200px]" style={{ fontFamily: 'Inter' }}>
+              <p className="text-left text-sm sm:text-base text-slate-400 leading-relaxed max-w-[260px]" style={{ fontFamily: 'Inter' }}>
                 The old way:<br />
                 Hunt &rarr; Wait &rarr; Unbox &rarr; Squeeze in &rarr; Strike a pose &rarr; Ask &quot;does this look ok?&quot;
               </p>
             </div>
 
             {/* VS 分割线 */}
-            <div className="flex md:flex-col items-center justify-center gap-2 py-2 md:py-0 md:px-4">
-              <div className="w-8 md:w-px h-px md:h-12 bg-slate-300" />
-              <span className="text-sm font-extrabold text-slate-500 uppercase tracking-widest">vs</span>
-              <div className="w-8 md:w-px h-px md:h-12 bg-slate-300" />
+            <div className="flex md:flex-col items-center justify-center gap-2 py-2 md:py-0 md:px-6">
+              <div className="w-8 md:w-px h-px md:h-16 bg-slate-300" />
+              <span className="text-base font-extrabold text-slate-500 uppercase tracking-widest">vs</span>
+              <div className="w-8 md:w-px h-px md:h-16 bg-slate-300" />
             </div>
 
             {/* 我们的方式 - 右下 */}
             <div className="flex-1 flex items-end justify-end md:justify-start p-4">
-              <p className="text-right md:text-left text-base font-bold leading-relaxed max-w-[220px]" style={{ fontFamily: 'Inter', color: '#E01C47' }}>
+              <p className="text-right md:text-left text-lg sm:text-xl font-bold leading-relaxed max-w-[280px]" style={{ fontFamily: 'Inter', color: '#E01C47' }}>
                 Us:<br />
                 Tap &rarr; Upload &rarr; AI slay &rarr; Share &rarr; Drown in likes &rarr; Buy the real thing.
               </p>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* 底部区域：导航 */}
-      <div className="w-full max-w-md flex flex-col items-center" style={{ paddingBottom: '20px' }}>
-        {/* 导航栏 */}
-        <div className="w-full max-w-[348px] flex" style={{ height: '62px', padding: '0px', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF', borderRadius: '36px' }}>
-          <button
-            onClick={() => router.push('/tryon')}
-            className="hover:bg-red-700 transition-all active:scale-98 flex-1 h-full flex flex-col justify-center items-center gap-1"
-            style={{ background: '#E01C47', borderRadius: '26px' }}
-          >
-            <span style={{ color: '#FFF', fontFamily: 'Inter', fontSize: '18px', fontWeight: 600 }}>Glow Up</span>
-            <svg style={{ width: '18px', height: '18px' }} viewBox="0 0 24 24" fill="#FFF">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-              <path d="M12 6.38l1.45 3.56L18 11.15l-3.55 3.38 1.45 5.56L12 17.07l-4.9 2.43 1.45-5.56L6 11.15l4.55-1.21L12 6.38z"/>
-            </svg>
-          </button>
-          <button
-            onClick={() => router.push('/profile')}
-            className="hover:bg-gray-100 transition-all active:scale-98 flex-1 h-full flex flex-col justify-center items-center gap-1"
-            style={{ background: '#FFF', borderRadius: '26px' }}
-          >
-            <span style={{ color: '#9CA3AF', fontFamily: 'Inter', fontSize: '18px', fontWeight: 600 }}>Profile</span>
-            <svg style={{ width: '18px', height: '18px' }} fill="none" viewBox="0 0 24 24" stroke="#9CA3AF" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-            </svg>
-          </button>
         </div>
       </div>
 
