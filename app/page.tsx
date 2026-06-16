@@ -108,9 +108,9 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF7FA] flex flex-col items-center justify-center px-4">
-      {/* LOGO区域 */}
-      <div className="w-full max-w-md flex flex-col justify-center items-center" style={{ minHeight: '70vh' }}>
+    <div className="min-h-screen bg-[#FFF7FA] flex flex-col items-center px-4">
+      {/* LOGO区域 - 垂直居中 */}
+      <div className="w-full max-w-md flex-1 flex flex-col justify-center items-center">
         {/* Logo */}
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
           <div className="flex items-center justify-center" style={{ width: '129px', height: '100px', background: '#FD7700', borderRadius: '28px', boxShadow: '0px 4px 4px 0px rgba(0, 0, 0, 0.25)' }}>
@@ -121,9 +121,12 @@ export default function HomePage() {
           <h1 style={{ color: '#1A1A1A', fontFamily: 'Inter', fontSize: '30px', fontWeight: 700, lineHeight: '1.2', margin: 0, padding: 0 }}>what to wear</h1>
           <p style={{ color: '#9CA3AF', fontFamily: 'Inter', fontSize: '13px', fontWeight: 500, lineHeight: '1', margin: 0, padding: 0 }}>By AI</p>
         </div>
+      </div>
 
+      {/* 底部区域：链接 + 导航 */}
+      <div className="w-full max-w-md flex flex-col items-center" style={{ paddingBottom: '20px' }}>
         {/* 底部链接 */}
-        <div className="text-center space-x-4 mt-auto" style={{ paddingBottom: '20px' }}>
+        <div className="text-center space-x-4" style={{ paddingBottom: '16px' }}>
           <Link href="/terms" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
             Terms of Service
           </Link>
@@ -132,11 +135,8 @@ export default function HomePage() {
             Privacy Policy
           </Link>
         </div>
-      </div>
 
-      {/* 导航栏区域 */}
-      <div className="w-full max-w-md flex justify-center" style={{ padding: '4px', marginBottom: '20px' }}>
-        {/* 按钮容器 */}
+        {/* 导航栏 */}
         <div className="w-full max-w-[348px] flex" style={{ height: '62px', padding: '0px', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF', borderRadius: '36px' }}>
           <button
             onClick={() => router.push('/tryon')}
