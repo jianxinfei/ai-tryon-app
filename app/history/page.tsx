@@ -108,22 +108,7 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-[#FFF7FA] pb-16">
-      {/* 导航栏 */}
-      <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-1 text-slate-600 hover:text-indigo-600 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            <span className="text-sm font-medium">Back</span>
-          </button>
-          <h1 className="text-base font-bold text-slate-900">Try-On History</h1>
-          <div className="w-12" />
-        </div>
-      </nav>
+
 
       <main className="max-w-5xl mx-auto px-4 py-6">
         {loading ? (

@@ -570,11 +570,6 @@ export default function TryOnPage() {
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-[#FFF7FA]">
-        {/* 导航栏 */}
-        <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
-          <div className="max-w-5xl mx-auto px-4 py-3" />
-        </nav>
-
         {/* 主内容 */}
         <main className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
           {/* 标题 */}
@@ -610,17 +605,7 @@ export default function TryOnPage() {
   // 已登录状态 - 显示试衣功能
   return (
     <div className="min-h-screen bg-[#FFF7FA] pb-16">
-      {/* 导航栏 */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center">
-          <button
-            onClick={() => router.push('/')}
-            className="px-3 py-1.5 text-sm text-slate-600 border border-slate-200 rounded-lg bg-white/80 backdrop-blur hover:bg-slate-50 transition-colors"
-          >
-            ← Home
-          </button>
-        </div>
-      </nav>
+
 
       {/* 主内容 */}
       <main className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
