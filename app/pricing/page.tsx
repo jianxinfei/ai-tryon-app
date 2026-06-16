@@ -140,25 +140,6 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-[#FFF7FA]">
-      {/* ── 导航栏 ── */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button
-            onClick={() => router.push('/')}
-            className="flex items-center gap-2 text-slate-900 hover:text-indigo-600 transition-colors"
-          >
-            <img src="/logo.png" alt="What to Wear" className="w-8 h-8 rounded-lg" />
-            <span className="font-bold text-sm sm:text-base">What to Wear</span>
-          </button>
-
-          {currentUser && (
-            <span className="text-xs text-slate-500">
-              {currentUser.email}
-            </span>
-          )}
-        </div>
-      </nav>
-
       {/* ── 顶部 ── */}
       <header className="pt-8 sm:pt-12 pb-6 sm:pb-8 text-center px-4">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -179,156 +160,182 @@ export default function PricingPage() {
         )}
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 pb-12 sm:pb-20 space-y-12 sm:space-y-16">
-        {/* ══════════════════════════════════
-            Credit Packs
-        ══════════════════════════════════ */}
-        <section>
-          <div className="text-center mb-6 sm:mb-8">
-            <span className="inline-block text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full">
-              {showReturningProducts ? 'Credit Packs' : 'New User Exclusive'}
-            </span>
-            <h2 className="mt-3 sm:mt-4 text-xl sm:text-2xl font-bold text-slate-900">
-              {showReturningProducts ? 'Pay as you go, credits never expire' : 'Bonus credits on your first purchase'}
-            </h2>
-          </div>
+      <main className="max-w-5xl mx-auto px-4 pb-12 sm:pb-20">
+        {/* ── 三个方案并排：左(10积分包) 中(100积分包) 右(订阅) ── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
+          {/* 左：10 积分包 */}
+          {(showReturningProducts ? returningUserPacks : newUserPacks).filter(p => !p.highlight).map((pack) => (
+            <div
+              key={pack.productId}
+              className="relative rounded-xl sm:rounded-2xl border-2 border-slate-200 bg-white p-4 sm:p-6 transition-all hover:shadow-lg flex flex-col"
+            >
+              <h3 className="text-base sm:text-lg font-bold text-slate-900">{pack.name}</h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
-            {(showReturningProducts ? returningUserPacks : newUserPacks).map((pack) => (
-              <div
-                key={pack.productId}
-                className={`relative rounded-xl sm:rounded-2xl border-2 p-4 sm:p-6 transition-all hover:shadow-lg ${
-                  pack.highlight
-                    ? 'border-indigo-500 bg-indigo-50/40 shadow-md'
-                    : 'border-slate-200 bg-white'
-                }`}
-              >
-                {pack.badge && (
-                  <span className="absolute -top-2.5 sm:-top-3 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full whitespace-nowrap">
-                    {pack.badge}
-                  </span>
-                )}
-
-                <h3 className="text-base sm:text-lg font-bold text-slate-900">{pack.name}</h3>
-
-                <div className="mt-3 sm:mt-4 flex items-baseline gap-1">
-                  <span className="text-2xl sm:text-4xl font-extrabold text-slate-900">{pack.price}</span>
-                  <span className="text-xs sm:text-sm text-slate-400">one-time</span>
-                </div>
-
-                <p className="mt-1 text-xs sm:text-sm text-slate-500">{pack.perCredit}</p>
-
-                <div className="mt-3 sm:mt-4 py-2 sm:py-3 border-t border-slate-100">
-                  <p className="text-center text-xl sm:text-2xl font-bold text-indigo-600">
-                    {pack.credits}
-                    <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1">try-ons</span>
-                  </p>
-                  {pack.note && (
-                    <p className="text-center text-[10px] sm:text-xs text-amber-600 font-medium mt-1">
-                      {pack.note}
-                    </p>
-                  )}
-                </div>
-
-                <button
-                  onClick={() => handlePurchase(pack.productId)}
-                  disabled={isAnyLoading}
-                  className="mt-3 sm:mt-4 w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all
-                    bg-indigo-600 text-white hover:bg-indigo-700
-                    disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-400"
-                >
-                  {loadingId === pack.productId ? (
-                    <span className="flex items-center justify-center gap-1.5 sm:gap-2">
-                      <svg className="animate-spin h-3.5 w-3.5 sm:h-4 sm:w-4" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      <span className="truncate">Redirecting to payment...</span>
-                    </span>
-                  ) : isAnyLoading ? (
-                    'Please wait...'
-                  ) : (
-                    'Buy Now'
-                  )}
-                </button>
+              <div className="mt-3 sm:mt-4 flex items-baseline gap-1">
+                <span className="text-2xl sm:text-4xl font-extrabold text-slate-900">{pack.price}</span>
+                <span className="text-xs sm:text-sm text-slate-400">one-time</span>
               </div>
-            ))}
-          </div>
-        </section>
 
-        {/* ══════════════════════════════════
-            Subscription
-        ══════════════════════════════════ */}
-        {subscriptionProduct && (
-          <section>
-            <div className="text-center mb-6 sm:mb-8">
-              <span className="inline-block text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-amber-600 bg-amber-50 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full">
+              <p className="mt-1 text-xs sm:text-sm text-slate-500">{pack.perCredit}</p>
+
+              <div className="mt-3 sm:mt-4 py-2 sm:py-3 border-t border-slate-100">
+                <p className="text-center text-xl sm:text-2xl font-bold text-indigo-600">
+                  {pack.credits}
+                  <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1">try-ons</span>
+                </p>
+                {pack.note && (
+                  <p className="text-center text-[10px] sm:text-xs text-amber-600 font-medium mt-1">
+                    {pack.note}
+                  </p>
+                )}
+              </div>
+
+              <button
+                onClick={() => handlePurchase(pack.productId)}
+                disabled={isAnyLoading}
+                className="mt-auto pt-3 sm:pt-4 w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all
+                  bg-indigo-600 text-white hover:bg-indigo-700
+                  disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-400"
+              >
+                {loadingId === pack.productId ? (
+                  <span className="flex items-center justify-center gap-1.5 sm:gap-2">
+                    <svg className="animate-spin h-3.5 w-3.5 sm:h-4 sm:w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <span className="truncate">Redirecting to payment...</span>
+                  </span>
+                ) : isAnyLoading ? (
+                  'Please wait...'
+                ) : (
+                  'Buy Now'
+                )}
+              </button>
+            </div>
+          ))}
+
+          {/* 中：100 积分包（推荐） */}
+          {(showReturningProducts ? returningUserPacks : newUserPacks).filter(p => p.highlight).map((pack) => (
+            <div
+              key={pack.productId}
+              className="relative rounded-xl sm:rounded-2xl border-2 border-indigo-500 bg-indigo-50/40 shadow-md p-4 sm:p-6 transition-all hover:shadow-lg flex flex-col"
+            >
+              {pack.badge && (
+                <span className="absolute -top-2.5 sm:-top-3 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full whitespace-nowrap">
+                  {pack.badge}
+                </span>
+              )}
+
+              <h3 className="text-base sm:text-lg font-bold text-slate-900">{pack.name}</h3>
+
+              <div className="mt-3 sm:mt-4 flex items-baseline gap-1">
+                <span className="text-2xl sm:text-4xl font-extrabold text-slate-900">{pack.price}</span>
+                <span className="text-xs sm:text-sm text-slate-400">one-time</span>
+              </div>
+
+              <p className="mt-1 text-xs sm:text-sm text-slate-500">{pack.perCredit}</p>
+
+              <div className="mt-3 sm:mt-4 py-2 sm:py-3 border-t border-slate-100">
+                <p className="text-center text-xl sm:text-2xl font-bold text-indigo-600">
+                  {pack.credits}
+                  <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1">try-ons</span>
+                </p>
+                {pack.note && (
+                  <p className="text-center text-[10px] sm:text-xs text-amber-600 font-medium mt-1">
+                    {pack.note}
+                  </p>
+                )}
+              </div>
+
+              <button
+                onClick={() => handlePurchase(pack.productId)}
+                disabled={isAnyLoading}
+                className="mt-auto pt-3 sm:pt-4 w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all
+                  bg-indigo-600 text-white hover:bg-indigo-700
+                  disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-400"
+              >
+                {loadingId === pack.productId ? (
+                  <span className="flex items-center justify-center gap-1.5 sm:gap-2">
+                    <svg className="animate-spin h-3.5 w-3.5 sm:h-4 sm:w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <span className="truncate">Redirecting to payment...</span>
+                  </span>
+                ) : isAnyLoading ? (
+                  'Please wait...'
+                ) : (
+                  'Buy Now'
+                )}
+              </button>
+            </div>
+          ))}
+
+          {/* 右：订阅 */}
+          {subscriptionProduct && (
+            <div
+              className="relative rounded-xl sm:rounded-2xl border-2 border-slate-200 bg-white p-4 sm:p-6 transition-all hover:shadow-lg flex flex-col"
+            >
+              <span className="absolute -top-2.5 sm:-top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full whitespace-nowrap">
                 Subscription
               </span>
-              <h2 className="mt-3 sm:mt-4 text-xl sm:text-2xl font-bold text-slate-900">Unlimited try-ons, best value</h2>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
-              <div
-                className="relative rounded-xl sm:rounded-2xl border-2 border-slate-200 bg-white p-4 sm:p-6 transition-all hover:shadow-lg"
-              >
-                <h3 className="text-base sm:text-lg font-bold text-slate-900">{subscriptionProduct.name}</h3>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900">{subscriptionProduct.name}</h3>
 
-                <div className="mt-3 sm:mt-4 flex items-baseline gap-1">
-                  <span className="text-2xl sm:text-4xl font-extrabold text-slate-900">{subscriptionProduct.price}</span>
-                  <span className="text-xs sm:text-sm text-slate-400">/month</span>
-                </div>
-
-                <p className="mt-1 text-xs sm:text-sm text-slate-500">{subscriptionProduct.perCredit}</p>
-
-                <div className="mt-3 sm:mt-4 py-2 sm:py-3 border-t border-slate-100">
-                  <p className="text-center text-xl sm:text-2xl font-bold text-amber-600">
-                    {subscriptionProduct.credits}
-                    <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1">/month</span>
-                  </p>
-                  {subscriptionProduct.note && (
-                    <p className="text-center text-[10px] sm:text-xs text-amber-600 font-medium mt-1">
-                      {subscriptionProduct.note}
-                    </p>
-                  )}
-                </div>
-
-                <ul className="mt-4 sm:mt-5 space-y-2 sm:space-y-2.5">
-                  {subscriptionProduct.features?.map((f) => (
-                    <li key={f} className="text-xs sm:text-sm text-slate-600 text-center">
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  onClick={() => handlePurchase(subscriptionProduct.productId)}
-                  disabled={isAnyLoading}
-                  className="mt-5 sm:mt-6 w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all
-                    bg-amber-500 text-white hover:bg-amber-600
-                    disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-400"
-                >
-                  {loadingId === subscriptionProduct.productId ? (
-                    <span className="flex items-center justify-center gap-1.5 sm:gap-2">
-                      <svg className="animate-spin h-3.5 w-3.5 sm:h-4 sm:w-4" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      <span className="truncate">Redirecting to payment...</span>
-                    </span>
-                  ) : isAnyLoading ? (
-                    'Please wait...'
-                  ) : (
-                    'Subscribe Now'
-                  )}
-                </button>
+              <div className="mt-3 sm:mt-4 flex items-baseline gap-1">
+                <span className="text-2xl sm:text-4xl font-extrabold text-slate-900">{subscriptionProduct.price}</span>
+                <span className="text-xs sm:text-sm text-slate-400">/month</span>
               </div>
+
+              <p className="mt-1 text-xs sm:text-sm text-slate-500">{subscriptionProduct.perCredit}</p>
+
+              <div className="mt-3 sm:mt-4 py-2 sm:py-3 border-t border-slate-100">
+                <p className="text-center text-xl sm:text-2xl font-bold text-amber-600">
+                  {subscriptionProduct.credits}
+                  <span className="text-xs sm:text-sm font-normal text-slate-500 ml-1">/month</span>
+                </p>
+                {subscriptionProduct.note && (
+                  <p className="text-center text-[10px] sm:text-xs text-amber-600 font-medium mt-1">
+                    {subscriptionProduct.note}
+                  </p>
+                )}
+              </div>
+
+              <ul className="mt-4 sm:mt-5 space-y-2 sm:space-y-2.5">
+                {subscriptionProduct.features?.map((f) => (
+                  <li key={f} className="text-xs sm:text-sm text-slate-600 text-center">
+                    {f}
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                onClick={() => handlePurchase(subscriptionProduct.productId)}
+                disabled={isAnyLoading}
+                className="mt-auto pt-3 sm:pt-4 w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all
+                  bg-amber-500 text-white hover:bg-amber-600
+                  disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-400"
+              >
+                {loadingId === subscriptionProduct.productId ? (
+                  <span className="flex items-center justify-center gap-1.5 sm:gap-2">
+                    <svg className="animate-spin h-3.5 w-3.5 sm:h-4 sm:w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <span className="truncate">Redirecting to payment...</span>
+                  </span>
+                ) : isAnyLoading ? (
+                  'Please wait...'
+                ) : (
+                  'Subscribe Now'
+                )}
+              </button>
             </div>
-          </section>
-        )}
+          )}
+        </div>
 
         {/* ── 底部操作 ── */}
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-3 mt-12 sm:mt-16">
           <div>
             <button
               onClick={() => router.push('/')}

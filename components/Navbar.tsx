@@ -82,7 +82,7 @@ export default function Navbar({ hideNav = false }: NavbarProps) {
           {/* 左边：LOGO */}
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
             <img src="/logo.png" alt="What to Wear" className="w-8 h-8 rounded-lg" />
-            <span className="text-base font-bold text-slate-900 hidden sm:inline">What to Wear</span>
+            <span className="text-base font-bold text-slate-900 hidden sm:inline">AIWHATTOWEAR</span>
           </Link>
 
           {/* 中间：菜单（桌面端） */}
