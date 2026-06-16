@@ -12,8 +12,8 @@ import Navbar from '@/components/Navbar';
 export default function NavbarWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // 首页和 profile 页面隐藏顶部导航
-  const hideNav = pathname === '/' || pathname === '/profile';
+  // profile 页面隐藏顶部导航（它有自己的底部导航栏）
+  const hideNav = pathname === '/profile';
 
   return (
     <>

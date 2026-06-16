@@ -58,6 +58,7 @@ export default function Navbar({ hideNav = false }: NavbarProps) {
   }, [pathname]);
 
   const menuItems = [
+    { label: 'Home', href: '/', icon: '🏠' },
     { label: 'Try On', href: '/tryon', icon: '✨' },
     { label: 'Guide', href: '/guide', icon: '📖' },
     { label: 'Pricing', href: '/pricing', icon: '💎' },
