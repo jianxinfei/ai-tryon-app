@@ -130,7 +130,7 @@ export default function HomePage() {
             <div className="flex-1 flex items-start justify-start md:justify-end p-4">
               <p className="text-left text-sm sm:text-base text-slate-400 leading-relaxed max-w-[260px]" style={{ fontFamily: 'Inter' }}>
                 The old way:<br />
-                Hunt &rarr; Wait &rarr; Unbox &rarr; Squeeze in &rarr; Strike a pose &rarr; Ask &quot;does this look ok?&quot;
+                Browse &rarr; Read reviews &rarr; Unbox &rarr; Try on &rarr; Ask around &rarr; Return if not fit
               </p>
             </div>
 
@@ -145,7 +145,7 @@ export default function HomePage() {
             <div className="flex-1 flex items-end justify-end md:justify-start p-4">
               <p className="text-right md:text-left text-lg sm:text-xl font-bold leading-relaxed max-w-[280px] text-slate-900" style={{ fontFamily: 'Inter' }}>
                 Us:<br />
-                Tap &rarr; Upload &rarr; AI slay &rarr; Share &rarr; Drown in likes &rarr; Buy the real thing.
+                Browse &rarr; Download photo &rarr; Upload to AIWHATTOWEAR &rarr; Get result &rarr; Post &rarr; Get likes &rarr; Order!
               </p>
             </div>
           </div>

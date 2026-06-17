@@ -24,7 +24,7 @@ export default function Navbar({ hideNav = false }: NavbarProps) {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [lang, setLang] = useState<'en' | 'zh'>('en');
+
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   // 监听滚动，改变导航栏背景
@@ -107,13 +107,28 @@ export default function Navbar({ hideNav = false }: NavbarProps) {
           {/* 右边：语言切换 + 登录 */}
           <div className="flex items-center gap-2.5">
             {/* 语言切换 */}
-            <button
-              onClick={() => setLang(lang === 'en' ? 'zh' : 'en')}
-              className="px-3 py-1.5 rounded-full text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all"
-              title="Switch language"
-            >
-              {lang === 'en' ? '中文' : 'EN'}
-            </button>
+            <div className="flex items-center bg-slate-100 rounded-full p-0.5">
+              <Link
+                href={pathname.startsWith('/zh') ? pathname.replace('/zh', '') || '/' : pathname}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                  !pathname.startsWith('/zh')
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                EN
+              </Link>
+              <Link
+                href={pathname.startsWith('/zh') ? pathname : '/zh' + pathname}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                  pathname.startsWith('/zh')
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                中文
+              </Link>
+            </div>
 
             {/* 登录按钮（桌面端） */}
             <div className="hidden md:block">

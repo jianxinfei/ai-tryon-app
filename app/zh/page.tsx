@@ -122,8 +122,8 @@ export default function HomePage() {
             {/* 旧方式 - 左上 */}
             <div className="flex-1 flex items-start justify-start md:justify-end p-4">
               <p className="text-left text-sm sm:text-base text-slate-400 leading-relaxed max-w-[260px]" style={{ fontFamily: 'Inter' }}>
-                传统方式：<br />
-                逛街 &rarr; 等待 &rarr; 拆箱 &rarr; 挤进去 &rarr; 摆姿势 &rarr; 问 &quot;好看吗？&quot;
+                过去：<br />
+                去平台选衣服 &rarr; 看评论 &rarr; 拆快递 &rarr; 试衣服 &rarr; 找人问 &rarr; 不合适面临退货和时间的损耗
               </p>
             </div>
 
@@ -137,8 +137,8 @@ export default function HomePage() {
             {/* 我们的方式 - 右下 */}
             <div className="flex-1 flex items-end justify-end md:justify-start p-4">
               <p className="text-right md:text-left text-lg sm:text-xl font-bold leading-relaxed max-w-[280px] text-slate-900" style={{ fontFamily: 'Inter' }}>
-                我们：<br />
-                点击 &rarr; 上传 &rarr; AI生成 &rarr; 分享 &rarr; 收获点赞 &rarr; 买正品
+                现在：<br />
+                去平台选衣服 &rarr; 下载衣物照片 &rarr; 上传到AIWHATTOWEAR &rarr; 下载完成照 &rarr; 发朋友圈 &rarr; 获得点赞 &rarr; 下单！
               </p>
             </div>
           </div>
