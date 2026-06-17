@@ -59,15 +59,25 @@ export default function Navbar({ hideNav = false }: NavbarProps) {
     setMobileMenuOpen(false);
   }, [pathname]);
 
+  const isZh = pathname.startsWith('/zh');
+
   const menuItems = [
-    { label: 'Home', href: '/', icon: '🏠' },
-    { label: 'Try On', href: '/tryon', icon: '✨' },
-    { label: 'Contact', href: '/contact', icon: '📧' },
-    { label: 'Pricing', href: '/pricing', icon: '💎' },
-    { label: 'Help', href: '/help', icon: '❓' },
+    { label: isZh ? '首页' : 'Home', href: '/', icon: '🏠' },
+    { label: isZh ? '试衣' : 'Try On', href: '/tryon', icon: '✨' },
+    { label: isZh ? '联系' : 'Contact', href: '/contact', icon: '📧' },
+    { label: isZh ? '定价' : 'Pricing', href: '/pricing', icon: '💎' },
+    { label: isZh ? '帮助' : 'Help', href: '/help', icon: '❓' },
   ];
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+  const getLocalizedHref = (href: string) => {
+    if (href === '/') return isZh ? '/zh' : '/';
+    return isZh ? '/zh' + href : href;
+  };
+
+  const isActive = (href: string) => {
+    const localized = getLocalizedHref(href);
+    return pathname === localized || pathname.startsWith(localized + '/');
+  };
 
   if (hideNav) return null;
 
@@ -82,7 +92,7 @@ export default function Navbar({ hideNav = false }: NavbarProps) {
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* 左边：LOGO */}
-          <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
+          <Link href={isZh ? '/zh' : '/'} className="flex items-center gap-2.5 flex-shrink-0">
             <img src="/logo.png" alt="What to Wear" className="w-9 h-9 rounded-lg" />
             <span className="text-lg font-bold text-slate-900 hidden sm:inline">AIWHATTOWEAR</span>
           </Link>
@@ -92,7 +102,7 @@ export default function Navbar({ hideNav = false }: NavbarProps) {
             {menuItems.map((item) => (
               <Link
                 key={item.href}
-                href={item.href}
+                href={getLocalizedHref(item.href)}
                 className={`px-4 py-2 rounded-full text-base font-medium transition-all duration-200 ${
                   isActive(item.href)
                     ? 'bg-indigo-100 text-indigo-700'
@@ -178,7 +188,7 @@ export default function Navbar({ hideNav = false }: NavbarProps) {
               {menuItems.map((item) => (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={getLocalizedHref(item.href)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                     isActive(item.href)
                       ? 'bg-indigo-50 text-indigo-700'
@@ -193,11 +203,11 @@ export default function Navbar({ hideNav = false }: NavbarProps) {
               <div className="border-t border-slate-100 mt-2 pt-2">
                 {loading ? null : user ? (
                   <button
-                    onClick={() => { setMobileMenuOpen(false); router.push('/history'); }}
+                    onClick={() => { setMobileMenuOpen(false); router.push(isZh ? '/zh/history' : '/history'); }}
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-indigo-700 hover:bg-indigo-50 w-full transition-all"
                   >
                     <div className="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_8px_2px_rgba(52,211,153,0.6)]" />
-                    History
+                    {isZh ? '历史记录' : 'History'}
                   </button>
                 ) : (
                   <button
@@ -207,7 +217,7 @@ export default function Navbar({ hideNav = false }: NavbarProps) {
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    Sign In
+                    {isZh ? '登录' : 'Sign In'}
                   </button>
                 )}
               </div>

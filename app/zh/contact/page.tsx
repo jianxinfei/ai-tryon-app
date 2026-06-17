@@ -15,7 +15,7 @@ export default function ContactPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </Link>
-            <h1 className="text-2xl font-bold text-slate-900">Contact Us</h1>
+            <h1 className="text-2xl font-bold text-slate-900">联系我们</h1>
           </div>
         </div>
       </div>
@@ -25,14 +25,14 @@ export default function ContactPage() {
         <div className="space-y-8">
           {/* 说明 */}
           <p className="text-slate-600 leading-relaxed text-lg">
-            Have questions or feedback about What to Wear? We&apos;d love to hear from you.
+            对 What to Wear 有疑问或反馈？我们很乐意听取您的意见。
           </p>
 
           {/* 联系邮箱 */}
           <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-6 sm:p-8">
-            <h2 className="text-lg font-bold text-indigo-900 mb-3">Email</h2>
+            <h2 className="text-lg font-bold text-indigo-900 mb-3">邮箱</h2>
             <p className="text-indigo-800 text-sm leading-relaxed mb-4">
-              For general inquiries, support requests, or feedback, please reach out to us at:
+              如有一般咨询、支持请求或反馈，请通过以下方式联系我们：
             </p>
             <a
               href="mailto:i_hot@qq.com"
@@ -45,23 +45,22 @@ export default function ContactPage() {
             </a>
           </div>
 
-          {/* 数据删除请求 */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-slate-900">Data Deletion Request</h2>
-            <p className="text-slate-600 leading-relaxed">
-              If you would like to request deletion of your personal data from What to Wear, please send an email to the address above with the subject &quot;Data Deletion Request&quot;. We will process your request within 30 days and confirm once completed.
-            </p>
-          </div>
-
           {/* 其他联系方式 */}
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-slate-900">Other Ways to Connect</h2>
+            <h2 className="text-xl font-bold text-slate-900">其他联系方式</h2>
             <ul className="space-y-3 text-slate-600 list-disc pl-6">
-              <li>Visit our <Link href="/help" className="text-indigo-600 hover:text-indigo-700 font-medium">Help Center</Link> for FAQs and troubleshooting.</li>
-              <li>Check out our <Link href="/pricing" className="text-indigo-600 hover:text-indigo-700 font-medium">Pricing</Link> page for plan details.</li>
-              <li>Follow us on social media for updates and tips.</li>
+              <li>访问我们的 <Link href="/help" className="text-indigo-600 hover:text-indigo-700 font-medium">帮助中心</Link> 获取常见问题解答和故障排除。</li>
+              <li>查看我们的 <Link href="/pricing" className="text-indigo-600 hover:text-indigo-700 font-medium">定价</Link> 页面了解方案详情。</li>
+              <li>关注我们的社交媒体获取更新和技巧。</li>
             </ul>
           </div>
+
+          <hr className="border-slate-200" />
+
+          {/* 底部 */}
+          <p className="text-sm text-slate-400">
+            我们通常会在24-48小时内回复。感谢您使用 What to Wear！
+          </p>
         </div>
       </div>
     </div>
