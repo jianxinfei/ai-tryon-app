@@ -68,7 +68,7 @@ export default function HomePage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        alert('Please sign in before purchasing');
+        alert('购买前请先登录');
         router.push('/history');
         return;
       }
@@ -87,18 +87,18 @@ export default function HomePage() {
       }
 
       if (!res.ok) {
-        alert(data.error || 'Failed to create payment session, please try again');
+        alert(data.error || '创建支付会话失败，请重试');
         return;
       }
 
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
       } else {
-        alert('Failed to get payment link, please try again');
+        alert('获取支付链接失败，请重试');
       }
     } catch (err) {
       console.error('购买失败:', err);
-      alert('Network error, please try again');
+      alert('网络错误，请重试');
     }
   };
 
@@ -109,18 +109,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#FFF7FA] flex flex-col items-center px-4">
-      {/* 语言切换器 */}
-      <div className="w-full max-w-md flex items-center justify-end gap-2 py-3">
-        <Link href="/zh" className="text-xs text-slate-400 hover:text-slate-600 transition-colors">中文</Link>
-        <span className="text-xs text-slate-300">|</span>
-        <span className="text-xs text-slate-600 font-medium">English</span>
-      </div>
-
       {/* LOGO区域 - 垂直居中 */}
       <div className="w-full max-w-md flex-1 flex flex-col justify-center items-center">
         {/* 标题 */}
         <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-slate-900 tracking-tight whitespace-nowrap" style={{ fontFamily: 'Inter', lineHeight: '1.1' }}>
-          What to wear?
+          今天穿什么？
         </h1>
 
         {/* 对比文案 */}
@@ -129,8 +122,8 @@ export default function HomePage() {
             {/* 旧方式 - 左上 */}
             <div className="flex-1 flex items-start justify-start md:justify-end p-4">
               <p className="text-left text-sm sm:text-base text-slate-400 leading-relaxed max-w-[260px]" style={{ fontFamily: 'Inter' }}>
-                The old way:<br />
-                Hunt &rarr; Wait &rarr; Unbox &rarr; Squeeze in &rarr; Strike a pose &rarr; Ask &quot;does this look ok?&quot;
+                传统方式：<br />
+                逛街 &rarr; 等待 &rarr; 拆箱 &rarr; 挤进去 &rarr; 摆姿势 &rarr; 问 &quot;好看吗？&quot;
               </p>
             </div>
 
@@ -144,8 +137,8 @@ export default function HomePage() {
             {/* 我们的方式 - 右下 */}
             <div className="flex-1 flex items-end justify-end md:justify-start p-4">
               <p className="text-right md:text-left text-lg sm:text-xl font-bold leading-relaxed max-w-[280px] text-slate-900" style={{ fontFamily: 'Inter' }}>
-                Us:<br />
-                Tap &rarr; Upload &rarr; AI slay &rarr; Share &rarr; Drown in likes &rarr; Buy the real thing.
+                我们：<br />
+                点击 &rarr; 上传 &rarr; AI生成 &rarr; 分享 &rarr; 收获点赞 &rarr; 买正品
               </p>
             </div>
           </div>
@@ -172,8 +165,8 @@ export default function HomePage() {
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-bold text-slate-900">No try-ons remaining</h2>
-                <p className="mt-1 text-sm text-slate-500">Purchase a credit pack or subscribe to continue</p>
+                <h2 className="text-xl font-bold text-slate-900">试穿次数已用完</h2>
+                <p className="mt-1 text-sm text-slate-500">购买积分包或订阅以继续</p>
               </div>
               <div className="space-y-3">
                 <button
@@ -181,17 +174,17 @@ export default function HomePage() {
                   className="w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-amber-300 hover:bg-amber-50/50 transition-all"
                 >
                   <div className="text-left">
-                    <p className="font-semibold text-base text-slate-900">Monthly Pro</p>
-                    <p className="text-xs text-slate-400">100/month · No watermark</p>
+                    <p className="font-semibold text-base text-slate-900">月度会员</p>
+                    <p className="text-xs text-slate-400">100次/月 · 无水印</p>
                   </div>
                   <div className="text-right">
                     <span className="text-lg font-bold text-slate-900">$9.90</span>
-                    <span className="text-xs font-normal text-slate-400">/month</span>
+                    <span className="text-xs font-normal text-slate-400">/月</span>
                   </div>
                 </button>
               </div>
               <button onClick={goToPricing} className="mt-4 w-full text-center text-sm text-indigo-600 hover:text-indigo-700 font-medium py-2">
-                View all plans &rarr;
+                查看全部方案 &rarr;
               </button>
             </div>
           </div>
@@ -199,9 +192,9 @@ export default function HomePage() {
       )}
       {/* 底部链接 */}
       <div className="w-full flex items-center justify-center gap-2 pb-6">
-        <a href="#" className="text-xs text-slate-400 hover:text-slate-500 transition-colors">Terms of Service</a>
+        <a href="#" className="text-xs text-slate-400 hover:text-slate-500 transition-colors">服务条款</a>
         <span className="text-xs text-slate-400">|</span>
-        <a href="#" className="text-xs text-slate-400 hover:text-slate-500 transition-colors">Privacy Policy</a>
+        <a href="#" className="text-xs text-slate-400 hover:text-slate-500 transition-colors">隐私政策</a>
       </div>
     </div>
   );
