@@ -190,12 +190,6 @@ export default function HomePage() {
           </div>
         </div>
       )}
-      {/* 底部链接 */}
-      <div className="w-full flex items-center justify-center gap-2 pb-6">
-        <a href="#" className="text-xs text-slate-400 hover:text-slate-500 transition-colors">服务条款</a>
-        <span className="text-xs text-slate-400">|</span>
-        <a href="#" className="text-xs text-slate-400 hover:text-slate-500 transition-colors">隐私政策</a>
-      </div>
     </div>
   );
 }

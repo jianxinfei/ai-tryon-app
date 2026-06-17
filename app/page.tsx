@@ -109,13 +109,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#FFF7FA] flex flex-col items-center px-4">
-      {/* 语言切换器 */}
-      <div className="w-full max-w-md flex items-center justify-end gap-2 py-3">
-        <Link href="/zh" className="text-xs text-slate-400 hover:text-slate-600 transition-colors">中文</Link>
-        <span className="text-xs text-slate-300">|</span>
-        <span className="text-xs text-slate-600 font-medium">English</span>
-      </div>
-
       {/* LOGO区域 - 垂直居中 */}
       <div className="w-full max-w-md flex-1 flex flex-col justify-center items-center">
         {/* 标题 */}
@@ -197,12 +190,6 @@ export default function HomePage() {
           </div>
         </div>
       )}
-      {/* 底部链接 */}
-      <div className="w-full flex items-center justify-center gap-2 pb-6">
-        <a href="#" className="text-xs text-slate-400 hover:text-slate-500 transition-colors">Terms of Service</a>
-        <span className="text-xs text-slate-400">|</span>
-        <a href="#" className="text-xs text-slate-400 hover:text-slate-500 transition-colors">Privacy Policy</a>
-      </div>
     </div>
   );
 }
