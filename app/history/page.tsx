@@ -323,19 +323,20 @@ export default function HistoryPage() {
                 </div>
               ) : (
                 <>
-                  {/* 三图预览 */}
-                  <div className="grid grid-cols-3 gap-2 mb-3">
-                    <div>
-                      <p className="text-[10px] text-slate-400 mb-0.5">Person</p>
-                      <img src={shareRecord.person_image_url} alt="Person" className="w-full aspect-[3/4] object-cover rounded-lg" />
+                  {/* 三图预览：左侧大图 + 右侧两张竖图 */}
+                  <div className="flex gap-2 mb-3 h-48">
+                    {/* 左侧：效果图大图 */}
+                    <div className="flex-1 h-full">
+                      <img src={shareRecord.result_image_url} alt="Result" className="w-full h-full object-cover rounded-lg" />
                     </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 mb-0.5">Clothing</p>
-                      <img src={shareRecord.clothing_image_url} alt="Clothing" className="w-full aspect-[3/4] object-cover rounded-lg" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 mb-0.5">Result</p>
-                      <img src={shareRecord.result_image_url} alt="Result" className="w-full aspect-[3/4] object-cover rounded-lg" />
+                    {/* 右侧：人物图 + 衣物图 */}
+                    <div className="w-24 flex flex-col gap-2 h-full">
+                      <div className="flex-1">
+                        <img src={shareRecord.person_image_url} alt="Person" className="w-full h-full object-cover rounded-lg" />
+                      </div>
+                      <div className="flex-1">
+                        <img src={shareRecord.clothing_image_url} alt="Clothing" className="w-full h-full object-cover rounded-lg" />
+                      </div>
                     </div>
                   </div>
 

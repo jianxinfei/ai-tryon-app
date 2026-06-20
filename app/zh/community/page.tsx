@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 
 interface Post {
@@ -10,6 +10,7 @@ interface Post {
   caption: string | null;
   product_link: string | null;
   created_at: string;
+  user_id: string;
   user_prefix: string;
   comment_count: number;
 }
@@ -23,10 +24,14 @@ interface Comment {
 
 export default function CommunityPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const isZh = true;
+  const initialMine = searchParams.get('mine') === 'true';
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showMine, setShowMine] = useState(initialMine);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
@@ -38,6 +43,7 @@ export default function CommunityPage() {
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reportResult, setReportResult] = useState<{ success: boolean; message: string } | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -52,10 +58,13 @@ export default function CommunityPage() {
     checkAuth();
   }, []);
 
-  const fetchPosts = useCallback(async () => {
+  const fetchPosts = useCallback(async (mine: boolean) => {
     try {
       setLoading(true);
-      const res = await fetch('/api/community/posts?page=1&pageSize=40');
+      const url = mine
+        ? '/api/community/posts?page=1&pageSize=40&mine=true'
+        : '/api/community/posts?page=1&pageSize=40';
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setPosts(data.posts || []);
@@ -68,8 +77,38 @@ export default function CommunityPage() {
   }, []);
 
   useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+    fetchPosts(showMine);
+  }, [fetchPosts, showMine]);
+
+  const handleToggleMine = () => {
+    const next = !showMine;
+    setShowMine(next);
+    if (next) {
+      router.replace(`${pathname}?mine=true`, { scroll: false });
+    } else {
+      router.replace(pathname, { scroll: false });
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    try {
+      const res = await fetch(`/api/community/posts/${postId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setPosts(prev => prev.filter(p => p.id !== postId));
+        if (selectedPost?.id === postId) {
+          setSelectedPost(null);
+        }
+        setDeleteConfirm(null);
+      } else {
+        alert(data.error || '删除失败');
+      }
+    } catch {
+      alert('网络错误');
+    }
+  };
 
   const fetchComments = useCallback(async (postId: string) => {
     try {
@@ -114,6 +153,7 @@ export default function CommunityPage() {
     setComments([]);
     setCommentText('');
     setCommentError('');
+    setDeleteConfirm(null);
   };
 
   const handleSubmitComment = async () => {
@@ -209,21 +249,37 @@ export default function CommunityPage() {
     return date.toLocaleDateString();
   };
 
-  // 小红书风格：瀑布流布局，计算每列高度
-  const distributePosts = (posts: Post[], cols: number) => {
-    const columns: Post[][] = Array.from({ length: cols }, () => []);
-    const heights = new Array(cols).fill(0);
-    posts.forEach((post) => {
-      const minCol = heights.indexOf(Math.min(...heights));
-      columns[minCol].push(post);
-      heights[minCol] += 1;
-    });
-    return columns;
-  };
-
   return (
     <div className="min-h-screen bg-white pt-16 pb-8">
-      {/* 小红书风格瀑布流 */}
+      {/* 顶部筛选标签 */}
+      {user && (
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 mb-3">
+          <div className="flex gap-2">
+            <button
+              onClick={() => { if (showMine) handleToggleMine(); }}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                !showMine
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              全部
+            </button>
+            <button
+              onClick={() => { if (!showMine) handleToggleMine(); }}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                showMine
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              我的分享
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Pinterest/Xiaohongshu style masonry feed */}
       {loading ? (
         <div className="max-w-7xl mx-auto px-2 sm:px-4">
           <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-2 sm:gap-3">
@@ -236,12 +292,10 @@ export default function CommunityPage() {
         </div>
       ) : posts.length === 0 ? (
         <div className="max-w-7xl mx-auto px-2 sm:px-4 pt-8">
-          <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-2 sm:gap-3">
-            <div className="break-inside-avoid mb-2 sm:mb-3">
-              <div className="bg-slate-50 rounded-xl aspect-[3/4] flex items-center justify-center">
-                <p className="text-slate-300 text-sm">暂无内容</p>
-              </div>
-            </div>
+          <div className="text-center py-20">
+            <p className="text-slate-400 text-sm">
+              {showMine ? '你还没有分享过穿搭' : '暂无内容'}
+            </p>
           </div>
         </div>
       ) : (
@@ -251,7 +305,7 @@ export default function CommunityPage() {
               <div
                 key={post.id}
                 onClick={() => openPostDetail(post)}
-                className="break-inside-avoid mb-2 sm:mb-3 cursor-pointer group"
+                className="break-inside-avoid mb-2 sm:mb-3 cursor-pointer group relative"
               >
                 <div className="relative rounded-xl overflow-hidden bg-slate-100">
                   <img
@@ -260,14 +314,12 @@ export default function CommunityPage() {
                     className="w-full object-cover group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
                   />
-                  {/* 悬停时显示标题 */}
                   {post.caption && (
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <p className="text-white text-xs line-clamp-2">{post.caption}</p>
                     </div>
                   )}
                 </div>
-                {/* 底部信息 */}
                 <div className="flex items-center justify-between mt-1 px-0.5">
                   <span className="text-xs text-slate-500">@{post.user_prefix}</span>
                   <div className="flex items-center gap-1">
@@ -300,6 +352,19 @@ export default function CommunityPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
+
+            {/* 删除按钮（仅作者可见） */}
+            {user && selectedPost.user_id === user.id && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setDeleteConfirm(selectedPost.id); }}
+                className="absolute top-4 left-4 z-10 w-8 h-8 rounded-full bg-red-500/80 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+                title="删除"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
 
             <div className="bg-slate-100">
               <img
@@ -403,6 +468,33 @@ export default function CommunityPage() {
                   <p className="text-xs text-red-500 mt-1.5">{commentError}</p>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 删除确认弹窗 */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteConfirm(null)} />
+          <div className="relative bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-900 mb-2">确认删除</h3>
+            <p className="text-sm text-slate-500 mb-6">
+              删除后无法恢复，确定要删除这条分享吗？
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => handleDeletePost(deleteConfirm)}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors"
+              >
+                删除
+              </button>
             </div>
           </div>
         </div>

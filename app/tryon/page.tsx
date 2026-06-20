@@ -1038,26 +1038,27 @@ export default function TryOnPage() {
                 </div>
               ) : (
                 <>
-                  {/* 三图预览 */}
-                  <div className="grid grid-cols-3 gap-2 mb-3">
-                    {personImage && (
-                      <div>
-                        <p className="text-[10px] text-slate-400 mb-0.5">Person</p>
-                        <img src={personImage} alt="Person" className="w-full aspect-[3/4] object-cover rounded-lg" />
-                      </div>
-                    )}
-                    {clothingImage && (
-                      <div>
-                        <p className="text-[10px] text-slate-400 mb-0.5">Clothing</p>
-                        <img src={clothingImage} alt="Clothing" className="w-full aspect-[3/4] object-cover rounded-lg" />
-                      </div>
-                    )}
+                  {/* 三图预览：左侧大图 + 右侧两张竖图 */}
+                  <div className="flex gap-2 mb-3 h-48">
+                    {/* 左侧：效果图大图 */}
                     {resultUrl && (
-                      <div>
-                        <p className="text-[10px] text-slate-400 mb-0.5">Result</p>
-                        <img src={resultUrl} alt="Result" className="w-full aspect-[3/4] object-cover rounded-lg" />
+                      <div className="flex-1 h-full">
+                        <img src={resultUrl} alt="Result" className="w-full h-full object-cover rounded-lg" />
                       </div>
                     )}
+                    {/* 右侧：人物图 + 衣物图 */}
+                    <div className="w-24 flex flex-col gap-2 h-full">
+                      {personImage && (
+                        <div className="flex-1">
+                          <img src={personImage} alt="Person" className="w-full h-full object-cover rounded-lg" />
+                        </div>
+                      )}
+                      {clothingImage && (
+                        <div className="flex-1">
+                          <img src={clothingImage} alt="Clothing" className="w-full h-full object-cover rounded-lg" />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* 文字描述 */}
