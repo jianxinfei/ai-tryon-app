@@ -1012,76 +1012,69 @@ export default function TryOnPage() {
       {/* 分享到试衣间弹窗 */}
       {showShareModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl mx-4 w-full overflow-hidden">
-            {shareSuccess ? (
-              <div className="p-8 text-center">
-                <div className="text-4xl mb-2">🎉</div>
-                <p className="text-green-600 font-medium">Shared successfully!</p>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md mx-4 w-full max-h-[85vh] overflow-y-auto">
+            <div className="p-5">
+              {/* 关闭按钮 */}
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-bold text-slate-900">Share to Fitting Room</h3>
                 <button
                   onClick={() => setShowShareModal(false)}
-                  className="mt-4 px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors"
+                  className="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors text-lg leading-none"
                 >
-                  View Fitting Room
+                  ×
                 </button>
               </div>
-            ) : (
-              <div className="flex flex-col md:flex-row">
-                {/* 左侧：效果图大图 */}
-                <div className="flex-1 bg-slate-100 flex items-center justify-center min-h-[280px]">
-                  {resultUrl && (
-                    <img
-                      src={resultUrl}
-                      alt="Result preview"
-                      className="w-full h-full object-contain max-h-[50vh]"
-                    />
-                  )}
+
+              {shareSuccess ? (
+                <div className="text-center py-6">
+                  <div className="text-4xl mb-2">🎉</div>
+                  <p className="text-green-600 font-medium text-sm">Shared successfully!</p>
+                  <button
+                    onClick={() => setShowShareModal(false)}
+                    className="mt-4 px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors"
+                  >
+                    Close
+                  </button>
                 </div>
-
-                {/* 右侧：人物图 + 衣物图 + 描述 + 按钮 */}
-                <div className="w-full md:w-72 flex-shrink-0 p-5 space-y-3 flex flex-col">
-                  <h3 className="text-lg font-bold text-slate-900">Share to Fitting Room</h3>
-
-                  {/* 人物图 */}
-                  {personImage && (
-                    <div>
-                      <p className="text-xs text-slate-400 mb-1">Person Photo</p>
-                      <img
-                        src={personImage}
-                        alt="Person photo"
-                        className="w-full aspect-[3/4] object-cover rounded-lg border border-slate-200"
-                      />
-                    </div>
-                  )}
-
-                  {/* 衣物图 */}
-                  {clothingImage && (
-                    <div>
-                      <p className="text-xs text-slate-400 mb-1">Clothing Photo</p>
-                      <img
-                        src={clothingImage}
-                        alt="Clothing photo"
-                        className="w-full aspect-[3/4] object-cover rounded-lg border border-slate-200"
-                      />
-                    </div>
-                  )}
+              ) : (
+                <>
+                  {/* 三图预览 */}
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {personImage && (
+                      <div>
+                        <p className="text-[10px] text-slate-400 mb-0.5">Person</p>
+                        <img src={personImage} alt="Person" className="w-full aspect-[3/4] object-cover rounded-lg" />
+                      </div>
+                    )}
+                    {clothingImage && (
+                      <div>
+                        <p className="text-[10px] text-slate-400 mb-0.5">Clothing</p>
+                        <img src={clothingImage} alt="Clothing" className="w-full aspect-[3/4] object-cover rounded-lg" />
+                      </div>
+                    )}
+                    {resultUrl && (
+                      <div>
+                        <p className="text-[10px] text-slate-400 mb-0.5">Result</p>
+                        <img src={resultUrl} alt="Result" className="w-full aspect-[3/4] object-cover rounded-lg" />
+                      </div>
+                    )}
+                  </div>
 
                   {/* 文字描述 */}
-                  <div className="flex-1">
-                    <textarea
-                      value={shareCaption}
-                      onChange={(e) => setShareCaption(e.target.value)}
-                      placeholder="Describe your look..."
-                      maxLength={200}
-                      rows={2}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 resize-none"
-                    />
-                  </div>
+                  <textarea
+                    value={shareCaption}
+                    onChange={(e) => setShareCaption(e.target.value)}
+                    placeholder="Describe your look..."
+                    maxLength={200}
+                    rows={2}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 resize-none mb-3"
+                  />
 
                   {/* 按钮 */}
                   <div className="flex gap-2">
                     <button
                       onClick={() => setShowShareModal(false)}
-                      className="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+                      className="flex-1 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
                     >
                       Cancel
                     </button>
@@ -1111,14 +1104,14 @@ export default function TryOnPage() {
                         }
                       }}
                       disabled={shareSubmitting}
-                      className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-pink-500 to-indigo-500 rounded-xl hover:from-pink-600 hover:to-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 py-2 text-sm font-medium text-white bg-gradient-to-r from-pink-500 to-indigo-500 rounded-xl hover:from-pink-600 hover:to-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {shareSubmitting ? 'Sharing...' : 'Share'}
                     </button>
                   </div>
-                </div>
-              </div>
-            )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
