@@ -1,15 +1,17 @@
 /**
- * AI 虚拟试衣任务状态查询 API
+ * AI 虚拟试衣任务状态查询 API（带后端水印处理）
  *
  * 路径: app/api/tryon/status/route.ts
  * 方法: POST
  *
  * 用于前端轮询查询可灵 AI 试衣任务的状态和结果
+ * 任务完成后，后端自动处理水印并上传到 Supabase Storage
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac } from 'crypto';
 import { rollbackCredits } from '@/lib/credits';
+import { processTryOnImage } from '@/lib/image-watermark';
 
 // ══════════════════════════════════════════════
 // 可灵 AI 配置
@@ -167,9 +169,9 @@ export async function POST(req: NextRequest) {
 
     // 任务完成
     if (taskStatus === 'succeed') {
-      const resultUrl = taskData.task_result?.images?.[0]?.url;
+      const rawResultUrl = taskData.task_result?.images?.[0]?.url;
 
-      if (!resultUrl) {
+      if (!rawResultUrl) {
         console.error('[TryOn Status] 任务成功但无结果图片');
         return NextResponse.json({
           success: false,
@@ -177,10 +179,16 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      console.log('[TryOn Status] 任务完成，结果 URL:', resultUrl);
+      console.log('[TryOn Status] 任务完成，原始 URL:', rawResultUrl);
+
+      // ===== 后端水印处理 =====
+      // 去除可灵原水印 + 添加品牌水印 + 上传 Storage
+      const processedUrl = await processTryOnImage(rawResultUrl, taskId);
+      console.log('[TryOn Status] 水印处理完成，返回 URL:', processedUrl);
+
       return NextResponse.json({
         success: true,
-        resultUrl,
+        resultUrl: processedUrl,
       });
     }
 
