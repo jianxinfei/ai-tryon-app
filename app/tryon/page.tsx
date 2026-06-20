@@ -70,6 +70,18 @@ export default function TryOnPage() {
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [taskId, setTaskId] = useState('');
 
+  // 分享到社区状态
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareCaption, setShareCaption] = useState('');
+  const [shareProductLink, setShareProductLink] = useState('');
+  const [shareSubmitting, setShareSubmitting] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState(false);
+
+  // 任务队列状态（防止快速连续提交）
+  const [queueCount, setQueueCount] = useState(0); // 排队中的任务数
+  const taskQueueRef = useRef<(() => Promise<void>)[]>([]); // 任务队列
+  const isProcessingQueueRef = useRef(false); // 是否正在处理队列
+
   // 轮询状态
   const [pollProgress, setPollProgress] = useState<PollProgress>({ count: 0, estimatedTime: 40 });
   const pollIntervalRef = useRef<number | null>(null);
@@ -794,12 +806,23 @@ export default function TryOnPage() {
               <p className="mt-2 text-xs text-amber-600 text-center">
                 Generated image link is valid for 30 days, please download and save it in time
               </p>
-              <div className="mt-4 flex justify-center">
+              <div className="mt-4 flex justify-center gap-3">
                 <button
                   onClick={handleChangeClothing}
                   className="py-2.5 px-6 border border-indigo-200 text-indigo-600 text-base font-medium rounded-lg hover:bg-indigo-50 transition-colors"
                 >
                   Change Clothing
+                </button>
+                <button
+                  onClick={() => {
+                    setShareCaption('');
+                    setShareProductLink('');
+                    setShareSuccess(false);
+                    setShowShareModal(true);
+                  }}
+                  className="py-2.5 px-6 bg-gradient-to-r from-pink-500 to-indigo-500 text-white text-base font-medium rounded-lg hover:from-pink-600 hover:to-indigo-600 transition-colors"
+                >
+                  🌐 Share to Community
                 </button>
               </div>
               <div className="mt-3 flex justify-center">
@@ -891,6 +914,104 @@ export default function TryOnPage() {
                 Purchase Credits
               </a>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 分享到社区弹窗 */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md mx-4 w-full">
+            <h3 className="text-lg font-bold text-slate-900 mb-4">Share to Community</h3>
+
+            {/* 效果图预览 */}
+            {resultUrl && (
+              <div className="mb-4 rounded-xl overflow-hidden bg-slate-100">
+                <img src={resultUrl} alt="Preview" className="w-full max-h-48 object-contain" />
+              </div>
+            )}
+
+            {shareSuccess ? (
+              <div className="text-center py-4">
+                <div className="text-4xl mb-2">🎉</div>
+                <p className="text-green-600 font-medium">Shared successfully!</p>
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  className="mt-4 px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors"
+                >
+                  View Community
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* 文字描述 */}
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Caption</label>
+                  <textarea
+                    value={shareCaption}
+                    onChange={(e) => setShareCaption(e.target.value)}
+                    placeholder="Describe your look..."
+                    maxLength={200}
+                    rows={3}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 resize-none"
+                  />
+                </div>
+
+                {/* 商品链接（选填） */}
+                <div className="mb-5">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Product Link <span className="text-slate-400">(optional)</span>
+                  </label>
+                  <input
+                    type="url"
+                    value={shareProductLink}
+                    onChange={(e) => setShareProductLink(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowShareModal(false)}
+                    className="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!resultUrl) return;
+                      setShareSubmitting(true);
+                      try {
+                        const res = await fetch('/api/community/share', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            resultImageUrl: resultUrl,
+                            caption: shareCaption.trim() || null,
+                            productLink: shareProductLink.trim() || null,
+                          }),
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                          setShareSuccess(true);
+                        } else {
+                          alert(data.error || 'Share failed');
+                        }
+                      } catch {
+                        alert('Network error, please try again');
+                      } finally {
+                        setShareSubmitting(false);
+                      }
+                    }}
+                    disabled={shareSubmitting}
+                    className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-pink-500 to-indigo-500 rounded-xl hover:from-pink-600 hover:to-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {shareSubmitting ? 'Sharing...' : 'Confirm Share'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
