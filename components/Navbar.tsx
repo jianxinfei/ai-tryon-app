@@ -66,7 +66,7 @@ export default function Navbar({ hideNav = false }: NavbarProps) {
   const menuItems = [
     { label: isZh ? '首页' : 'Home', href: '/', icon: '🏠' },
     { label: isZh ? '试衣' : 'Try On', href: '/tryon', icon: '✨' },
-    { label: isZh ? '社区' : 'Community', href: '/community', icon: '💬' },
+    { label: isZh ? '试衣间' : 'Fitting Room', href: '/community', icon: '💬' },
     { label: isZh ? '联系' : 'Contact', href: '/contact', icon: '📧' },
     { label: isZh ? '定价' : 'Pricing', href: '/pricing', icon: '💎' },
     { label: isZh ? '帮助' : 'Help', href: '/help', icon: '❓' },

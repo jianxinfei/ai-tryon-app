@@ -21,7 +21,7 @@ export default function HistoryPage() {
   const [deleteTarget, setDeleteTarget] = useState<TryOnRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // 分享到社区状态
+  // 分享到试衣间状态
   const [shareRecord, setShareRecord] = useState<TryOnRecord | null>(null);
   const [shareCaption, setShareCaption] = useState('');
   const [shareProductLink, setShareProductLink] = useState('');
@@ -294,7 +294,7 @@ export default function HistoryPage() {
         </div>
       )}
 
-      {/* 分享到社区弹窗 */}
+      {/* 分享到试衣间弹窗 */}
       {shareRecord && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl mx-4 w-full overflow-hidden">
@@ -322,7 +322,7 @@ export default function HistoryPage() {
 
                 {/* 右侧：人物图 + 衣物图 + 描述 + 按钮 */}
                 <div className="w-full md:w-72 flex-shrink-0 p-5 space-y-3 flex flex-col">
-                  <h3 className="text-lg font-bold text-slate-900">Share to Community</h3>
+                  <h3 className="text-lg font-bold text-slate-900">Share to Fitting Room</h3>
 
                   {/* 人物图 */}
                   <div>

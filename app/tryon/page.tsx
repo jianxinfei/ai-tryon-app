@@ -70,7 +70,7 @@ export default function TryOnPage() {
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [taskId, setTaskId] = useState('');
 
-  // 分享到社区状态
+  // 分享到试衣间状态
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareCaption, setShareCaption] = useState('');
   const [shareProductLink, setShareProductLink] = useState('');
@@ -913,7 +913,7 @@ export default function TryOnPage() {
                   }}
                   className="py-2.5 px-6 bg-gradient-to-r from-pink-500 to-indigo-500 text-white text-base font-medium rounded-lg hover:from-pink-600 hover:to-indigo-600 transition-colors"
                 >
-                  🌐 Share to Community
+                  🌐 Share to Fitting Room
                 </button>
               </div>
               <div className="mt-3 flex justify-center">
@@ -1009,7 +1009,7 @@ export default function TryOnPage() {
         </div>
       )}
 
-      {/* 分享到社区弹窗 */}
+      {/* 分享到试衣间弹窗 */}
       {showShareModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl mx-4 w-full overflow-hidden">
@@ -1021,7 +1021,7 @@ export default function TryOnPage() {
                   onClick={() => setShowShareModal(false)}
                   className="mt-4 px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors"
                 >
-                  View Community
+                  View Fitting Room
                 </button>
               </div>
             ) : (
@@ -1039,7 +1039,7 @@ export default function TryOnPage() {
 
                 {/* 右侧：人物图 + 衣物图 + 描述 + 按钮 */}
                 <div className="w-full md:w-72 flex-shrink-0 p-5 space-y-3 flex flex-col">
-                  <h3 className="text-lg font-bold text-slate-900">Share to Community</h3>
+                  <h3 className="text-lg font-bold text-slate-900">Share to Fitting Room</h3>
 
                   {/* 人物图 */}
                   {personImage && (

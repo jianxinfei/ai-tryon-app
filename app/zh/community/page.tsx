@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 
 interface Post {
@@ -23,8 +23,7 @@ interface Comment {
 
 export default function CommunityPage() {
   const router = useRouter();
-  const pathname = usePathname();
-  const isZh = pathname.startsWith('/zh');
+  const isZh = true;
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -120,11 +119,11 @@ export default function CommunityPage() {
   const handleSubmitComment = async () => {
     if (!selectedPost) return;
     if (!user) {
-      setCommentError(isZh ? '请先登录后再评论' : 'Please sign in to comment');
+      setCommentError('请先登录后再评论');
       return;
     }
     if (!commentText.trim()) {
-      setCommentError(isZh ? '评论内容不能为空' : 'Comment cannot be empty');
+      setCommentError('评论内容不能为空');
       return;
     }
 
@@ -142,18 +141,17 @@ export default function CommunityPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setCommentError(data.error || (isZh ? '评论失败' : 'Comment failed'));
+        setCommentError(data.error || '评论失败');
         return;
       }
 
       setCommentText('');
       fetchComments(selectedPost.id);
-      // 更新本地评论数
       setPosts(prev => prev.map(p =>
         p.id === selectedPost.id ? { ...p, comment_count: p.comment_count + 1 } : p
       ));
     } catch {
-      setCommentError(isZh ? '网络错误，请重试' : 'Network error, please try again');
+      setCommentError('网络错误，请重试');
     } finally {
       setCommentSubmitting(false);
     }
@@ -162,7 +160,7 @@ export default function CommunityPage() {
   const handleReport = async () => {
     if (!reportModal || !user) return;
     if (!reportReason.trim()) {
-      setReportResult({ success: false, message: isZh ? '请填写举报理由' : 'Please enter a reason' });
+      setReportResult({ success: false, message: '请填写举报理由' });
       return;
     }
 
@@ -180,17 +178,17 @@ export default function CommunityPage() {
 
       const data = await res.json();
       if (res.ok) {
-        setReportResult({ success: true, message: isZh ? '举报已提交，我们会尽快处理' : 'Report submitted, we will review it soon' });
+        setReportResult({ success: true, message: '举报已提交，我们会尽快处理' });
         setTimeout(() => {
           setReportModal(null);
           setReportReason('');
           setReportResult(null);
         }, 2000);
       } else {
-        setReportResult({ success: false, message: data.error || (isZh ? '举报失败' : 'Report failed') });
+        setReportResult({ success: false, message: data.error || '举报失败' });
       }
     } catch {
-      setReportResult({ success: false, message: isZh ? '网络错误' : 'Network error' });
+      setReportResult({ success: false, message: '网络错误' });
     } finally {
       setReportSubmitting(false);
     }
@@ -204,16 +202,28 @@ export default function CommunityPage() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return isZh ? '刚刚' : 'Just now';
-    if (diffMins < 60) return isZh ? `${diffMins} 分钟前` : `${diffMins}m ago`;
-    if (diffHours < 24) return isZh ? `${diffHours} 小时前` : `${diffHours}h ago`;
-    if (diffDays < 30) return isZh ? `${diffDays} 天前` : `${diffDays}d ago`;
+    if (diffMins < 1) return '刚刚';
+    if (diffMins < 60) return `${diffMins} 分钟前`;
+    if (diffHours < 24) return `${diffHours} 小时前`;
+    if (diffDays < 30) return `${diffDays} 天前`;
     return date.toLocaleDateString();
+  };
+
+  // 小红书风格：瀑布流布局，计算每列高度
+  const distributePosts = (posts: Post[], cols: number) => {
+    const columns: Post[][] = Array.from({ length: cols }, () => []);
+    const heights = new Array(cols).fill(0);
+    posts.forEach((post) => {
+      const minCol = heights.indexOf(Math.min(...heights));
+      columns[minCol].push(post);
+      heights[minCol] += 1;
+    });
+    return columns;
   };
 
   return (
     <div className="min-h-screen bg-white pt-16 pb-8">
-      {/* Pinterest/Xiaohongshu style masonry feed */}
+      {/* 小红书风格瀑布流 */}
       {loading ? (
         <div className="max-w-7xl mx-auto px-2 sm:px-4">
           <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-2 sm:gap-3">
@@ -229,7 +239,7 @@ export default function CommunityPage() {
           <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-2 sm:gap-3">
             <div className="break-inside-avoid mb-2 sm:mb-3">
               <div className="bg-slate-50 rounded-xl aspect-[3/4] flex items-center justify-center">
-                <p className="text-slate-300 text-sm">No content yet</p>
+                <p className="text-slate-300 text-sm">暂无内容</p>
               </div>
             </div>
           </div>
@@ -250,14 +260,14 @@ export default function CommunityPage() {
                     className="w-full object-cover group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
                   />
-                  {/* Hover caption overlay */}
+                  {/* 悬停时显示标题 */}
                   {post.caption && (
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <p className="text-white text-xs line-clamp-2">{post.caption}</p>
                     </div>
                   )}
                 </div>
-                {/* Bottom info */}
+                {/* 底部信息 */}
                 <div className="flex items-center justify-between mt-1 px-0.5">
                   <span className="text-xs text-slate-500">@{post.user_prefix}</span>
                   <div className="flex items-center gap-1">
@@ -282,7 +292,6 @@ export default function CommunityPage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closePostDetail} />
           <div className="relative bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            {/* 关闭按钮 */}
             <button
               onClick={closePostDetail}
               className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/30 text-white flex items-center justify-center hover:bg-black/50 transition-colors"
@@ -292,7 +301,6 @@ export default function CommunityPage() {
               </svg>
             </button>
 
-            {/* 大图 */}
             <div className="bg-slate-100">
               <img
                 src={selectedPost.result_image_url}
@@ -301,7 +309,6 @@ export default function CommunityPage() {
               />
             </div>
 
-            {/* 信息区 */}
             <div className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm text-slate-500">@{selectedPost.user_prefix}</span>
@@ -322,14 +329,13 @@ export default function CommunityPage() {
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
-                  {isZh ? '去购买' : 'Buy Now'}
+                  去购买
                 </a>
               )}
 
-              {/* 评论区 */}
               <div className="border-t border-slate-100 pt-4 mt-4">
                 <h3 className="text-sm font-semibold text-slate-700 mb-3">
-                  {isZh ? `评论 (${selectedPost.comment_count})` : `Comments (${selectedPost.comment_count})`}
+                  评论 ({selectedPost.comment_count})
                 </h3>
 
                 {commentsLoading ? (
@@ -342,9 +348,7 @@ export default function CommunityPage() {
                     ))}
                   </div>
                 ) : comments.length === 0 ? (
-                  <p className="text-sm text-slate-400 py-2">
-                    {isZh ? '暂无评论，来说点什么吧' : 'No comments yet. Be the first!'}
-                  </p>
+                  <p className="text-sm text-slate-400 py-2">暂无评论，来说点什么吧</p>
                 ) : (
                   <div className="space-y-3 max-h-60 overflow-y-auto mb-4">
                     {comments.map((comment) => (
@@ -359,7 +363,7 @@ export default function CommunityPage() {
                         <button
                           onClick={() => {
                             if (!user) {
-                              alert(isZh ? '请先登录' : 'Please sign in');
+                              alert('请先登录');
                               return;
                             }
                             setReportModal({ commentId: comment.id, commentContent: comment.content });
@@ -367,23 +371,22 @@ export default function CommunityPage() {
                             setReportResult(null);
                           }}
                           className="opacity-0 group-hover:opacity-100 text-xs text-slate-400 hover:text-red-500 transition-all flex-shrink-0 mt-1"
-                          title={isZh ? '举报' : 'Report'}
+                          title="举报"
                         >
-                          {isZh ? '举报' : 'Report'}
+                          举报
                         </button>
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* 评论输入框 */}
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={commentText}
                     onChange={(e) => { setCommentText(e.target.value); setCommentError(''); }}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !commentSubmitting) handleSubmitComment(); }}
-                    placeholder={user ? (isZh ? '写下你的评论...' : 'Write a comment...') : (isZh ? '登录后评论' : 'Sign in to comment')}
+                    placeholder={user ? '写下你的评论...' : '登录后评论'}
                     disabled={!user || commentSubmitting}
                     maxLength={500}
                     className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 disabled:bg-slate-50 disabled:text-slate-400"
@@ -393,7 +396,7 @@ export default function CommunityPage() {
                     disabled={!user || commentSubmitting || !commentText.trim()}
                     className="px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed"
                   >
-                    {commentSubmitting ? (isZh ? '...' : '...') : (isZh ? '发送' : 'Send')}
+                    {commentSubmitting ? '...' : '发送'}
                   </button>
                 </div>
                 {commentError && (
@@ -410,9 +413,7 @@ export default function CommunityPage() {
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => { setReportModal(null); setReportResult(null); }} />
           <div className="relative bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-900 mb-2">
-              {isZh ? '举报评论' : 'Report Comment'}
-            </h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">举报评论</h3>
             <p className="text-sm text-slate-500 mb-4 line-clamp-2">
               &ldquo;{reportModal.commentContent}&rdquo;
             </p>
@@ -420,7 +421,7 @@ export default function CommunityPage() {
             <textarea
               value={reportReason}
               onChange={(e) => { setReportReason(e.target.value); setReportResult(null); }}
-              placeholder={isZh ? '请说明举报理由...' : 'Please explain the reason...'}
+              placeholder="请说明举报理由..."
               maxLength={200}
               rows={3}
               className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 resize-none"
@@ -437,14 +438,14 @@ export default function CommunityPage() {
                 onClick={() => { setReportModal(null); setReportResult(null); }}
                 className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-600 text-sm font-medium rounded-xl hover:bg-slate-50 transition-colors"
               >
-                {isZh ? '取消' : 'Cancel'}
+                取消
               </button>
               <button
                 onClick={handleReport}
                 disabled={reportSubmitting || !reportReason.trim()}
                 className="flex-1 px-4 py-2.5 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed"
               >
-                {reportSubmitting ? (isZh ? '提交中...' : 'Submitting...') : (isZh ? '提交举报' : 'Submit Report')}
+                {reportSubmitting ? '提交中...' : '提交举报'}
               </button>
             </div>
           </div>
