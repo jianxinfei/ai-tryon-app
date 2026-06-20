@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { resultImageUrl, caption, productLink } = body;
+    const { resultImageUrl, personImageUrl, clothingImageUrl, caption, productLink } = body;
 
     if (!resultImageUrl) {
       return NextResponse.json({ error: '缺少效果图 URL' }, { status: 400 });
@@ -39,6 +39,8 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user.id,
         result_image_url: resultImageUrl,
+        person_image_url: personImageUrl || null,
+        clothing_image_url: clothingImageUrl || null,
         caption: caption?.trim() || null,
         product_link: productLink?.trim() || null,
         status: 'approved',

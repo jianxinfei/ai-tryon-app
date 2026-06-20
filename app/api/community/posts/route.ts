@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     // 构建查询
     let query = supabase
       .from('community_posts')
-      .select('id, user_id, result_image_url, caption, product_link, created_at')
+      .select('id, user_id, result_image_url, person_image_url, clothing_image_url, caption, product_link, created_at')
       .eq('status', 'approved')
       .order('created_at', { ascending: false });
 
@@ -92,6 +92,8 @@ export async function GET(request: NextRequest) {
     const postsWithMeta = posts.map(post => ({
       id: post.id,
       result_image_url: post.result_image_url,
+      person_image_url: post.person_image_url || null,
+      clothing_image_url: post.clothing_image_url || null,
       caption: post.caption,
       product_link: post.product_link,
       created_at: post.created_at,

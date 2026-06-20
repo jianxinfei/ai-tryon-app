@@ -1089,6 +1089,8 @@ export default function TryOnPage() {
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                               resultImageUrl: resultUrl,
+                              personImageUrl: personImage || null,
+                              clothingImageUrl: clothingImage || null,
                               caption: shareCaption.trim() || null,
                             }),
                           });

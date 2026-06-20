@@ -367,6 +367,8 @@ export default function HistoryPage() {
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                               resultImageUrl: shareRecord.result_image_url,
+                              personImageUrl: shareRecord.person_image_url || null,
+                              clothingImageUrl: shareRecord.clothing_image_url || null,
                               caption: shareCaption.trim() || null,
                             }),
                           });

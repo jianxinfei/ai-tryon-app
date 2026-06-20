@@ -7,6 +7,8 @@ import { createBrowserClient } from '@supabase/ssr';
 interface Post {
   id: string;
   result_image_url: string;
+  person_image_url: string | null;
+  clothing_image_url: string | null;
   caption: string | null;
   product_link: string | null;
   created_at: string;
@@ -316,12 +318,44 @@ export default function CommunityPage() {
                 className="break-inside-avoid mb-2 sm:mb-3 cursor-pointer group relative"
               >
                 <div className="relative rounded-xl overflow-hidden bg-slate-100">
-                  <img
-                    src={post.result_image_url}
-                    alt={post.caption || 'Community post'}
-                    className="w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                  />
+                  {/* 三图布局：左侧大图 + 右侧两张竖图 */}
+                  {post.person_image_url && post.clothing_image_url ? (
+                    <div className="flex gap-0.5">
+                      <div className="flex-1">
+                        <img
+                          src={post.result_image_url}
+                          alt={post.caption || 'Community post'}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      </div>
+                      <div className="w-[30%] flex flex-col gap-0.5">
+                        <div className="flex-1">
+                          <img
+                            src={post.person_image_url}
+                            alt="Person"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <img
+                            src={post.clothing_image_url}
+                            alt="Clothing"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={post.result_image_url}
+                      alt={post.caption || 'Community post'}
+                      className="w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                  )}
                   {post.caption && (
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <p className="text-white text-xs line-clamp-2">{post.caption}</p>
@@ -374,12 +408,41 @@ export default function CommunityPage() {
               </button>
             )}
 
+            {/* 三图展示 */}
             <div className="bg-slate-100">
-              <img
-                src={selectedPost.result_image_url}
-                alt={selectedPost.caption || 'Post detail'}
-                className="w-full max-h-[60vh] object-contain"
-              />
+              {selectedPost.person_image_url && selectedPost.clothing_image_url ? (
+                <div className="flex gap-1 p-2">
+                  <div className="flex-1">
+                    <img
+                      src={selectedPost.result_image_url}
+                      alt={selectedPost.caption || 'Post detail'}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  </div>
+                  <div className="w-28 flex flex-col gap-1">
+                    <div className="flex-1">
+                      <img
+                        src={selectedPost.person_image_url}
+                        alt="Person"
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <img
+                        src={selectedPost.clothing_image_url}
+                        alt="Clothing"
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <img
+                  src={selectedPost.result_image_url}
+                  alt={selectedPost.caption || 'Post detail'}
+                  className="w-full max-h-[60vh] object-contain"
+                />
+              )}
             </div>
 
             <div className="p-5">
