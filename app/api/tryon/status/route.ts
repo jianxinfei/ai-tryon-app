@@ -100,6 +100,7 @@ export async function POST(req: NextRequest) {
     console.log('[TryOn Status] 查询任务状态:', taskId, '(类型:', idType + ')');
 
     // 构建查询 URL（支持通过 external_task_id 查询）
+    // 可灵文档标注 GET，但实际 API 可能要求 POST，这里统一用 POST 以兼容
     let url: string;
     if (isExternalTaskId) {
       url = `${KLING_API_BASE}/v1/images/kolors-virtual-try-on/${encodeURIComponent(taskId)}?external_task_id=true`;
@@ -108,7 +109,9 @@ export async function POST(req: NextRequest) {
     }
     const headers = getKlingAuthHeaders();
 
-    // 调用可灵 API，增加超时和错误处理
+    console.log('[TryOn Status] 请求可灵 API:', url, ', method: GET');
+
+    // 调用可灵 API（先尝试 GET，如果返回 1202 则降级为 POST）
     let response: Response;
     try {
       response = await fetch(url, {
@@ -116,6 +119,22 @@ export async function POST(req: NextRequest) {
         headers,
         signal: AbortSignal.timeout(15000), // 15秒超时
       });
+
+      // 如果 GET 返回 404 + 1202 (method invalid)，降级为 POST 重试
+      if (!response.ok) {
+        let errorData: any = {};
+        try { errorData = await response.json(); } catch { /* ignore */ }
+        const klingCode = errorData?.code || errorData?.data?.code;
+
+        if (klingCode === 1202 || klingCode === 1202) {
+          console.warn('[TryOn Status] GET 请求返回 1202 (method invalid)，降级为 POST 重试');
+          response = await fetch(url, {
+            method: 'POST',
+            headers,
+            signal: AbortSignal.timeout(15000),
+          });
+        }
+      }
     } catch (fetchErr: any) {
       console.error('[TryOn Status] fetch 调用失败:', fetchErr.message);
       return NextResponse.json({
