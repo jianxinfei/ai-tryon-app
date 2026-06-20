@@ -385,10 +385,10 @@ export default function CommunityPage() {
       {selectedPost && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closePostDetail} />
-          <div className="relative bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="relative bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <button
               onClick={closePostDetail}
-              className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/30 text-white flex items-center justify-center hover:bg-black/50 transition-colors"
+              className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-black/30 text-white flex items-center justify-center hover:bg-black/50 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -399,7 +399,7 @@ export default function CommunityPage() {
             {user && selectedPost.user_id === user.id && (
               <button
                 onClick={(e) => { e.stopPropagation(); setDeleteConfirm(selectedPost.id); }}
-                className="absolute top-4 left-4 z-10 w-8 h-8 rounded-full bg-red-500/80 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+                className="absolute top-2 left-2 z-10 w-7 h-7 rounded-full bg-red-500/80 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
                 title="删除"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -409,29 +409,29 @@ export default function CommunityPage() {
             )}
 
             {/* 三图展示 */}
-            <div className="bg-slate-100">
+            <div>
               {selectedPost.person_image_url && selectedPost.clothing_image_url ? (
-                <div className="flex gap-2 p-3">
-                  <div className="flex-1 min-w-0 flex items-center justify-center">
+                <div className="flex">
+                  <div className="flex-1 min-w-0">
                     <img
                       src={selectedPost.result_image_url}
                       alt={selectedPost.caption || 'Post detail'}
-                      className="w-full max-h-[60vh] object-contain rounded-lg"
+                      className="w-full object-cover"
                     />
                   </div>
-                  <div className="w-48 flex-shrink-0 flex flex-col gap-2">
-                    <div>
+                  <div className="w-36 flex-shrink-0 flex flex-col">
+                    <div className="flex-1 min-h-0">
                       <img
                         src={selectedPost.person_image_url}
                         alt="Person"
-                        className="w-full aspect-square object-cover rounded-lg"
+                        className="w-full h-full object-cover"
                       />
                     </div>
-                    <div>
+                    <div className="flex-1 min-h-0">
                       <img
                         src={selectedPost.clothing_image_url}
                         alt="Clothing"
-                        className="w-full aspect-square object-cover rounded-lg"
+                        className="w-full h-full object-cover"
                       />
                     </div>
                   </div>
