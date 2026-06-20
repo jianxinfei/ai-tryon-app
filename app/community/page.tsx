@@ -419,26 +419,26 @@ export default function CommunityPage() {
             <div className="bg-slate-100">
               {selectedPost.person_image_url && selectedPost.clothing_image_url ? (
                 <div className="flex gap-1 p-2">
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0 flex items-center justify-center">
                     <img
                       src={selectedPost.result_image_url}
                       alt={selectedPost.caption || 'Post detail'}
-                      className="w-full h-full object-cover rounded-lg"
+                      className="w-full max-h-[60vh] object-contain rounded-lg"
                     />
                   </div>
-                  <div className="w-28 flex flex-col gap-1">
-                    <div className="flex-1">
+                  <div className="w-28 flex-shrink-0 flex flex-col gap-1">
+                    <div>
                       <img
                         src={selectedPost.person_image_url}
                         alt="Person"
-                        className="w-full h-full object-cover rounded-lg"
+                        className="w-full aspect-square object-cover rounded-lg"
                       />
                     </div>
-                    <div className="flex-1">
+                    <div>
                       <img
                         src={selectedPost.clothing_image_url}
                         alt="Clothing"
-                        className="w-full h-full object-cover rounded-lg"
+                        className="w-full aspect-square object-cover rounded-lg"
                       />
                     </div>
                   </div>
