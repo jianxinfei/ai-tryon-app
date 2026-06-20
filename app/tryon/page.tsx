@@ -1039,7 +1039,7 @@ export default function TryOnPage() {
               ) : (
                 <>
                   {/* 三图预览：左侧大图 + 右侧两张竖图 */}
-                  <div className="flex gap-2 mb-3 h-48">
+                  <div className="flex gap-2 mb-4 h-48">
                     {/* 左侧：效果图大图 */}
                     {resultUrl && (
                       <div className="flex-1 h-full">

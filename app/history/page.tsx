@@ -324,7 +324,7 @@ export default function HistoryPage() {
               ) : (
                 <>
                   {/* 三图预览：左侧大图 + 右侧两张竖图 */}
-                  <div className="flex gap-2 mb-3 h-48">
+                  <div className="flex gap-2 mb-4 h-48">
                     {/* 左侧：效果图大图 */}
                     <div className="flex-1 h-full">
                       <img src={shareRecord.result_image_url} alt="Result" className="w-full h-full object-cover rounded-lg" />
