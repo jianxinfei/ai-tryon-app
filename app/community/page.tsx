@@ -391,7 +391,7 @@ export default function CommunityPage() {
       {selectedPost && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closePostDetail} />
-          <div className="relative bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="relative bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             {/* 关闭按钮 */}
             <button
               onClick={closePostDetail}
@@ -418,7 +418,7 @@ export default function CommunityPage() {
             {/* 三图展示 */}
             <div className="bg-slate-100">
               {selectedPost.person_image_url && selectedPost.clothing_image_url ? (
-                <div className="flex gap-1 p-2">
+                <div className="flex gap-2 p-3">
                   <div className="flex-1 min-w-0 flex items-center justify-center">
                     <img
                       src={selectedPost.result_image_url}
@@ -426,7 +426,7 @@ export default function CommunityPage() {
                       className="w-full max-h-[60vh] object-contain rounded-lg"
                     />
                   </div>
-                  <div className="w-28 flex-shrink-0 flex flex-col gap-1">
+                  <div className="w-48 flex-shrink-0 flex flex-col gap-2">
                     <div>
                       <img
                         src={selectedPost.person_image_url}
