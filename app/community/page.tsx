@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 
 interface Post {
@@ -25,13 +25,11 @@ interface Comment {
 export default function CommunityPage() {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const isZh = pathname.startsWith('/zh');
-  const initialMine = searchParams.get('mine') === 'true';
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showMine, setShowMine] = useState(initialMine);
+  const [showMine, setShowMine] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
@@ -44,6 +42,16 @@ export default function CommunityPage() {
   const [reportResult, setReportResult] = useState<{ success: boolean; message: string } | null>(null);
   const [user, setUser] = useState<any>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // 从 URL 读取 mine 参数（避免 useSearchParams 的 SSR 问题）
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('mine') === 'true') {
+        setShowMine(true);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
