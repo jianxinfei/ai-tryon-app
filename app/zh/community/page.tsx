@@ -320,8 +320,8 @@ export default function CommunityPage() {
                 <div className="relative rounded-xl overflow-hidden bg-slate-100">
                   {/* 三图布局：左侧大图 + 右侧两张竖图 */}
                   {post.person_image_url && post.clothing_image_url ? (
-                    <div className="flex gap-0.5">
-                      <div className="flex-1">
+                    <div className="flex gap-0.5 aspect-[3/4]">
+                      <div className="flex-1 min-w-0">
                         <img
                           src={post.result_image_url}
                           alt={post.caption || 'Community post'}
@@ -329,8 +329,8 @@ export default function CommunityPage() {
                           loading="lazy"
                         />
                       </div>
-                      <div className="w-[30%] flex flex-col gap-0.5">
-                        <div className="flex-1">
+                      <div className="w-[30%] flex flex-col gap-0.5 flex-shrink-0">
+                        <div className="flex-1 min-h-0">
                           <img
                             src={post.person_image_url}
                             alt="Person"
@@ -338,7 +338,7 @@ export default function CommunityPage() {
                             loading="lazy"
                           />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-h-0">
                           <img
                             src={post.clothing_image_url}
                             alt="Clothing"
