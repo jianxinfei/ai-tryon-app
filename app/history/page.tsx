@@ -21,6 +21,13 @@ export default function HistoryPage() {
   const [deleteTarget, setDeleteTarget] = useState<TryOnRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // 分享到社区状态
+  const [shareRecord, setShareRecord] = useState<TryOnRecord | null>(null);
+  const [shareCaption, setShareCaption] = useState('');
+  const [shareProductLink, setShareProductLink] = useState('');
+  const [shareSubmitting, setShareSubmitting] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState(false);
+
   const fetchHistory = async () => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -169,6 +176,22 @@ export default function HistoryPage() {
                       </p>
                     </div>
                   </button>
+                  {/* 分享按钮 */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShareRecord(record);
+                      setShareCaption('');
+                      setShareProductLink('');
+                      setShareSuccess(false);
+                    }}
+                    className="absolute top-2 right-10 z-10 w-7 h-7 bg-black/40 hover:bg-indigo-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+                    title="Share to community"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                  </button>
                   {/* 删除按钮 */}
                   <button
                     onClick={(e) => { e.stopPropagation(); setDeleteTarget(record); }}
@@ -238,7 +261,7 @@ export default function HistoryPage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 pt-2">
+              <div className="grid grid-cols-3 gap-2 pt-2">
                 <a
                   href={selectedRecord.result_image_url}
                   target="_blank"
@@ -248,6 +271,18 @@ export default function HistoryPage() {
                   Download
                 </a>
                 <button
+                  onClick={() => {
+                    setSelectedRecord(null);
+                    setShareRecord(selectedRecord);
+                    setShareCaption('');
+                    setShareProductLink('');
+                    setShareSuccess(false);
+                  }}
+                  className="block py-2.5 bg-gradient-to-r from-pink-500 to-indigo-500 hover:from-pink-600 hover:to-indigo-600 text-white text-sm font-medium text-center rounded-xl transition-colors"
+                >
+                  Share
+                </button>
+                <button
                   onClick={() => { setSelectedRecord(null); setDeleteTarget(selectedRecord); }}
                   className="block py-2.5 bg-white border border-red-200 text-red-500 text-sm font-medium text-center rounded-xl hover:bg-red-50 transition-colors"
                 >
@@ -255,6 +290,101 @@ export default function HistoryPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 分享到社区弹窗 */}
+      {shareRecord && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 max-w-md mx-4 w-full">
+            <h3 className="text-lg font-bold text-slate-900 mb-4">Share to Community</h3>
+
+            {/* 效果图预览 */}
+            <div className="mb-4 rounded-xl overflow-hidden bg-slate-100">
+              <img src={shareRecord.result_image_url} alt="Preview" className="w-full max-h-48 object-contain" />
+            </div>
+
+            {shareSuccess ? (
+              <div className="text-center py-4">
+                <div className="text-4xl mb-2">🎉</div>
+                <p className="text-green-600 font-medium">Shared successfully!</p>
+                <button
+                  onClick={() => setShareRecord(null)}
+                  className="mt-4 px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* 文字描述 */}
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Caption</label>
+                  <textarea
+                    value={shareCaption}
+                    onChange={(e) => setShareCaption(e.target.value)}
+                    placeholder="Describe your look..."
+                    maxLength={200}
+                    rows={3}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 resize-none"
+                  />
+                </div>
+
+                {/* 商品链接（选填） */}
+                <div className="mb-5">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Product Link <span className="text-slate-400">(optional)</span>
+                  </label>
+                  <input
+                    type="url"
+                    value={shareProductLink}
+                    onChange={(e) => setShareProductLink(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShareRecord(null)}
+                    className="flex-1 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setShareSubmitting(true);
+                      try {
+                        const res = await fetch('/api/community/share', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            resultImageUrl: shareRecord.result_image_url,
+                            caption: shareCaption.trim() || null,
+                            productLink: shareProductLink.trim() || null,
+                          }),
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                          setShareSuccess(true);
+                        } else {
+                          alert(data.error || 'Share failed');
+                        }
+                      } catch {
+                        alert('Network error, please try again');
+                      } finally {
+                        setShareSubmitting(false);
+                      }
+                    }}
+                    disabled={shareSubmitting}
+                    className="flex-1 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-pink-500 to-indigo-500 rounded-xl hover:from-pink-600 hover:to-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {shareSubmitting ? 'Sharing...' : 'Confirm Share'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

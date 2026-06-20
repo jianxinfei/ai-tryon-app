@@ -790,9 +790,7 @@ export default function TryOnPage() {
                     target.style.display = 'none';
                   }}
                 />
-                <span className="absolute bottom-2 right-2 text-white bg-black/40 px-2 py-0.5 rounded-md text-[11px] z-10">
-                  What to Wear · AI 生成
-                </span>
+
               </div>
               <p className="mt-2 text-xs text-amber-600 text-center">
                 生成图片链接有效期30天，请及时下载保存
