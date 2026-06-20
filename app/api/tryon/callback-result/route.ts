@@ -1,16 +1,15 @@
 /**
- * 回调结果查询接口（带后端水印处理）
+ * 回调结果查询接口
  *
  * 路径: app/api/tryon/callback-result/route.ts
  * 方法: POST
  *
  * 供前端轮询查询可灵 AI 回调结果（从 tryon_callback_results 表查询）。
- * 查询到成功结果后，后端自动处理水印并上传到 Supabase Storage。
+ * 查询到成功结果后，直接返回可灵原始图片 URL。
  * 使用 supabase-admin 绕过 RLS。
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { processTryOnImage } from '@/lib/image-watermark';
 
 export async function POST(req: NextRequest) {
   try {
@@ -59,14 +58,10 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // ===== 后端水印处理 =====
-      // 去除可灵原水印 + 添加品牌水印 + 上传 Storage
-      const processedUrl = await processTryOnImage(rawResultUrl, taskId);
-      console.log('[Callback Result] 水印处理完成，返回 URL:', processedUrl);
-
+      // 直接返回可灵原始图片 URL
       return NextResponse.json({
         success: true,
-        resultUrl: processedUrl,
+        resultUrl: rawResultUrl,
         status: 'succeed',
       });
     }

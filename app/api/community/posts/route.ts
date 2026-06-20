@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 获取帖子作者信息
-    const userIds = [...new Set(posts.map(p => p.user_id))];
+    const userIds = posts.map(p => p.user_id).filter((id, index, arr) => arr.indexOf(id) === index);
     const { data: profiles } = await supabase
       .from('user_credits')
       .select('user_id')
