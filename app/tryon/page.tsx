@@ -434,6 +434,23 @@ export default function TryOnPage() {
     pollIntervalRef.current = window.setInterval(() => pollOnce(taskId), 1500);
   }, []);
 
+  // 处理任务队列（依次执行，上一个完成后才执行下一个）
+  const processQueue = useCallback(async () => {
+    if (isProcessingQueueRef.current) return;
+    isProcessingQueueRef.current = true;
+
+    while (taskQueueRef.current.length > 0) {
+      const task = taskQueueRef.current.shift();
+      setQueueCount(taskQueueRef.current.length);
+      if (task) {
+        await task();
+      }
+    }
+
+    isProcessingQueueRef.current = false;
+    setQueueCount(0);
+  }, []);
+
   // 创建试衣任务
   const createTryOnTask = useCallback(async () => {
     if (!personImage || !clothingImage) {
@@ -494,6 +511,12 @@ export default function TryOnPage() {
           console.error(`[TryOn] 创建任务失败（不可重试）:`, data.error, data.message);
           return { noRetry: true, error: data.message || data.error || 'Operation failed, please try again later' };
         }
+
+        // code 1303 并发超限：特殊标记，触发前端等待重试
+        if (data.code === 1303 || data.klingCode === 1303) {
+          console.warn(`[TryOn] 并发超限 (code 1303)，等待后重试`);
+          return { noRetry: true, error: '__CONCURRENT_LIMIT__' };
+        }
         
         // 没有 taskId，记录错误（可重试）
         if (!response.ok) {
@@ -526,13 +549,46 @@ export default function TryOnPage() {
       return;
     }
     
-    // 服务端明确标记不可重试：直接展示错误，不重试
-    if (result && 'noRetry' in result && result.noRetry) {
+    // 服务端明确标记不可重试：直接展示错误，不重试（排除并发超限）
+    if (result && 'noRetry' in result && result.noRetry && result.error !== '__CONCURRENT_LIMIT__') {
       setError(result.error);
       setIsLoading(false);
       return;
     }
-    
+
+    // code 1303 并发超限：等待 2 秒后重试，最多 3 次
+    if (result && 'noRetry' in result && result.error === '__CONCURRENT_LIMIT__') {
+      let retrySuccess = false;
+      for (let i = 0; i < 3; i++) {
+        console.log(`[TryOn] 并发超限，等待 2 秒后重试 (${i + 1}/3)...`);
+        await new Promise(r => setTimeout(r, 2000));
+        result = await doCreateTask(true);
+
+        if (result && 'taskId' in result && result.taskId !== 'INSUFFICIENT_CREDITS') {
+          retrySuccess = true;
+          break;
+        }
+
+        // 重试后又遇到并发超限，继续循环
+        if (result && 'noRetry' in result && result.error === '__CONCURRENT_LIMIT__') {
+          continue;
+        }
+
+        // 其他不可重试错误
+        if (result && 'noRetry' in result) {
+          setError(result.error);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      if (!retrySuccess) {
+        setError('Server is busy, please try again in a moment');
+        setIsLoading(false);
+        return;
+      }
+    }
+
     // 第一次失败，自动重试一次
     if (!result) {
       console.log('[TryOn] 创建任务失败，1秒后自动重试...');
@@ -557,6 +613,29 @@ export default function TryOnPage() {
       setIsLoading(false);
     }
   }, [personImage, clothingImage, startPolling]);
+
+  // 带任务队列的提交入口
+  const submitTryOn = useCallback(() => {
+    // 如果当前正在加载（有任务在执行），将请求加入队列
+    if (isLoading) {
+      console.log('[TryOn] 任务执行中，加入队列等待');
+      taskQueueRef.current.push(async () => {
+        await createTryOnTask();
+      });
+      setQueueCount(taskQueueRef.current.length);
+      return;
+    }
+
+    // 没有任务在执行，直接执行
+    createTryOnTask();
+  }, [isLoading, createTryOnTask]);
+
+  // 监听队列变化，自动处理
+  useEffect(() => {
+    if (!isLoading && taskQueueRef.current.length > 0 && !isProcessingQueueRef.current) {
+      processQueue();
+    }
+  }, [isLoading, processQueue]);
 
   // 更换服装
   const handleChangeClothing = useCallback(() => {
@@ -754,12 +833,24 @@ export default function TryOnPage() {
         {/* 开始试衣按钮 */}
         {!result && (
           <button 
-            onClick={createTryOnTask} 
+            onClick={submitTryOn} 
             disabled={isLoading || !personImage || !clothingImage}
             className="w-full py-4 bg-indigo-600 text-white font-bold text-lg rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-indigo-200"
           >
             {isLoading ? 'Trying on...' : 'Start Try-On (1 credit)'}
           </button>
+        )}
+
+        {/* 排队提示 */}
+        {queueCount > 0 && (
+          <div className="mt-3 text-center">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 text-sm rounded-full">
+              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {queueCount} task{queueCount > 1 ? 's' : ''} in queue
+            </span>
+          </div>
         )}
 
         {/* 等待动画区域 */}
