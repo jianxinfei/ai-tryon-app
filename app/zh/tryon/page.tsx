@@ -764,6 +764,7 @@ export default function TryOnPage() {
             <p className="text-xs text-slate-400">
               已用时：{pollProgress.count * 2}秒
             </p>
+            <p className="text-xs text-slate-400 mt-1">请不要离开或刷新此页面</p>
           </div>
         )}
 

@@ -20,7 +20,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { createHmac } from 'crypto';
 
 // ══════════════════════════════════════════════
 // 可灵 AI 配置
@@ -80,51 +79,20 @@ const KLING_ERROR = {
 } as const;
 
 // ══════════════════════════════════════════════
-// 可灵 AI JWT Token 鉴权
+// 可灵 AI API Key 鉴权
 // ══════════════════════════════════════════════
 
-function base64UrlEncode(input: string): string {
-  return Buffer.from(input)
-    .toString('base64')
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
-}
+function getKlingAuthHeaders(): Record<string, string> {
+  const apiKey = process.env.KLING_API_KEY;
 
-function generateKlingJwtToken(): string {
-  const ak = process.env.KLING_AI_ACCESS_KEY_ID;
-  const sk = process.env.KLING_AI_SECRET_KEY;
-
-  if (!ak || !sk) {
-    throw new Error('可灵 AI AK/SK 未配置');
+  if (!apiKey) {
+    throw new Error('KLING_API_KEY 未配置');
   }
 
-  const now = Math.floor(Date.now() / 1000);
-
-  const headerB64 = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const payloadB64 = base64UrlEncode(JSON.stringify({
-    iss: ak,
-    exp: now + 1800,
-    nbf: now - 5,
-  }));
-
-  const signingInput = `${headerB64}.${payloadB64}`;
-  const signature = createHmac('sha256', sk)
-    .update(signingInput)
-    .digest('base64')
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
-
-  return `${headerB64}.${payloadB64}.${signature}`;
-}
-
-function getKlingAuthHeaders(): Record<string, string> {
-  const token = generateKlingJwtToken();
   return {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'Authorization': `Bearer ${token}`,
+    'Authorization': `Bearer ${apiKey}`,
   };
 }
 

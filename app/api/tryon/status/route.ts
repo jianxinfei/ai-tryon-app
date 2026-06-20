@@ -9,7 +9,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createHmac } from 'crypto';
 import { rollbackCredits } from '@/lib/credits';
 
 // ══════════════════════════════════════════════
@@ -19,56 +18,20 @@ import { rollbackCredits } from '@/lib/credits';
 const KLING_API_BASE = 'https://api-beijing.klingai.com';
 
 // ══════════════════════════════════════════════
-// 可灵 AI JWT Token 鉴权
+// 可灵 AI API Key 鉴权
 // ══════════════════════════════════════════════
 
-function base64UrlEncode(input: string): string {
-  return Buffer.from(input)
-    .toString('base64')
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
-}
-
-function generateKlingJwtToken(ak: string, sk: string): string {
-  const now = Math.floor(Date.now() / 1000);
-
-  const headerB64 = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const payloadB64 = base64UrlEncode(JSON.stringify({
-    iss: ak,
-    exp: now + 1800,
-    nbf: now - 5,
-  }));
-
-  const signingInput = `${headerB64}.${payloadB64}`;
-  const signature = createHmac('sha256', sk)
-    .update(signingInput)
-    .digest('base64')
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
-
-  return `${headerB64}.${payloadB64}.${signature}`;
-}
-
 function getKlingAuthHeaders(): Record<string, string> {
-  const ak = process.env.KLING_AI_ACCESS_KEY_ID;
-  const sk = process.env.KLING_AI_SECRET_KEY;
+  const apiKey = process.env.KLING_API_KEY;
 
-  if (!ak || !sk) {
-    console.error('[TryOn Status] 环境变量检查失败:', {
-      hasAk: !!ak,
-      hasSk: !!sk,
-      envKeys: Object.keys(process.env).filter(k => k.startsWith('KLING_'))
-    });
-    throw new Error('可灵 AI 配置不完整，请联系管理员');
+  if (!apiKey) {
+    throw new Error('KLING_API_KEY 未配置');
   }
 
-  const token = generateKlingJwtToken(ak, sk);
   return {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'Authorization': `Bearer ${token}`,
+    'Authorization': `Bearer ${apiKey}`,
   };
 }
 
