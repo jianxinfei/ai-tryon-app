@@ -113,35 +113,17 @@ export default function HomePage() {
       <div className="w-full max-w-md flex-1 flex flex-col justify-center items-center">
         {/* 标题 */}
         <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-slate-900 tracking-tight whitespace-nowrap" style={{ fontFamily: 'Inter', lineHeight: '1.1' }}>
-          今天穿什么？
+          What to wear?
         </h1>
 
-        {/* 对比文案 */}
-        <div className="w-full mt-10 sm:mt-14">
-          <div className="flex flex-col md:flex-row items-stretch gap-0">
-            {/* 旧方式 - 左上 */}
-            <div className="flex-1 flex items-start justify-start md:justify-end p-4">
-              <p className="text-left text-sm sm:text-base text-slate-400 leading-relaxed max-w-[260px]" style={{ fontFamily: 'Inter' }}>
-                过去：<br />
-                去平台选衣服 &rarr; 看评论 &rarr; 拆快递 &rarr; 试衣服 &rarr; 找人问 &rarr; 不合适面临退货和时间的损耗
-              </p>
-            </div>
-
-            {/* VS 分割线 */}
-            <div className="flex md:flex-col items-center justify-center gap-2 py-2 md:py-0 md:px-6">
-              <div className="w-8 md:w-px h-px md:h-16 bg-slate-300" />
-              <span className="text-base font-extrabold text-slate-500 uppercase tracking-widest">vs</span>
-              <div className="w-8 md:w-px h-px md:h-16 bg-slate-300" />
-            </div>
-
-            {/* 我们的方式 - 右下 */}
-            <div className="flex-1 flex items-end justify-end md:justify-start p-4">
-              <p className="text-right md:text-left text-lg sm:text-xl font-bold leading-relaxed max-w-[280px] text-slate-900" style={{ fontFamily: 'Inter' }}>
-                现在：<br />
-                去平台选衣服 &rarr; 下载衣物照片 &rarr; 上传到AIWHATTOWEAR &rarr; 下载完成照 &rarr; 发朋友圈 &rarr; 获得点赞 &rarr; 下单！
-              </p>
-            </div>
-          </div>
+        {/* 文案 */}
+        <div className="w-full mt-10 sm:mt-14 text-center space-y-3">
+          <p className="text-lg sm:text-xl font-bold text-slate-700" style={{ fontFamily: 'Inter' }}>
+            不买也能搭！不搭怎么买？
+          </p>
+          <p className="text-base sm:text-lg font-semibold text-indigo-600" style={{ fontFamily: 'Inter' }}>
+            先"穿"再搭！
+          </p>
         </div>
       </div>
 

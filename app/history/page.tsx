@@ -347,7 +347,16 @@ export default function HistoryPage() {
                     placeholder="Describe your look..."
                     maxLength={200}
                     rows={2}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 resize-none mb-3"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 resize-none mb-2"
+                  />
+
+                  {/* 商品链接 */}
+                  <input
+                    type="url"
+                    value={shareProductLink}
+                    onChange={(e) => setShareProductLink(e.target.value)}
+                    placeholder="Product link (optional)"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 mb-3"
                   />
 
                   {/* 按钮 */}
@@ -370,6 +379,7 @@ export default function HistoryPage() {
                               personImageUrl: shareRecord.person_image_url || null,
                               clothingImageUrl: shareRecord.clothing_image_url || null,
                               caption: shareCaption.trim() || null,
+                              productLink: shareProductLink.trim() || null,
                             }),
                           });
                           const data = await res.json();

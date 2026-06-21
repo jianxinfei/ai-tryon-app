@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     if (id) {
       const { data: post, error } = await supabase
         .from('community_posts')
-        .select('id, user_id, result_image_url, person_image_url, clothing_image_url, caption, product_link, created_at')
+        .select('id, user_id, result_image_url, person_image_url, clothing_image_url, clothing2_image_url, tryon_mode, caption, product_link, created_at')
         .eq('id', id)
         .eq('status', 'approved')
         .single();
@@ -49,6 +49,8 @@ export async function GET(request: NextRequest) {
           result_image_url: post.result_image_url,
           person_image_url: post.person_image_url || null,
           clothing_image_url: post.clothing_image_url || null,
+          clothing2_image_url: post.clothing2_image_url || null,
+          tryon_mode: post.tryon_mode || 'single',
           caption: post.caption,
           product_link: post.product_link,
           created_at: post.created_at,
@@ -68,7 +70,7 @@ export async function GET(request: NextRequest) {
     // 构建查询
     let query = supabase
       .from('community_posts')
-      .select('id, user_id, result_image_url, person_image_url, clothing_image_url, caption, product_link, created_at')
+      .select('id, user_id, result_image_url, person_image_url, clothing_image_url, clothing2_image_url, tryon_mode, caption, product_link, created_at')
       .eq('status', 'approved')
       .order('created_at', { ascending: false });
 
@@ -131,6 +133,8 @@ export async function GET(request: NextRequest) {
       result_image_url: post.result_image_url,
       person_image_url: post.person_image_url || null,
       clothing_image_url: post.clothing_image_url || null,
+      clothing2_image_url: post.clothing2_image_url || null,
+      tryon_mode: post.tryon_mode || 'single',
       caption: post.caption,
       product_link: post.product_link,
       created_at: post.created_at,

@@ -11,6 +11,8 @@ interface Post {
   clothing_image_url: string | null;
   caption: string | null;
   product_link: string | null;
+  clothing2_image_url: string | null;
+  tryon_mode: string;
   created_at: string;
   user_id: string;
   user_prefix: string;
@@ -175,36 +177,71 @@ export default function CommunityPage() {
                 className="break-inside-avoid mb-2 sm:mb-3 cursor-pointer group relative"
               >
                 <div className="relative rounded-xl overflow-hidden bg-slate-100">
-                  {/* 三图布局：左侧大图 + 右侧两张竖图 */}
+                  {/* 图片布局：组合模式展示服装图，单件模式展示人物图 */}
                   {post.person_image_url && post.clothing_image_url ? (
-                    <div className="flex gap-0.5 aspect-[3/4]">
-                      <div className="flex-1 min-w-0">
-                        <img
-                          src={post.result_image_url}
-                          alt={post.caption || 'Community post'}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          loading="lazy"
-                        />
-                      </div>
-                      <div className="w-[30%] flex flex-col gap-0.5 flex-shrink-0">
-                        <div className="flex-1 min-h-0">
+                    post.tryon_mode === 'combo' ? (
+                      /* 组合模式：左侧效果图 + 右侧上衣+下装 */
+                      <div className="flex gap-0.5 aspect-[3/4]">
+                        <div className="flex-1 min-w-0">
                           <img
-                            src={post.person_image_url}
-                            alt="Person"
+                            src={post.result_image_url}
+                            alt={post.caption || 'Community post'}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             loading="lazy"
                           />
                         </div>
-                        <div className="flex-1 min-h-0">
+                        <div className="w-[30%] flex flex-col gap-0.5 flex-shrink-0">
+                          <div className="flex-1 min-h-0">
+                            <img
+                              src={post.clothing_image_url}
+                              alt="Top"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              loading="lazy"
+                            />
+                          </div>
+                          {post.clothing2_image_url && (
+                            <div className="flex-1 min-h-0">
+                              <img
+                                src={post.clothing2_image_url}
+                                alt="Bottom"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                loading="lazy"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      /* 单件模式：左侧效果图 + 右侧人物图+服装图 */
+                      <div className="flex gap-0.5 aspect-[3/4]">
+                        <div className="flex-1 min-w-0">
                           <img
-                            src={post.clothing_image_url}
-                            alt="Clothing"
+                            src={post.result_image_url}
+                            alt={post.caption || 'Community post'}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             loading="lazy"
                           />
                         </div>
+                        <div className="w-[30%] flex flex-col gap-0.5 flex-shrink-0">
+                          <div className="flex-1 min-h-0">
+                            <img
+                              src={post.person_image_url}
+                              alt="Person"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              loading="lazy"
+                            />
+                          </div>
+                          <div className="flex-1 min-h-0">
+                            <img
+                              src={post.clothing_image_url}
+                              alt="Clothing"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              loading="lazy"
+                            />
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )
                   ) : (
                     <img
                       src={post.result_image_url}

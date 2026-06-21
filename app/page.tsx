@@ -116,32 +116,17 @@ export default function HomePage() {
           What to wear?
         </h1>
 
-        {/* 对比文案 */}
-        <div className="w-full mt-10 sm:mt-14">
-          <div className="flex flex-col md:flex-row items-stretch gap-0">
-            {/* 旧方式 - 左上 */}
-            <div className="flex-1 flex items-start justify-start md:justify-end p-4">
-              <p className="text-left text-sm sm:text-base text-slate-400 leading-relaxed max-w-[260px]" style={{ fontFamily: 'Inter' }}>
-                The old way:<br />
-                Browse &rarr; Read reviews &rarr; Unbox &rarr; Try on &rarr; Ask around &rarr; Return if not fit
-              </p>
-            </div>
-
-            {/* VS 分割线 */}
-            <div className="flex md:flex-col items-center justify-center gap-2 py-2 md:py-0 md:px-6">
-              <div className="w-8 md:w-px h-px md:h-16 bg-slate-300" />
-              <span className="text-base font-extrabold text-slate-500 uppercase tracking-widest">vs</span>
-              <div className="w-8 md:w-px h-px md:h-16 bg-slate-300" />
-            </div>
-
-            {/* 我们的方式 - 右下 */}
-            <div className="flex-1 flex items-end justify-end md:justify-start p-4">
-              <p className="text-right md:text-left text-lg sm:text-xl font-bold leading-relaxed max-w-[280px] text-slate-900" style={{ fontFamily: 'Inter' }}>
-                Us:<br />
-                Browse &rarr; Download photo &rarr; Upload to AIWHATTOWEAR &rarr; Get result &rarr; Post &rarr; Get likes &rarr; Order!
-              </p>
-            </div>
-          </div>
+        {/* 文案 */}
+        <div className="w-full mt-10 sm:mt-14 text-center space-y-3">
+          <p className="text-lg sm:text-xl font-bold text-slate-700" style={{ fontFamily: 'Inter' }}>
+            Why buy before you style?
+          </p>
+          <p className="text-base sm:text-lg font-semibold text-indigo-600" style={{ fontFamily: 'Inter' }}>
+            Style before you try?
+          </p>
+          <p className="text-base sm:text-lg font-bold text-slate-900" style={{ fontFamily: 'Inter' }}>
+            Try on first!
+          </p>
         </div>
       </div>
 

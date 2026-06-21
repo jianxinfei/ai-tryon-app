@@ -37,6 +37,7 @@ export default function TryOnPage() {
   const router = useRouter();
   const personInputRef = useRef<HTMLInputElement>(null);
   const clothingInputRef = useRef<HTMLInputElement>(null);
+  const clothing2InputRef = useRef<HTMLInputElement>(null);
 
   // Supabase 客户端（客户端初始化）
   const [supabase, setSupabase] = useState<any>(null);
@@ -58,9 +59,14 @@ export default function TryOnPage() {
   const [personImage, setPersonImage] = useState('');
   const [clothingPreview, setClothingPreview] = useState('');
   const [clothingImage, setClothingImage] = useState('');
+  const [clothing2Preview, setClothing2Preview] = useState('');
+  const [clothing2Image, setClothing2Image] = useState('');
+
+  // 试衣模式
+  const [tryOnMode, setTryOnMode] = useState<'single' | 'combo'>('single');
 
   // 上传状态
-  const [isUploading, setIsUploading] = useState({ person: false, clothing: false });
+  const [isUploading, setIsUploading] = useState({ person: false, clothing: false, clothing2: false });
 
   // 试衣状态
   const [isLoading, setIsLoading] = useState(false);
@@ -69,6 +75,13 @@ export default function TryOnPage() {
   const [error, setError] = useState('');
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [taskId, setTaskId] = useState('');
+
+  // 分享到试衣间状态
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareCaption, setShareCaption] = useState('');
+  const [shareProductLink, setShareProductLink] = useState('');
+  const [shareSubmitting, setShareSubmitting] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState(false);
 
   // 轮询状态
   const [pollProgress, setPollProgress] = useState<PollProgress>({ count: 0, estimatedTime: 40 });
@@ -152,7 +165,7 @@ export default function TryOnPage() {
   };
 
   // 处理图片上传
-  const handleImageUpload = async (file: File, type: 'person' | 'clothing') => {
+  const handleImageUpload = async (file: File, type: 'person' | 'clothing' | 'clothing2') => {
     if (!file || !file.type.startsWith('image/')) {
       setError('请上传有效的图片（JPG、PNG）');
       return;
@@ -162,36 +175,41 @@ export default function TryOnPage() {
     
     if (type === 'person') {
       setIsUploading(prev => ({ ...prev, person: true }));
-    } else {
+    } else if (type === 'clothing') {
       setIsUploading(prev => ({ ...prev, clothing: true }));
+    } else {
+      setIsUploading(prev => ({ ...prev, clothing2: true }));
     }
 
     try {
-      // 客户端压缩图片
       const options = {
-        maxSizeMB: 2, // 最大 2MB
-        maxWidthOrHeight: 1200, // 最大宽高 1200px
+        maxSizeMB: 2,
+        maxWidthOrHeight: 1200,
         useWebWorker: true,
       };
       
       const compressedFile = await imageCompression(file, options);
-      
       const imageUrl = await uploadImage(compressedFile);
       
       if (type === 'person') {
         setPersonPreview(imageUrl);
         setPersonImage(imageUrl);
-      } else {
+      } else if (type === 'clothing') {
         setClothingPreview(imageUrl);
         setClothingImage(imageUrl);
+      } else {
+        setClothing2Preview(imageUrl);
+        setClothing2Image(imageUrl);
       }
     } catch (err: any) {
       setError(err.message || '图片上传失败');
     } finally {
       if (type === 'person') {
         setIsUploading(prev => ({ ...prev, person: false }));
-      } else {
+      } else if (type === 'clothing') {
         setIsUploading(prev => ({ ...prev, clothing: false }));
+      } else {
+        setIsUploading(prev => ({ ...prev, clothing2: false }));
       }
     }
   };
@@ -429,27 +447,38 @@ export default function TryOnPage() {
       return;
     }
 
-    // 检查邮箱验证状态
+    if (tryOnMode === 'combo' && !clothing2Image) {
+      setError('组合模式需要同时上传上衣和裤装');
+      return;
+    }
+
     if (!emailVerified) {
       setError('试穿前请先验证邮箱');
       return;
     }
 
-    // 将图片 URL 存入 ref，供轮询成功后使用
     personImageRef.current = personImage;
-    clothingImageRef.current = clothingImage;
+    clothingImageRef.current = tryOnMode === 'combo' ? `${clothingImage}+${clothing2Image}` : clothingImage;
 
     setError('');
     setIsLoading(true);
     setResult(null);
     setPollProgress({ count: 0, estimatedTime: 40 });
 
-    // 创建任务请求（带 30 秒超时 + 自动重试）
     const doCreateTask = async (isRetry: boolean): Promise<{ taskId: string } | { noRetry: true; error: string } | null> => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
       
       try {
+        const requestBody: any = {
+          personImage,
+          clothingImage,
+          tryOnMode,
+        };
+        if (tryOnMode === 'combo') {
+          requestBody.clothingImage2 = clothing2Image;
+        }
+
         const response = await fetch('/api/tryon', {
           method: 'POST',
           credentials: 'include',
@@ -457,10 +486,7 @@ export default function TryOnPage() {
             'Content-Type': 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
           },
-          body: JSON.stringify({
-            personImage,
-            clothingImage
-          }),
+          body: JSON.stringify(requestBody),
           signal: controller.signal,
         });
         
@@ -544,7 +570,7 @@ export default function TryOnPage() {
       setError('创建任务失败，请稍后重试');
       setIsLoading(false);
     }
-  }, [personImage, clothingImage, startPolling]);
+  }, [personImage, clothingImage, clothing2Image, tryOnMode, startPolling]);
 
   // 更换服装
   const handleChangeClothing = useCallback(() => {
@@ -557,6 +583,8 @@ export default function TryOnPage() {
     // 重置所有状态
     setClothingPreview('');
     setClothingImage('');
+    setClothing2Preview('');
+    setClothing2Image('');
     setResult(null);
     setResultUrl(''); // 清空图片 URL
     setError('');
@@ -617,6 +645,35 @@ export default function TryOnPage() {
           <p className="mt-1.5 text-xs text-slate-400">
             每次消耗1积分 | 支持 JPG / PNG | 积分自购买起180天有效
           </p>
+
+          {/* 模式切换 */}
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <button
+              onClick={() => setTryOnMode('single')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                tryOnMode === 'single'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              单件模式
+            </button>
+            <button
+              onClick={() => setTryOnMode('combo')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                tryOnMode === 'combo'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              上装+下装
+            </button>
+          </div>
+          {tryOnMode === 'combo' && (
+            <p className="mt-2 text-xs text-center text-amber-600 font-medium">
+              组合模式消耗 2 积分
+            </p>
+          )}
         </div>
 
         {/* 邮箱未验证提示 */}
@@ -728,7 +785,7 @@ export default function TryOnPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33l3.558-2.207a2.25 2.25 0 00.993-1.898V8.25A2.25 2.25 0 0018 6h-4.568a2.25 2.25 0 01-1.658-.734l-1.08-1.233a2.25 2.25 0 00-1.658-.734zM7.5 9.75a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
                         </svg>
                       </div>
-                      <span className="font-semibold text-sm">上传服装照片</span>
+                      <span className="font-semibold text-sm">{tryOnMode === 'combo' ? '上传上衣照片' : '上传服装照片'}</span>
                       <span className="text-xs mt-1 text-slate-300 group-hover:text-indigo-400 transition-colors duration-300">点击选择或拖拽文件</span>
                     </>
                   )}
@@ -736,6 +793,54 @@ export default function TryOnPage() {
               )}
               <p className="mt-3 text-xs text-center text-slate-400">支持 JPG、PNG，自动压缩</p>
             </div>
+
+            {/* 组合模式：第二件服装上传（下装） */}
+            {tryOnMode === 'combo' && (
+              <div className="group bg-white rounded-2xl border-2 border-dashed border-slate-200 p-6 hover:border-indigo-400 hover:shadow-lg hover:shadow-indigo-50 transition-all duration-300">
+                <input 
+                  ref={clothing2InputRef} 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => e.target.files && handleImageUpload(e.target.files[0], 'clothing2')} 
+                  className="hidden" 
+                />
+                {clothing2Preview ? (
+                  <div className="relative">
+                    <img src={clothing2Preview} alt="Bottom clothing preview" className="w-full h-64 object-cover rounded-xl shadow-sm" />
+                    <button 
+                      onClick={() => { setClothing2Preview(''); setClothing2Image(''); }}
+                      className="absolute top-2 right-2 py-2 px-3 bg-red-500/90 backdrop-blur-sm text-white text-base font-medium rounded-full flex items-center justify-center hover:bg-red-600 transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => clothing2InputRef.current?.click()} 
+                    disabled={isUploading.clothing2}
+                    className="w-full h-64 flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-slate-50 to-indigo-50/30 text-slate-400 hover:text-indigo-600 hover:from-indigo-50/40 hover:to-purple-50/30 transition-all duration-300 active:scale-[0.98]"
+                  >
+                    {isUploading.clothing2 ? (
+                      <>
+                        <div className="animate-spin w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full mb-3" />
+                        <span className="text-sm font-medium text-indigo-600">正在处理图片...</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-14 h-14 mb-3 rounded-2xl bg-indigo-100/60 flex items-center justify-center group-hover:bg-indigo-200/60 transition-colors duration-300">
+                          <svg className="w-8 h-8 text-indigo-400 group-hover:text-indigo-600 transition-colors duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                          </svg>
+                        </div>
+                        <span className="font-semibold text-sm">上传下装照片</span>
+                        <span className="text-xs mt-1 text-slate-300 group-hover:text-indigo-400 transition-colors duration-300">裤子、裙子等</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                <p className="mt-3 text-xs text-center text-slate-400">支持 JPG、PNG，自动压缩</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -743,10 +848,10 @@ export default function TryOnPage() {
         {!result && (
           <button 
             onClick={createTryOnTask} 
-            disabled={isLoading || !personImage || !clothingImage}
+            disabled={isLoading || !personImage || !clothingImage || (tryOnMode === 'combo' && !clothing2Image)}
             className="w-full py-4 bg-indigo-600 text-white font-bold text-lg rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-indigo-200"
           >
-            {isLoading ? '正在试穿...' : '开始试穿（消耗1积分）'}
+            {isLoading ? '正在试穿...' : `开始试穿（消耗${tryOnMode === 'combo' ? '2' : '1'}积分）`}
           </button>
         )}
 
@@ -807,6 +912,19 @@ export default function TryOnPage() {
               <div className="mt-3 flex justify-center">
                 <button
                   onClick={() => {
+                    setShowShareModal(true);
+                    setShareCaption('');
+                    setShareProductLink('');
+                    setShareSuccess(false);
+                  }}
+                  className="py-2.5 px-6 bg-gradient-to-r from-pink-500 to-indigo-500 text-white text-base font-medium rounded-lg hover:from-pink-600 hover:to-indigo-600 transition-colors"
+                >
+                  分享到试衣间
+                </button>
+              </div>
+              <div className="mt-3 flex justify-center">
+                <button
+                  onClick={() => {
                     if (pollIntervalRef.current) {
                       clearInterval(pollIntervalRef.current);
                       pollIntervalRef.current = null;
@@ -815,6 +933,8 @@ export default function TryOnPage() {
                     setPersonImage('');
                     setClothingPreview('');
                     setClothingImage('');
+                    setClothing2Preview('');
+                    setClothing2Image('');
                     setResult(null);
                     setResultUrl('');
                     setError('');
@@ -867,6 +987,150 @@ export default function TryOnPage() {
           </button>
         </div>
       </main>
+
+      {/* 分享到试衣间弹窗 */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md mx-4 w-full max-h-[85vh] overflow-y-auto">
+            <div className="p-5">
+              {/* 关闭按钮 */}
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-bold text-slate-900">分享到试衣间</h3>
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  className="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors text-lg leading-none"
+                >
+                  ×
+                </button>
+              </div>
+
+              {shareSuccess ? (
+                <div className="text-center py-6">
+                  <div className="text-4xl mb-2">🎉</div>
+                  <p className="text-green-600 font-medium text-sm">分享成功！</p>
+                  <button
+                    onClick={() => setShowShareModal(false)}
+                    className="mt-4 px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors"
+                  >
+                    关闭
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* 图片预览：组合模式展示服装图，单件展示效果图+人物图 */}
+                  <div className="flex gap-2 mb-4 h-48">
+                    {tryOnMode === 'combo' ? (
+                      <>
+                        {/* 组合模式：左侧效果图 + 右侧上衣+下装 */}
+                        <div className="flex-1 h-full">
+                          <img src={resultUrl} alt="Result" className="w-full h-full object-cover rounded-lg" />
+                        </div>
+                        <div className="w-24 flex flex-col gap-2 h-full">
+                          {clothingImage && (
+                            <div className="flex-1">
+                              <img src={clothingImage} alt="上衣" className="w-full h-full object-cover rounded-lg" />
+                            </div>
+                          )}
+                          {clothing2Image && (
+                            <div className="flex-1">
+                              <img src={clothing2Image} alt="下装" className="w-full h-full object-cover rounded-lg" />
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* 单件模式：左侧效果图 + 右侧人物图+服装图 */}
+                        {resultUrl && (
+                          <div className="flex-1 h-full">
+                            <img src={resultUrl} alt="Result" className="w-full h-full object-cover rounded-lg" />
+                          </div>
+                        )}
+                        <div className="w-24 flex flex-col gap-2 h-full">
+                          {personImage && (
+                            <div className="flex-1">
+                              <img src={personImage} alt="人物" className="w-full h-full object-cover rounded-lg" />
+                            </div>
+                          )}
+                          {clothingImage && (
+                            <div className="flex-1">
+                              <img src={clothingImage} alt="服装" className="w-full h-full object-cover rounded-lg" />
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* 文字描述 */}
+                  <textarea
+                    value={shareCaption}
+                    onChange={(e) => setShareCaption(e.target.value)}
+                    placeholder="描述你的穿搭..."
+                    maxLength={200}
+                    rows={2}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 resize-none mb-2"
+                  />
+
+                  {/* 商品链接 */}
+                  <input
+                    type="url"
+                    value={shareProductLink}
+                    onChange={(e) => setShareProductLink(e.target.value)}
+                    placeholder="商品链接（选填）"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 mb-3"
+                  />
+
+                  {/* 按钮 */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowShareModal(false)}
+                      className="flex-1 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+                    >
+                      取消
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!resultUrl) return;
+                        setShareSubmitting(true);
+                        try {
+                          const res = await fetch('/api/community/share', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              resultImageUrl: resultUrl,
+                              personImageUrl: personImage || null,
+                              clothingImageUrl: clothingImage || null,
+                              clothing2ImageUrl: (tryOnMode === 'combo' ? clothing2Image : null) || null,
+                              caption: shareCaption.trim() || null,
+                              productLink: shareProductLink.trim() || null,
+                              tryOnMode,
+                            }),
+                          });
+                          const data = await res.json();
+                          if (res.ok) {
+                            setShareSuccess(true);
+                          } else {
+                            alert(data.error || '分享失败');
+                          }
+                        } catch {
+                          alert('网络错误，请重试');
+                        } finally {
+                          setShareSubmitting(false);
+                        }
+                      }}
+                      disabled={shareSubmitting}
+                      className="flex-1 py-2 text-sm font-medium text-white bg-gradient-to-r from-pink-500 to-indigo-500 rounded-xl hover:from-pink-600 hover:to-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {shareSubmitting ? '分享中...' : '分享'}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 积分不足弹窗 */}
       {showCreditsModal && (

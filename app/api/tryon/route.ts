@@ -20,6 +20,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import sharp from 'sharp';
 
 // ══════════════════════════════════════════════
 // 可灵 AI 配置
@@ -27,6 +28,7 @@ import { cookies } from 'next/headers';
 
 const KLING_API_BASE = 'https://api-beijing.klingai.com';
 const KLING_MODEL = 'kolors-virtual-try-on-v1';
+const KLING_MODEL_COMBO = 'kolors-virtual-try-on-v1-5'; // 组合模式使用 v1.5
 
 // 轮询超时（秒）
 const POLL_TIMEOUT = 120;
@@ -340,6 +342,74 @@ async function fetchWithSmartRetry(
 }
 
 // ══════════════════════════════════════════════
+// 组合模式：拼接上衣 + 下装图片
+// ══════════════════════════════════════════════
+
+/**
+ * 下载图片并返回 Buffer
+ */
+async function downloadImage(url: string): Promise<Buffer> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to download image: ${response.status}`);
+  }
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+/**
+ * 将上衣和下装图片上下拼接为一张白底图
+ * 返回拼接后的图片 Buffer（PNG 格式）
+ */
+async function combineClothingImages(topUrl: string, bottomUrl: string): Promise<Buffer> {
+  const [topBuf, bottomBuf] = await Promise.all([
+    downloadImage(topUrl),
+    downloadImage(bottomUrl),
+  ]);
+
+  const topMeta = await sharp(topBuf).metadata();
+  const bottomMeta = await sharp(bottomBuf).metadata();
+
+  const topW = topMeta.width || 512;
+  const topH = topMeta.height || 512;
+  const bottomW = bottomMeta.width || 512;
+  const bottomH = bottomMeta.height || 512;
+
+  // 统一宽度为两者最大值
+  const targetWidth = Math.max(topW, bottomW);
+
+  // 将两张图缩放到统一宽度
+  const topResized = await sharp(topBuf)
+    .resize({ width: targetWidth })
+    .png()
+    .toBuffer();
+
+  const bottomResized = await sharp(bottomBuf)
+    .resize({ width: targetWidth })
+    .png()
+    .toBuffer();
+
+  // 上下拼接
+  const totalHeight = topH + bottomH;
+  const combined = await sharp({
+    create: {
+      width: targetWidth,
+      height: totalHeight,
+      channels: 3,
+      background: { r: 255, g: 255, b: 255 },
+    },
+  })
+    .composite([
+      { input: topResized, top: 0, left: 0 },
+      { input: bottomResized, top: topH, left: 0 },
+    ])
+    .png()
+    .toBuffer();
+
+  return combined;
+}
+
+// ══════════════════════════════════════════════
 // 可灵 AI 虚拟试衣
 // ══════════════════════════════════════════════
 
@@ -351,6 +421,7 @@ async function createKlingTryOnTask(
   clothingImage: string,
   userId: string,
   signal?: AbortSignal,
+  modelName?: string,
 ): Promise<{ taskId: string; externalTaskId: string }> {
   // 正确路径：/v1/images/kolors-virtual-try-on
   const path = '/v1/images/kolors-virtual-try-on';
@@ -361,14 +432,14 @@ async function createKlingTryOnTask(
   console.log('[TryOn API] 创建可灵 AI 试衣任务, external_task_id:', externalTaskId);
   console.log('[TryOn API] 请求 URL:', url);
 
+  const model = modelName || KLING_MODEL;
+
   // 直接传 Supabase Storage 公开 URL（可灵官方推荐方式）
-  // 注：callback_url 在国内网络环境下可能无法被可灵回调到，暂时注释掉，主用轮询
   const requestBody = {
-    model_name: KLING_MODEL,
+    model_name: model,
     human_image: personImage,
     cloth_image: clothingImage,
     external_task_id: externalTaskId,
-    // callback_url: 'https://www.aiwhattowear.com/api/kling/callback',
   };
 
   console.log('[TryOn API] 请求体: model_name=%s, external_task_id=%s, human_image=[URL %s], cloth_image=[URL %s]',
@@ -506,9 +577,11 @@ async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
 
     // ── 2. 解析请求体 ──
     const body = await req.json().catch(() => ({}));
-    const { personImage, clothingImage } = body;
+    const { personImage, clothingImage, clothingImage2, tryOnMode } = body;
+    const isCombo = tryOnMode === 'combo';
 
-    console.log('[TryOn API] 请求模式: 虚拟试衣，所需积分: 1');
+    const requiredCredits = isCombo ? 2 : 1;
+    console.log(`[TryOn API] 请求模式: ${isCombo ? '组合试穿' : '单件试穿'}，所需积分: ${requiredCredits}`);
     console.log('[TryOn API] 当前用户ID:', userId);
 
     // ── 3. 验证参数 ──
@@ -518,12 +591,18 @@ async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
     if (!clothingImage) {
       return NextResponse.json({ success: false, error: '请上传服装图' }, { status: 400 });
     }
+    if (isCombo && !clothingImage2) {
+      return NextResponse.json({ success: false, error: '组合模式需要同时上传上衣和裤装' }, { status: 400 });
+    }
     const urlPattern = /^https?:\/\/.+/;
     if (!urlPattern.test(personImage)) {
       return NextResponse.json({ success: false, error: '人物图片 URL 格式无效' }, { status: 400 });
     }
     if (!urlPattern.test(clothingImage)) {
       return NextResponse.json({ success: false, error: '服装图片 URL 格式无效' }, { status: 400 });
+    }
+    if (isCombo && clothingImage2 && !urlPattern.test(clothingImage2)) {
+      return NextResponse.json({ success: false, error: '第二张服装图片 URL 格式无效' }, { status: 400 });
     }
 
     // ── 3.5 积分校验（在调用可灵 API 之前） ──
@@ -547,12 +626,12 @@ async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
     }
 
     const currentCredits = creditRow?.credits ?? 0;
-    console.log('[TryOn API] 积分校验结果:', { userId, currentCredits, required: 1, sufficient: currentCredits >= 1 });
+    console.log('[TryOn API] 积分校验结果:', { userId, currentCredits, required: requiredCredits, sufficient: currentCredits >= requiredCredits });
 
-    if (currentCredits < 1) {
-      console.warn('[TryOn API] 积分不足，拒绝请求:', { userId, currentCredits });
+    if (currentCredits < requiredCredits) {
+      console.warn('[TryOn API] 积分不足，拒绝请求:', { userId, currentCredits, required: requiredCredits });
       return NextResponse.json(
-        { success: false, error: 'insufficient_credits', message: '积分不足，请先购买积分包' },
+        { success: false, error: 'insufficient_credits', message: `积分不足，组合模式需要 ${requiredCredits} 积分` },
         { status: 403 }
       );
     }
@@ -562,8 +641,43 @@ async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
     let taskId: string;
     let externalTaskId: string;
 
+    // 组合模式：拼接上衣+下装图片，上传到 Supabase Storage
+    let finalClothingImage = clothingImage;
+    if (isCombo && clothingImage2) {
+      try {
+        console.log('[TryOn API] 组合模式：拼接上衣+下装图片...');
+        const combinedBuffer = await combineClothingImages(clothingImage, clothingImage2);
+
+        // 上传拼接后的图片到 Supabase Storage
+        const combinedFileName = `combo_${userId}_${Date.now()}.png`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('tryon-images')
+          .upload(combinedFileName, combinedBuffer, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: 'image/png',
+          });
+
+        if (uploadError) {
+          console.error('[TryOn API] 拼接图片上传失败:', uploadError.message);
+          return NextResponse.json({ success: false, error: '图片处理失败，请重试' }, { status: 500 });
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('tryon-images')
+          .getPublicUrl(uploadData!.path);
+
+        finalClothingImage = urlData.publicUrl;
+        console.log('[TryOn API] 拼接图片上传成功:', finalClothingImage);
+      } catch (err: any) {
+        console.error('[TryOn API] 拼接图片失败:', err.message);
+        return NextResponse.json({ success: false, error: '图片处理失败，请重试' }, { status: 500 });
+      }
+    }
+
     try {
-      const result = await createKlingTryOnTask(personImage, clothingImage, userId, signal);
+      const modelName = isCombo ? KLING_MODEL_COMBO : KLING_MODEL;
+      const result = await createKlingTryOnTask(personImage, finalClothingImage, userId, signal, modelName);
       taskId = result.taskId;
       externalTaskId = result.externalTaskId;
       console.log('[TryOn API] 任务创建成功，task_id:', taskId, ', external_task_id:', externalTaskId);
@@ -592,6 +706,7 @@ async function handleTryOnRequest(req: NextRequest, signal: AbortSignal) {
       success: true,
       taskId,
       externalTaskId,
+      tryOnMode: isCombo ? 'combo' : 'single',
       message: '任务已创建',
     });
 

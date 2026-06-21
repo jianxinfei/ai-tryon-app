@@ -37,6 +37,7 @@ export default function TryOnPage() {
   const router = useRouter();
   const personInputRef = useRef<HTMLInputElement>(null);
   const clothingInputRef = useRef<HTMLInputElement>(null);
+  const clothing2InputRef = useRef<HTMLInputElement>(null);
 
   // Supabase 客户端（客户端初始化）
   const [supabase, setSupabase] = useState<any>(null);
@@ -58,9 +59,14 @@ export default function TryOnPage() {
   const [personImage, setPersonImage] = useState('');
   const [clothingPreview, setClothingPreview] = useState('');
   const [clothingImage, setClothingImage] = useState('');
+  const [clothing2Preview, setClothing2Preview] = useState('');
+  const [clothing2Image, setClothing2Image] = useState('');
+
+  // 试衣模式
+  const [tryOnMode, setTryOnMode] = useState<'single' | 'combo'>('single');
 
   // 上传状态
-  const [isUploading, setIsUploading] = useState({ person: false, clothing: false });
+  const [isUploading, setIsUploading] = useState({ person: false, clothing: false, clothing2: false });
 
   // 试衣状态
   const [isLoading, setIsLoading] = useState(false);
@@ -164,7 +170,7 @@ export default function TryOnPage() {
   };
 
   // 处理图片上传
-  const handleImageUpload = async (file: File, type: 'person' | 'clothing') => {
+  const handleImageUpload = async (file: File, type: 'person' | 'clothing' | 'clothing2') => {
     if (!file || !file.type.startsWith('image/')) {
       setError('Please upload a valid image (JPG, PNG)');
       return;
@@ -174,15 +180,16 @@ export default function TryOnPage() {
     
     if (type === 'person') {
       setIsUploading(prev => ({ ...prev, person: true }));
-    } else {
+    } else if (type === 'clothing') {
       setIsUploading(prev => ({ ...prev, clothing: true }));
+    } else {
+      setIsUploading(prev => ({ ...prev, clothing2: true }));
     }
 
     try {
-      // 客户端压缩图片
       const options = {
-        maxSizeMB: 2, // 最大 2MB
-        maxWidthOrHeight: 1200, // 最大宽高 1200px
+        maxSizeMB: 2,
+        maxWidthOrHeight: 1200,
         useWebWorker: true,
       };
       
@@ -193,17 +200,22 @@ export default function TryOnPage() {
       if (type === 'person') {
         setPersonPreview(imageUrl);
         setPersonImage(imageUrl);
-      } else {
+      } else if (type === 'clothing') {
         setClothingPreview(imageUrl);
         setClothingImage(imageUrl);
+      } else {
+        setClothing2Preview(imageUrl);
+        setClothing2Image(imageUrl);
       }
     } catch (err: any) {
       setError(err.message || 'Image upload failed');
     } finally {
       if (type === 'person') {
         setIsUploading(prev => ({ ...prev, person: false }));
-      } else {
+      } else if (type === 'clothing') {
         setIsUploading(prev => ({ ...prev, clothing: false }));
+      } else {
+        setIsUploading(prev => ({ ...prev, clothing2: false }));
       }
     }
   };
@@ -458,6 +470,12 @@ export default function TryOnPage() {
       return;
     }
 
+    // 组合模式校验
+    if (tryOnMode === 'combo' && !clothing2Image) {
+      setError('Combo mode requires both a top and a bottom clothing photo');
+      return;
+    }
+
     // 检查邮箱验证状态
     if (!emailVerified) {
       setError('Please verify your email before trying on');
@@ -466,7 +484,7 @@ export default function TryOnPage() {
 
     // 将图片 URL 存入 ref，供轮询成功后使用
     personImageRef.current = personImage;
-    clothingImageRef.current = clothingImage;
+    clothingImageRef.current = tryOnMode === 'combo' ? `${clothingImage}+${clothing2Image}` : clothingImage;
 
     setError('');
     setIsLoading(true);
@@ -479,6 +497,15 @@ export default function TryOnPage() {
       const timeoutId = setTimeout(() => controller.abort(), 30000);
       
       try {
+        const requestBody: any = {
+          personImage,
+          clothingImage,
+          tryOnMode,
+        };
+        if (tryOnMode === 'combo') {
+          requestBody.clothingImage2 = clothing2Image;
+        }
+
         const response = await fetch('/api/tryon', {
           method: 'POST',
           credentials: 'include',
@@ -486,10 +513,7 @@ export default function TryOnPage() {
             'Content-Type': 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
           },
-          body: JSON.stringify({
-            personImage,
-            clothingImage
-          }),
+          body: JSON.stringify(requestBody),
           signal: controller.signal,
         });
         
@@ -612,7 +636,7 @@ export default function TryOnPage() {
       setError('Failed to create task, please try again later');
       setIsLoading(false);
     }
-  }, [personImage, clothingImage, startPolling]);
+  }, [personImage, clothingImage, clothing2Image, tryOnMode, emailVerified, startPolling]);
 
   // 带任务队列的提交入口
   const submitTryOn = useCallback(() => {
@@ -648,6 +672,8 @@ export default function TryOnPage() {
     // 重置所有状态
     setClothingPreview('');
     setClothingImage('');
+    setClothing2Preview('');
+    setClothing2Image('');
     setResult(null);
     setResultUrl(''); // 清空图片 URL
     setError('');
@@ -708,6 +734,35 @@ export default function TryOnPage() {
           <p className="mt-1.5 text-xs text-slate-400">
             1 credit per use | JPG / PNG supported | Credits valid for 180 days from purchase
           </p>
+
+          {/* 模式切换 */}
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <button
+              onClick={() => setTryOnMode('single')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                tryOnMode === 'single'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Single Item
+            </button>
+            <button
+              onClick={() => setTryOnMode('combo')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                tryOnMode === 'combo'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Top + Bottom
+            </button>
+          </div>
+          {tryOnMode === 'combo' && (
+            <p className="mt-2 text-xs text-center text-amber-600 font-medium">
+              Combo mode costs 2 credits per use
+            </p>
+          )}
         </div>
 
         {/* 邮箱未验证提示 */}
@@ -819,7 +874,7 @@ export default function TryOnPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33l3.558-2.207a2.25 2.25 0 00.993-1.898V8.25A2.25 2.25 0 0018 6h-4.568a2.25 2.25 0 01-1.658-.734l-1.08-1.233a2.25 2.25 0 00-1.658-.734zM7.5 9.75a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
                         </svg>
                       </div>
-                      <span className="font-semibold text-sm">Upload clothing photo</span>
+                      <span className="font-semibold text-sm">{tryOnMode === 'combo' ? 'Upload top photo' : 'Upload clothing photo'}</span>
                       <span className="text-xs mt-1 text-slate-300 group-hover:text-indigo-400 transition-colors duration-300">Click to select or drag a file</span>
                     </>
                   )}
@@ -827,6 +882,54 @@ export default function TryOnPage() {
               )}
               <p className="mt-3 text-xs text-center text-slate-400">Supports JPG, PNG with auto compression</p>
             </div>
+
+            {/* 组合模式：第二件服装上传（下装） */}
+            {tryOnMode === 'combo' && (
+              <div className="group bg-white rounded-2xl border-2 border-dashed border-slate-200 p-6 hover:border-indigo-400 hover:shadow-lg hover:shadow-indigo-50 transition-all duration-300">
+                <input 
+                  ref={clothing2InputRef} 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => e.target.files && handleImageUpload(e.target.files[0], 'clothing2')} 
+                  className="hidden" 
+                />
+                {clothing2Preview ? (
+                  <div className="relative">
+                    <img src={clothing2Preview} alt="Bottom clothing preview" className="w-full h-64 object-cover rounded-xl shadow-sm" />
+                    <button 
+                      onClick={() => { setClothing2Preview(''); setClothing2Image(''); }}
+                      className="absolute top-2 right-2 py-2 px-3 bg-red-500/90 backdrop-blur-sm text-white text-base font-medium rounded-full flex items-center justify-center hover:bg-red-600 transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => clothing2InputRef.current?.click()} 
+                    disabled={isUploading.clothing2}
+                    className="w-full h-64 flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-slate-50 to-indigo-50/30 text-slate-400 hover:text-indigo-600 hover:from-indigo-50/40 hover:to-purple-50/30 transition-all duration-300 active:scale-[0.98]"
+                  >
+                    {isUploading.clothing2 ? (
+                      <>
+                        <div className="animate-spin w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full mb-3" />
+                        <span className="text-sm font-medium text-indigo-600">Processing image...</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-14 h-14 mb-3 rounded-2xl bg-indigo-100/60 flex items-center justify-center group-hover:bg-indigo-200/60 transition-colors duration-300">
+                          <svg className="w-8 h-8 text-indigo-400 group-hover:text-indigo-600 transition-colors duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                          </svg>
+                        </div>
+                        <span className="font-semibold text-sm">Upload bottom photo</span>
+                        <span className="text-xs mt-1 text-slate-300 group-hover:text-indigo-400 transition-colors duration-300">Pants, skirt, etc.</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                <p className="mt-3 text-xs text-center text-slate-400">Supports JPG, PNG with auto compression</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -834,10 +937,10 @@ export default function TryOnPage() {
         {!result && (
           <button 
             onClick={submitTryOn} 
-            disabled={isLoading || !personImage || !clothingImage}
+            disabled={isLoading || !personImage || !clothingImage || (tryOnMode === 'combo' && !clothing2Image)}
             className="w-full py-4 bg-indigo-600 text-white font-bold text-lg rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-indigo-200"
           >
-            {isLoading ? 'Trying on...' : 'Start Try-On (1 credit)'}
+            {isLoading ? 'Trying on...' : `Start Try-On (${tryOnMode === 'combo' ? '2' : '1'} credit${tryOnMode === 'combo' ? 's' : ''})`}
           </button>
         )}
 
@@ -928,6 +1031,8 @@ export default function TryOnPage() {
                     setPersonImage('');
                     setClothingPreview('');
                     setClothingImage('');
+                    setClothing2Preview('');
+                    setClothing2Image('');
                     setResult(null);
                     setResultUrl('');
                     setError('');
@@ -1039,27 +1144,49 @@ export default function TryOnPage() {
                 </div>
               ) : (
                 <>
-                  {/* 三图预览：左侧大图 + 右侧两张竖图 */}
+                  {/* 图片预览：组合模式展示服装图，单件展示效果图+人物图 */}
                   <div className="flex gap-2 mb-4 h-48">
-                    {/* 左侧：效果图大图 */}
-                    {resultUrl && (
-                      <div className="flex-1 h-full">
-                        <img src={resultUrl} alt="Result" className="w-full h-full object-cover rounded-lg" />
-                      </div>
+                    {tryOnMode === 'combo' ? (
+                      <>
+                        {/* 组合模式：左侧效果图 + 右侧上衣+下装 */}
+                        <div className="flex-1 h-full">
+                          <img src={resultUrl} alt="Result" className="w-full h-full object-cover rounded-lg" />
+                        </div>
+                        <div className="w-24 flex flex-col gap-2 h-full">
+                          {clothingImage && (
+                            <div className="flex-1">
+                              <img src={clothingImage} alt="Top" className="w-full h-full object-cover rounded-lg" />
+                            </div>
+                          )}
+                          {clothing2Image && (
+                            <div className="flex-1">
+                              <img src={clothing2Image} alt="Bottom" className="w-full h-full object-cover rounded-lg" />
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* 单件模式：左侧效果图 + 右侧人物图+服装图 */}
+                        {resultUrl && (
+                          <div className="flex-1 h-full">
+                            <img src={resultUrl} alt="Result" className="w-full h-full object-cover rounded-lg" />
+                          </div>
+                        )}
+                        <div className="w-24 flex flex-col gap-2 h-full">
+                          {personImage && (
+                            <div className="flex-1">
+                              <img src={personImage} alt="Person" className="w-full h-full object-cover rounded-lg" />
+                            </div>
+                          )}
+                          {clothingImage && (
+                            <div className="flex-1">
+                              <img src={clothingImage} alt="Clothing" className="w-full h-full object-cover rounded-lg" />
+                            </div>
+                          )}
+                        </div>
+                      </>
                     )}
-                    {/* 右侧：人物图 + 衣物图 */}
-                    <div className="w-24 flex flex-col gap-2 h-full">
-                      {personImage && (
-                        <div className="flex-1">
-                          <img src={personImage} alt="Person" className="w-full h-full object-cover rounded-lg" />
-                        </div>
-                      )}
-                      {clothingImage && (
-                        <div className="flex-1">
-                          <img src={clothingImage} alt="Clothing" className="w-full h-full object-cover rounded-lg" />
-                        </div>
-                      )}
-                    </div>
                   </div>
 
                   {/* 文字描述 */}
@@ -1069,7 +1196,16 @@ export default function TryOnPage() {
                     placeholder="Describe your look..."
                     maxLength={200}
                     rows={2}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 resize-none mb-3"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 resize-none mb-2"
+                  />
+
+                  {/* 商品链接 */}
+                  <input
+                    type="url"
+                    value={shareProductLink}
+                    onChange={(e) => setShareProductLink(e.target.value)}
+                    placeholder="Product link (optional)"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-300 mb-3"
                   />
 
                   {/* 按钮 */}
@@ -1092,7 +1228,10 @@ export default function TryOnPage() {
                               resultImageUrl: resultUrl,
                               personImageUrl: personImage || null,
                               clothingImageUrl: clothingImage || null,
+                              clothing2ImageUrl: (tryOnMode === 'combo' ? clothing2Image : null) || null,
                               caption: shareCaption.trim() || null,
+                              productLink: shareProductLink.trim() || null,
+                              tryOnMode,
                             }),
                           });
                           const data = await res.json();

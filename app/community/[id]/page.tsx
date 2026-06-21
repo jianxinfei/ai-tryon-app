@@ -18,6 +18,8 @@ interface Post {
   clothing_image_url: string | null;
   caption: string | null;
   product_link: string | null;
+  clothing2_image_url: string | null;
+  tryon_mode: string;
   created_at: string;
   user_id: string;
   user_prefix: string;
@@ -265,28 +267,54 @@ export default function PostDetailPage() {
           {isZh ? '返回试衣间' : 'Back to Fitting Room'}
         </button>
 
-        {/* 三图展示：不裁切、不变形，自然排列 */}
+        {/* 图片展示：组合模式展示服装图，单件模式展示人物图 */}
         <div className="overflow-x-auto">
           {post.person_image_url && post.clothing_image_url ? (
-            <div className="flex items-start gap-0">
-              <img
-                src={post.result_image_url}
-                alt={post.caption || 'Post detail'}
-                className="max-h-[70vh] object-contain flex-shrink-0"
-              />
-              <div className="flex flex-col flex-shrink-0">
+            post.tryon_mode === 'combo' ? (
+              /* 组合模式：左侧效果图 + 右侧上衣+下装 */
+              <div className="flex items-start gap-0">
                 <img
-                  src={post.person_image_url}
-                  alt="Person"
-                  className="max-h-[35vh] object-contain"
+                  src={post.result_image_url}
+                  alt={post.caption || 'Post detail'}
+                  className="max-h-[70vh] object-contain flex-shrink-0"
                 />
-                <img
-                  src={post.clothing_image_url}
-                  alt="Clothing"
-                  className="max-h-[35vh] object-contain"
-                />
+                <div className="flex flex-col flex-shrink-0">
+                  <img
+                    src={post.clothing_image_url}
+                    alt="Top"
+                    className="max-h-[35vh] object-contain"
+                  />
+                  {post.clothing2_image_url && (
+                    <img
+                      src={post.clothing2_image_url}
+                      alt="Bottom"
+                      className="max-h-[35vh] object-contain"
+                    />
+                  )}
+                </div>
               </div>
-            </div>
+            ) : (
+              /* 单件模式：左侧效果图 + 右侧人物图+服装图 */
+              <div className="flex items-start gap-0">
+                <img
+                  src={post.result_image_url}
+                  alt={post.caption || 'Post detail'}
+                  className="max-h-[70vh] object-contain flex-shrink-0"
+                />
+                <div className="flex flex-col flex-shrink-0">
+                  <img
+                    src={post.person_image_url}
+                    alt="Person"
+                    className="max-h-[35vh] object-contain"
+                  />
+                  <img
+                    src={post.clothing_image_url}
+                    alt="Clothing"
+                    className="max-h-[35vh] object-contain"
+                  />
+                </div>
+              </div>
+            )
           ) : (
             <img
               src={post.result_image_url}

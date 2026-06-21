@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { resultImageUrl, personImageUrl, clothingImageUrl, caption, productLink } = body;
+    const { resultImageUrl, personImageUrl, clothingImageUrl, clothing2ImageUrl, caption, productLink, tryOnMode } = body;
 
     if (!resultImageUrl) {
       return NextResponse.json({ error: '缺少效果图 URL' }, { status: 400 });
@@ -41,8 +41,10 @@ export async function POST(request: NextRequest) {
         result_image_url: resultImageUrl,
         person_image_url: personImageUrl || null,
         clothing_image_url: clothingImageUrl || null,
+        clothing2_image_url: clothing2ImageUrl || null,
         caption: caption?.trim() || null,
         product_link: productLink?.trim() || null,
+        tryon_mode: tryOnMode || 'single',
         status: 'approved',
       })
       .select('id, created_at')
