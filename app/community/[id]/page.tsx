@@ -265,39 +265,33 @@ export default function PostDetailPage() {
           {isZh ? '返回试衣间' : 'Back to Fitting Room'}
         </button>
 
-        {/* 三图展示 */}
-        <div>
+        {/* 三图展示：不裁切、不变形，自然排列 */}
+        <div className="overflow-x-auto">
           {post.person_image_url && post.clothing_image_url ? (
-            <div className="flex">
-              <div className="flex-1 min-w-0">
+            <div className="flex items-start gap-0">
+              <img
+                src={post.result_image_url}
+                alt={post.caption || 'Post detail'}
+                className="max-h-[70vh] object-contain flex-shrink-0"
+              />
+              <div className="flex flex-col flex-shrink-0">
                 <img
-                  src={post.result_image_url}
-                  alt={post.caption || 'Post detail'}
-                  className="w-full object-cover"
+                  src={post.person_image_url}
+                  alt="Person"
+                  className="max-h-[35vh] object-contain"
                 />
-              </div>
-              <div className="w-36 flex-shrink-0 flex flex-col">
-                <div className="flex-1 min-h-0">
-                  <img
-                    src={post.person_image_url}
-                    alt="Person"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-h-0">
-                  <img
-                    src={post.clothing_image_url}
-                    alt="Clothing"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                <img
+                  src={post.clothing_image_url}
+                  alt="Clothing"
+                  className="max-h-[35vh] object-contain"
+                />
               </div>
             </div>
           ) : (
             <img
               src={post.result_image_url}
               alt={post.caption || 'Post detail'}
-              className="w-full max-h-[60vh] object-contain"
+              className="w-full max-h-[70vh] object-contain"
             />
           )}
         </div>
