@@ -23,6 +23,43 @@ export async function GET(request: NextRequest) {
     );
 
     const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    // 如果传了 id，查询单条帖子
+    if (id) {
+      const { data: post, error } = await supabase
+        .from('community_posts')
+        .select('id, user_id, result_image_url, person_image_url, clothing_image_url, caption, product_link, created_at')
+        .eq('id', id)
+        .eq('status', 'approved')
+        .single();
+
+      if (error || !post) {
+        return NextResponse.json({ error: '帖子不存在' }, { status: 404 });
+      }
+
+      const { count } = await supabase
+        .from('community_comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('post_id', id);
+
+      return NextResponse.json({
+        post: {
+          id: post.id,
+          result_image_url: post.result_image_url,
+          person_image_url: post.person_image_url || null,
+          clothing_image_url: post.clothing_image_url || null,
+          caption: post.caption,
+          product_link: post.product_link,
+          created_at: post.created_at,
+          user_id: post.user_id,
+          user_prefix: post.user_id ? post.user_id.substring(0, 8) : 'unknown',
+          comment_count: count || 0,
+        },
+      });
+    }
+
+    // 列表查询
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '20');
     const mine = searchParams.get('mine') === 'true';
